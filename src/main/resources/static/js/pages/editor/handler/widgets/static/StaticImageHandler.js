@@ -12,8 +12,9 @@ export default class StaticImageHandler extends FormHandler {
     h: 1,
   };
 
-  constructor(element, item) {
-    super(element);
+  constructor(item) {
+    const template = document.querySelector("#static-image-template");
+    super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
     this.img = this.element.querySelector("img");

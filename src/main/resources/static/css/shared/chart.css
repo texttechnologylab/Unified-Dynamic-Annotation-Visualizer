@@ -44,14 +44,6 @@
   border-bottom-right-radius: inherit;
 }
 
-.dv-chart-icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 5rem;
-  color: var(--border-color);
-}
-
 .dv-chart-tooltip {
   position: absolute;
   opacity: 0;

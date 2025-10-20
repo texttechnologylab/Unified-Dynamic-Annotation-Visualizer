@@ -17,6 +17,7 @@ export default class LineChart extends D3Visualization {
       width,
       height
     );
+
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
@@ -92,12 +93,21 @@ export default class LineChart extends D3Visualization {
       .attr("cx", (item) => xAxis(item.x))
       .attr("cy", (item) => yAxis(item.y))
       .attr("r", 4)
-      .attr("fill", this.dots ? (item) => item.color : "transparent")
-      .on("mouseover", (event) => this.mouseover(event.currentTarget))
-      .on("mousemove", (event, data) =>
-        this.mousemove(event.pageY, event.pageX + 20, `(${data.x}, ${data.y})`)
-      )
-      .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      .attr("fill", this.dots ? (item) => item.color : "transparent");
+
+    if (!this.tooltip.empty()) {
+      this.svg
+        .selectAll("circle")
+        .on("mouseover", (event) => this.mouseover(event.currentTarget))
+        .on("mousemove", (event, data) =>
+          this.mousemove(
+            event.pageY,
+            event.pageX + 20,
+            `(${data.x}, ${data.y})`
+          )
+        )
+        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+    }
 
     // Pass data to export handler
     this.exports.update(this.filter, coordinates, this.svg.node());

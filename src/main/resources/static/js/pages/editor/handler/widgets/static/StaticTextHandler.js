@@ -14,8 +14,9 @@ export default class StaticTextHandler extends FormHandler {
     h: 1,
   };
 
-  constructor(element, item) {
-    super(element);
+  constructor(item) {
+    const template = document.querySelector("#static-text-template");
+    super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
     this.div = this.element.querySelector("#static-text");
@@ -35,36 +36,32 @@ export default class StaticTextHandler extends FormHandler {
     const alignInput = this.createSelect(
       "align",
       "Text alignment",
-      ["text-start", "text-center", "text-end"],
-      styles[0]
+      ["start", "center", "end"],
+      styles[0].replace("text-", "")
     );
     const sizeInput = this.createSelect(
       "size",
       "Font size",
-      ["fs-1", "fs-2", "fs-3", "fs-4", "fs-5", "fs-6"],
-      styles[1]
+      ["1", "2", "3", "4", "5", "6"],
+      styles[1].replace("fs-", "")
     );
     const weightInput = this.createSelect(
       "weight",
       "Font weight",
-      ["fw-normal", "fw-bold"],
-      styles[2]
+      ["normal", "bold"],
+      styles[2].replace("fw-", "")
     );
     const styleInput = this.createSelect(
       "style",
       "Font style",
-      ["fst-normal", "fst-italic"],
-      styles[3]
+      ["normal", "italic"],
+      styles[3].replace("fst-", "")
     );
     const decorationInput = this.createSelect(
       "decoration",
       "Text decoration",
-      [
-        "text-decoration-none",
-        "text-decoration-underline",
-        "text-decoration-line-through",
-      ],
-      styles[4]
+      ["none", "underline", "line-through"],
+      styles[4].replace("text-decoration-", "")
     );
     const titleInput = this.createTextInput(
       "title",
@@ -87,7 +84,7 @@ export default class StaticTextHandler extends FormHandler {
     // Save form input
     const data = Object.fromEntries(new FormData(form));
     this.item.text = data.text;
-    this.item.options.style = `${data.align} ${data.size} ${data.weight} ${data.style} ${data.decoration}`;
+    this.item.options.style = `text-${data.align} fs-${data.size} fw-${data.weight} fst-${data.style} text-decoration-${data.decoration}`;
     this.item.title = data.title;
 
     this.div.textContent = this.item.text;

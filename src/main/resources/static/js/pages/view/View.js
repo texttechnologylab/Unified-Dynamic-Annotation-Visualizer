@@ -4,6 +4,7 @@ import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
+import { getElementDimensions } from "../../shared/modules/utils.js";
 
 export default class View {
   constructor(pipeline) {
@@ -57,7 +58,7 @@ export default class View {
 
       if (ChartClass) {
         const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
-        const options = { ...config.options, ...this.getDimensions(node) };
+        const options = { ...config.options, ...getElementDimensions(node) };
 
         const chart = new ChartClass(node, endpoint, options);
         chart.init();
@@ -67,12 +68,5 @@ export default class View {
         node.classList.remove("hide");
       }
     });
-  }
-
-  getDimensions(element) {
-    const area = element.querySelector(".dv-chart-area");
-    const rect = area.getBoundingClientRect();
-
-    return { width: rect.width, height: rect.height };
   }
 }

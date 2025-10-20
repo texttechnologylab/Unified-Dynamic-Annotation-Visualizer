@@ -3,7 +3,7 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class Network2D extends D3Visualization {
-  constructor(root, endpoint, { width = 800, height = 600, radius = 10 }) {
+  constructor(root, endpoint, { width = 800, height = 600 }) {
     super(
       root,
       endpoint,
@@ -11,13 +11,11 @@ export default class Network2D extends D3Visualization {
       width,
       height
     );
-    this.handler = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
+    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
       "png",
       "json",
     ]);
-
-    this.radius = radius;
   }
 
   async init() {
@@ -28,12 +26,6 @@ export default class Network2D extends D3Visualization {
   render(data) {
     this.clear();
 
-    // Initialize zoom functionality
-    const zoom = d3.zoom().on("zoom", (event) => {
-      this.svg.select("g").attr("transform", event.transform);
-    });
-    this.svg.call(zoom);
-
     // Initialize the links
     const link = this.svg
       .select("g")
@@ -43,22 +35,33 @@ export default class Network2D extends D3Visualization {
       .style("stroke", (item) => item.color);
 
     // Initialize the nodes
+    const radius = 10;
     const node = this.svg
       .select("g")
       .selectAll("circle")
       .data(data.nodes)
       .join("circle")
-      .attr("r", this.radius)
-      .style("fill", (item) => item.color)
-      .on("mouseover", (event) => this.mouseover(event.currentTarget))
-      .on("mousemove", (event, data) =>
-        this.mousemove(
-          event.pageY,
-          event.pageX + 20,
-          `<strong>${data.name}</strong> (${data.id})`
+      .attr("r", radius)
+      .style("fill", (item) => item.color);
+
+    if (!this.tooltip.empty()) {
+      const zoom = d3.zoom().on("zoom", (event) => {
+        this.svg.select("g").attr("transform", event.transform);
+      });
+      this.svg.call(zoom);
+
+      this.svg
+        .selectAll("circle")
+        .on("mouseover", (event) => this.mouseover(event.currentTarget))
+        .on("mousemove", (event, data) =>
+          this.mousemove(
+            event.pageY,
+            event.pageX + 20,
+            `<strong>${data.name}</strong> (${data.id})`
+          )
         )
-      )
-      .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+    }
 
     // This function is run at each iteration of the force algorithm, updating the nodes position.
     const onTick = () => {
@@ -78,7 +81,7 @@ export default class Network2D extends D3Visualization {
         d3.forceLink(data.links).id((item) => item.id)
       )
       // avoid node overlaps
-      .force("collide", d3.forceCollide().radius(this.radius))
+      .force("collide", d3.forceCollide().radius(radius))
       // attraction or repulsion between nodes
       .force("charge", d3.forceManyBody())
       // nodes are attracted by the center of the chart area
@@ -87,6 +90,6 @@ export default class Network2D extends D3Visualization {
       .on("tick", onTick);
 
     // Pass data to export handler
-    this.handler.update(this.filter, data, this.svg.node());
+    this.exports.update(this.filter, data, this.svg.node());
   }
 }

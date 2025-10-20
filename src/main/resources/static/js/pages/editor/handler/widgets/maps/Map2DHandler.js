@@ -1,5 +1,9 @@
-import { createElement } from "../../../../../shared/modules/utils.js";
+import {
+  createElement,
+  getElementDimensions,
+} from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
+import Map2D from "../../../../view/widgets/maps/Map2D.js";
 
 export default class Map2DHandler extends FormHandler {
   static defaults = {
@@ -12,8 +16,9 @@ export default class Map2DHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(element, item) {
-    super(element);
+  constructor(item) {
+    const template = document.querySelector("#default-chart-template");
+    super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
     this.span = this.element.querySelector("span");
@@ -21,9 +26,14 @@ export default class Map2DHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.setIcon(this.item.icon);
-
     this.initButtons(modal, "Map 2D Options", grid);
+
+    this.element._chart = new Map2D(this.element, "", {
+      ...getElementDimensions(this.element),
+      ...this.item.options,
+    });
+    this.element._data = data;
+    this.element._chart.render(this.element._data);
   }
 
   createForm() {
@@ -46,7 +56,19 @@ export default class Map2DHandler extends FormHandler {
     this.item.title = data.title;
     this.item.generator.id = data.generator;
 
-    // Update Title
+    // Update title
     this.span.textContent = data.title;
   }
 }
+
+const data = [
+  {
+    type: "LineString",
+    label: "Flight 1",
+    color: "#00618f",
+    coordinates: [
+      [100, 60],
+      [-60, -30],
+    ],
+  },
+];

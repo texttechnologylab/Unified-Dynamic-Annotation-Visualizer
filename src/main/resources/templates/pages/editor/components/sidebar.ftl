@@ -33,13 +33,13 @@
 
       <@accordion icon="bi bi-grid" title="Widgets">
         <p>Add new widgets by dragging them into the grid area to the right.</p>
-        <div class="dv-widgets-container">
-          <template id="new-widget-template">
-            <div class="dv-new-widget">
-              <div class="dv-widget-draggable">
+        <div class="dv-add-widgets-container">
+          <template id="add-widget-template">
+            <div class="dv-add-widget">
+              <div class="dv-add-widget-draggable">
                 <i></i>
               </div>
-              <span class="dv-widget-title"></span>
+              <span class="dv-add-widget-title"></span>
             </div>
           </template>
         </div>

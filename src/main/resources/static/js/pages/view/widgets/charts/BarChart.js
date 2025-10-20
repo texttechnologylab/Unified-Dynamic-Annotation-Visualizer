@@ -48,15 +48,15 @@ export default class BarChart extends D3Visualization {
       }
     );
 
-    this.controls.appendInputRadio(
-      "Filter labels by",
-      ["includes", "regex"],
-      (input, type) => {
-        this.filter.filter = input;
-        this.filter.regex = type === "regex";
-        this.fetch().then((data) => this.render(data));
-      }
-    );
+    // this.controls.appendInputRadio(
+    //   "Filter labels by",
+    //   ["includes", "regex"],
+    //   (input, type) => {
+    //     this.filter.filter = input;
+    //     this.filter.regex = type === "regex";
+    //     this.fetch().then((data) => this.render(data));
+    //   }
+    // );
 
     this.controls.appendDoubleSlider(min, max, (min, max) => {
       this.filter.min = min;
@@ -104,16 +104,21 @@ export default class BarChart extends D3Visualization {
       .attr("y", y)
       .attr("width", width)
       .attr("height", height)
-      .attr("fill", (item) => item.color)
-      .on("mouseover", (event) => this.mouseover(event.currentTarget))
-      .on("mousemove", (event, data) =>
-        this.mousemove(
-          event.pageY,
-          event.pageX + 20,
-          `<strong>${data.label}</strong><br>${data.value}`
+      .attr("fill", (item) => item.color);
+
+    if (!this.tooltip.empty()) {
+      this.svg
+        .selectAll("rect")
+        .on("mouseover", (event) => this.mouseover(event.currentTarget))
+        .on("mousemove", (event, data) =>
+          this.mousemove(
+            event.pageY,
+            event.pageX + 20,
+            `<strong>${data.label}</strong><br>${data.value}`
+          )
         )
-      )
-      .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+    }
 
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());

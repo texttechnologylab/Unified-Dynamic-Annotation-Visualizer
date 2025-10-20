@@ -1,5 +1,9 @@
-import { createElement } from "../../../../../shared/modules/utils.js";
+import {
+  createElement,
+  getElementDimensions,
+} from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
+import BarChart from "../../../../view/widgets/charts/BarChart.js";
 
 export default class BarChartHandler extends FormHandler {
   static defaults = {
@@ -14,8 +18,9 @@ export default class BarChartHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(element, item) {
-    super(element);
+  constructor(item) {
+    const template = document.querySelector("#default-chart-template");
+    super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
     this.span = this.element.querySelector("span");
@@ -23,9 +28,14 @@ export default class BarChartHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.setIcon(this.item.icon);
-
     this.initButtons(modal, "Bar Chart Options", grid);
+
+    this.element._chart = new BarChart(this.element, "", {
+      ...getElementDimensions(this.element),
+      ...this.item.options,
+    });
+    this.element._data = data;
+    this.element._chart.render(this.element._data);
   }
 
   createForm() {
@@ -56,7 +66,29 @@ export default class BarChartHandler extends FormHandler {
     this.item.generator.id = data.generator;
     this.item.options.horizontal = data.orientation === "horizontal";
 
-    // Update Title
+    // Update title
     this.span.textContent = data.title;
+
+    // Update chart
+    this.element._chart.horizontal = this.item.options.horizontal;
+    this.element._chart.render(this.element._data);
   }
 }
+
+const data = [
+  {
+    label: "Label 1",
+    value: 140,
+    color: "#00618f",
+  },
+  {
+    label: "Label 2",
+    value: 73,
+    color: "#3a4856",
+  },
+  {
+    label: "Label 3",
+    value: 56,
+    color: "#9eadbd",
+  },
+];

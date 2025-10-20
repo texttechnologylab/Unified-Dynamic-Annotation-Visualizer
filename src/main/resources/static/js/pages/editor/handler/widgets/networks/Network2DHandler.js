@@ -1,21 +1,24 @@
-import { createElement } from "../../../../../shared/modules/utils.js";
+import {
+  createElement,
+  getElementDimensions,
+} from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
+import Network2D from "../../../../view/widgets/networks/Network2D.js";
 
 export default class Network2DHandler extends FormHandler {
   static defaults = {
     type: "Network2D",
     title: "Network 2D",
     generator: { id: "" },
-    options: {
-      radius: 10,
-    },
+    options: {},
     icon: "bi bi-diagram-3",
     w: 4,
     h: 3,
   };
 
-  constructor(element, item) {
-    super(element);
+  constructor(item) {
+    const template = document.querySelector("#default-chart-template");
+    super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
     this.span = this.element.querySelector("span");
@@ -23,9 +26,14 @@ export default class Network2DHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.setIcon(this.item.icon);
-
     this.initButtons(modal, "Network 2D Options", grid);
+
+    this.element._chart = new Network2D(this.element, "", {
+      ...getElementDimensions(this.element),
+      ...this.item.options,
+    });
+    this.element._data = data;
+    this.element._chart.render(this.element._data);
   }
 
   createForm() {
@@ -35,18 +43,10 @@ export default class Network2DHandler extends FormHandler {
       "Generator",
       this.item.generator.id
     );
-    const radiusInput = this.createNumberInput(
-      "radius",
-      "Node radius",
-      this.item.options.radius,
-      1,
-      100
-    );
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
-      radiusInput,
     ]);
   }
 
@@ -55,9 +55,40 @@ export default class Network2DHandler extends FormHandler {
     const data = Object.fromEntries(new FormData(form));
     this.item.title = data.title;
     this.item.generator.id = data.generator;
-    this.item.options.radius = data.radius;
 
-    // Update Title
+    // Update title
     this.span.textContent = data.title;
   }
 }
+
+const data = {
+  nodes: [
+    {
+      id: 1,
+      name: "A",
+      color: "#00618f",
+    },
+    {
+      id: 2,
+      name: "B",
+      color: "#00618f",
+    },
+    {
+      id: 3,
+      name: "C",
+      color: "#00618f",
+    },
+  ],
+  links: [
+    {
+      source: 1,
+      target: 2,
+      color: "#9eadbd",
+    },
+    {
+      source: 1,
+      target: 3,
+      color: "#9eadbd",
+    },
+  ],
+};

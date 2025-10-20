@@ -22,10 +22,10 @@
     <#include "/pages/editor/components/grid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=config?eval_json.id!"New Pipeline" />
+      <@sidebar id=config?eval_json.id!"new-pipeline" />
 
       <main class="dv-main">
-        <@grid widgets=config?eval_json.widgets![] />
+        <@grid />
       </main>
 
       <@modal />

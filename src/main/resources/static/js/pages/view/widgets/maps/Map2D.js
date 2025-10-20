@@ -11,7 +11,8 @@ export default class Map2D extends D3Visualization {
       width,
       height
     );
-    this.handler = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
+
+    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
       "png",
       "csv",
@@ -28,20 +29,7 @@ export default class Map2D extends D3Visualization {
     this.clear();
 
     // https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson
-    d3.json("/js/maps/world.geojson").then((world) => {
-      // Initialize zoom functionality
-      const zoom = d3
-        .zoom()
-        .scaleExtent([0.8, 18])
-        .translateExtent([
-          [0, 0],
-          [this.width, this.height],
-        ])
-        .on("zoom", (event) => {
-          this.svg.select("g").attr("transform", event.transform);
-        });
-      this.svg.call(zoom);
-
+    d3.json("/js/pages/view/widgets/maps/world.geojson").then((world) => {
       // Map and projection
       const projection = d3
         .geoEquirectangular()
@@ -59,16 +47,7 @@ export default class Map2D extends D3Visualization {
         .attr("d", path)
         .attr("fill", "#b8b8b8")
         .style("stroke", "#fff")
-        .style("stroke-width", 0.1)
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, data) =>
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `<strong>${data?.properties.name}</strong>`
-          )
-        )
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+        .style("stroke-width", 0.1);
 
       // Draw the data
       this.svg
@@ -79,19 +58,36 @@ export default class Map2D extends D3Visualization {
         .attr("d", path)
         .style("fill", "none")
         .style("stroke", (item) => item.color)
-        .style("stroke-width", 2)
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, data) =>
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `<strong>${data.label}</strong>`
+        .style("stroke-width", 2);
+
+      if (!this.tooltip.empty()) {
+        const zoom = d3
+          .zoom()
+          .scaleExtent([0.8, 18])
+          .translateExtent([
+            [0, 0],
+            [this.width, this.height],
+          ])
+          .on("zoom", (event) => {
+            this.svg.select("g").attr("transform", event.transform);
+          });
+        this.svg.call(zoom);
+
+        this.svg
+          .selectAll("path")
+          .on("mouseover", (event) => this.mouseover(event.currentTarget))
+          .on("mousemove", (event, data) =>
+            this.mousemove(
+              event.pageY,
+              event.pageX + 20,
+              `<strong>${data.label}</strong>`
+            )
           )
-        )
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+          .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      }
 
       // Pass data to export handler
-      this.handler.update(this.filter, data, this.svg.node());
+      this.exports.update(this.filter, data, this.svg.node());
     });
   }
 }

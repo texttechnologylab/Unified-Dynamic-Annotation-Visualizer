@@ -19,10 +19,6 @@ export default class FormHandler {
     throw new Error("Method saveForm() not implemented.");
   }
 
-  setIcon(icon) {
-    this.element.querySelector(".dv-chart-area>i").className = icon;
-  }
-
   initButtons(modal, modalTitle, grid) {
     const buttons = this.element.querySelectorAll("button");
 

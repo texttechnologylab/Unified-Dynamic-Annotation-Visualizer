@@ -1,6 +1,6 @@
 import { GridStack } from "https://cdn.jsdelivr.net/npm/gridstack@12.3.3/+esm";
 import Modal from "../../shared/classes/Modal.js";
-import { randomId } from "../../shared/modules/utils.js";
+import { getElementDimensions, randomId } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
 
@@ -9,49 +9,29 @@ const defaults = Object.values(getter).map((Handler) => Handler.defaults);
 export default class Editor {
   constructor() {
     this.modal = new Modal(document.querySelector(".dv-modal").parentElement);
-    this.templates = {
-      newWidget: document.querySelector("#new-widget-template"),
-      textWidget: document.querySelector("#static-text-template"),
-      imageWidget: document.querySelector("#static-image-template"),
-      chartWidget: document.querySelector("#default-chart-template"),
-    };
 
     this.input = document.querySelector("#identifier-input");
-    this.sources;
-    this.derivedGenerators;
-    this.grid;
+    this.sources = [];
+    this.derivedGenerators = [];
+    this.grid = [];
   }
 
   init(config) {
     accordions.init();
 
-    // Create accepted widgets
-    const container = document.querySelector(".dv-widgets-container");
-    defaults.forEach((widget) => {
-      const element = this.createAcceptedWidget(widget.icon, widget.title);
-      container.append(element);
-    });
-
-    // Initialize gridstack
+    this.initAddWidgets();
     this.initGrid();
 
     // Load existing data
     this.sources = config.sources || [];
     this.derivedGenerators = config.derivedGenerators || [];
+    this.grid.load(config.widgets || []);
 
-    if (config.widgets) {
-      this.grid.load(config.widgets);
-      this.grid.engine.nodes.forEach((item) => {
-        const Handler = getter[item.type];
-        new Handler(item.el, item).init(this.modal, this.grid);
-
-        // Show charts after gridstack animation is finished
-        setTimeout(
-          () => item.el.querySelector(".hide").classList.remove("hide"),
-          300
-        );
-      });
-    }
+    // Replace whitespaces in the id with dashes
+    this.input.addEventListener(
+      "input",
+      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
+    );
 
     // Initialize buttons
     document
@@ -67,54 +47,64 @@ export default class Editor {
     this.grid = GridStack.init({
       minRow: 6,
       float: true,
-      acceptWidgets: ".dv-widget-draggable",
+      acceptWidgets: ".dv-add-widget-draggable",
     });
 
     GridStack.setupDragIn(
-      ".dv-widget-draggable",
+      ".dv-add-widget-draggable",
       { helper: "clone" },
       defaults
     );
 
-    this.grid.on("added", (event, items) => {
+    // Append and initialize added widgets to item content
+    this.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        item.id = randomId(item.type);
+        item.id = item.id || randomId(item.type);
 
-        item.el.classList.remove("dv-widget-draggable");
-        item.el.querySelector("i").replaceWith(this.createGridItemWidget(item));
+        const HandlerClass = getter[item.type];
+        const handler = new HandlerClass(item);
+
+        item.el.classList.remove("dv-add-widget-draggable");
+        item.el.querySelector("i")?.remove();
+
+        const content = item.el.querySelector(".grid-stack-item-content");
+        if (content) {
+          content.replaceChildren(...handler.element.childNodes);
+          content.className = handler.element.className;
+          handler.element = content;
+        } else {
+          item.el.prepend(handler.element);
+        }
+
+        handler.init(this.modal, this.grid);
       });
+    });
+
+    // Re-render chart with new dimensions after resize
+    this.grid.on("resizestop", (_, el) => {
+      const content = el.querySelector(".grid-stack-item-content");
+
+      if (content._chart) {
+        const dimensions = getElementDimensions(content);
+        content._chart.setDimensions(dimensions.width, dimensions.height);
+        content._chart.render(content._data);
+      }
     });
   }
 
-  createAcceptedWidget(icon, title) {
-    const element = this.templates.newWidget.content.cloneNode(true);
-    const i = element.querySelector("i");
-    const span = element.querySelector("span");
+  initAddWidgets() {
+    const container = document.querySelector(".dv-add-widgets-container");
+    const template = document.querySelector("#add-widget-template");
 
-    i.className = icon;
-    span.textContent = title;
-    span.title = title;
+    defaults.forEach((widget) => {
+      const element = template.content.cloneNode(true);
 
-    return element;
-  }
+      element.querySelector("i").className = widget.icon;
+      element.querySelector("span").title = widget.title;
+      element.querySelector("span").textContent = widget.title;
 
-  createGridItemWidget(item) {
-    const element = this.cloneTemplate(item.type);
-    const Handler = getter[item.type];
-
-    new Handler(element, item).init(this.modal, this.grid);
-
-    return element;
-  }
-
-  cloneTemplate(type) {
-    if (type === "StaticText") {
-      return this.templates.textWidget.content.cloneNode(true);
-    } else if (type === "StaticImage") {
-      return this.templates.imageWidget.content.cloneNode(true);
-    } else {
-      return this.templates.chartWidget.content.cloneNode(true);
-    }
+      container.append(element);
+    });
   }
 
   async validate() {

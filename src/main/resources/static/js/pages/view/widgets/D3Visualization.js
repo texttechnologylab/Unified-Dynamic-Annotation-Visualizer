@@ -7,23 +7,20 @@ export default class D3Visualization {
     this.endpoint = endpoint;
     this.width = width - margin.left - margin.right;
     this.height = height - margin.top - margin.bottom;
+    this.margin = margin;
 
     this.filter = {};
 
     this.tooltip = d3.select(".dv-chart-tooltip");
-
-    // Add svg
-    this.svg = this.root
-      .select(".dv-chart-area")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height);
-    this.svg
-      .append("g")
-      .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    this.svg = this.root.select(".dv-chart-area").append("svg");
 
     // Show chart
     this.root.classed("hide", false);
+  }
+
+  setDimensions(width, height) {
+    this.width = width - this.margin.left - this.margin.right;
+    this.height = height - this.margin.top - this.margin.bottom;
   }
 
   async fetch() {
@@ -44,7 +41,13 @@ export default class D3Visualization {
   }
 
   clear() {
-    this.svg.select("g").selectAll("*").remove();
+    this.svg.selectAll("*").remove();
+    this.svg
+      .attr("width", this.width + this.margin.left + this.margin.right)
+      .attr("height", this.height + this.margin.top + this.margin.bottom);
+    this.svg
+      .append("g")
+      .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
   }
 
   init() {
