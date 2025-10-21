@@ -10,23 +10,17 @@ export default class CorpusFilter {
   }
 
   init() {
-    this.root.querySelectorAll("[data-dv-filter]").forEach((node) => {
-      const id = node.id;
-      const type = node.dataset.dvFilter;
-
-      if (type === "checkbox") {
-        this.components[id] = new CheckboxSearch(id);
-        this.filter[id] = [];
-      } else if (type === "date") {
-        this.components[id] = new DateRange(id);
-        this.filter[id] = {};
-      }
-    });
+    this.components.files = new CheckboxSearch(
+      "file-filter",
+      "/api/files/documents"
+    );
+    this.components.tags = new CheckboxSearch("tag-filter", "/api/filter/tags");
+    this.components.date = new DateRange("date-filter");
   }
 
   apply() {
-    for (const [key, Component] of Object.entries(this.components)) {
-      this.filter[key] = Component.get();
+    for (const [key, component] of Object.entries(this.components)) {
+      this.filter[key] = component.getValues();
     }
   }
 }

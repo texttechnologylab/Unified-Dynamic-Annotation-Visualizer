@@ -4,7 +4,7 @@ export default class DateRange {
     this.inputs = root.querySelectorAll("input");
   }
 
-  get() {
+  getValues() {
     return { min: this.inputs[0].value, max: this.inputs[1].value };
   }
 }

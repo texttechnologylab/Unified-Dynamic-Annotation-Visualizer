@@ -121,6 +121,10 @@
   }
 }
 
+.dv-info-text {
+  float: inline-end;
+}
+
 .dv-filter-date-inputs {
   display: flex;
   justify-content: space-between;

@@ -9,6 +9,7 @@ import { getElementDimensions } from "../../shared/modules/utils.js";
 export default class View {
   constructor(pipeline) {
     corpusFilter.init();
+    corpusFilter.apply();
     sidepanels.init();
     accordions.init();
     dropdowns.init();
