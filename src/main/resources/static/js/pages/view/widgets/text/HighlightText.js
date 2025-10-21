@@ -7,7 +7,7 @@ export default class HighlightText extends D3Visualization {
     super(
       root,
       endpoint,
-      { top: 0, right: 0, bottom: 0, left: 0 },
+      { top: 16, right: 16, bottom: 16, left: 16 },
       width,
       height
     );
@@ -19,12 +19,21 @@ export default class HighlightText extends D3Visualization {
     ]);
 
     this.svg.remove();
-    this.div = this.root
-      .select(".dv-chart-area")
-      .append("div")
-      .style("width", this.width + "px")
-      .style("height", this.height + "px")
-      .style("padding", "1rem")
+    this.div = this.root.select(".dv-chart-area").append("div");
+  }
+
+  clear() {
+    this.div.selectAll("*").remove();
+    this.div
+      .style("width", this.width + this.margin.left + this.margin.right + "px")
+      .style(
+        "height",
+        this.height + this.margin.top + this.margin.bottom + "px"
+      )
+      .style("padding-top", this.margin.top + "px")
+      .style("padding-right", this.margin.right + "px")
+      .style("padding-bottom", this.margin.bottom + "px")
+      .style("padding-left", this.margin.left + "px")
       .style("overflow-y", "auto");
   }
 
@@ -48,12 +57,12 @@ export default class HighlightText extends D3Visualization {
       .data(data.spans)
       .join("span")
       .text((d) => d.TEXT ?? d.text ?? "")
-      .attr("style", (d) => d.style || null)
-      .filter((d) => d.label);
+      .attr("style", (d) => d.style || null);
 
     if (!this.tooltip.empty()) {
       this.div
         .selectAll("span")
+        .filter((d) => d.label)
         .on("mouseover", (event) => this.mouseover(event.currentTarget))
         .on("mousemove", (event, d) =>
           this.mousemove(

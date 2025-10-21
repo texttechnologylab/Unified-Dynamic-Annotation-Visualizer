@@ -5,7 +5,7 @@ export default class StaticImageHandler extends FormHandler {
   static defaults = {
     type: "StaticImage",
     title: "Image",
-    src: "https://placehold.co/600x400?text=Placeholder",
+    src: "https://placehold.co/600x400?text=Image",
     options: {},
     icon: "bi bi-image",
     w: 1,

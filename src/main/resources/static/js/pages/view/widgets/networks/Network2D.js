@@ -7,7 +7,7 @@ export default class Network2D extends D3Visualization {
     super(
       root,
       endpoint,
-      { top: 10, right: 30, bottom: 30, left: 40 },
+      { top: 20, right: 20, bottom: 20, left: 20 },
       width,
       height
     );
@@ -44,12 +44,35 @@ export default class Network2D extends D3Visualization {
       .attr("r", radius)
       .style("fill", (item) => item.color);
 
-    if (!this.tooltip.empty()) {
-      const zoom = d3.zoom().on("zoom", (event) => {
-        this.svg.select("g").attr("transform", event.transform);
-      });
-      this.svg.call(zoom);
+    d3.forceSimulation(data.nodes)
+      // links between nodes
+      .force(
+        "link",
+        d3.forceLink(data.links).id((item) => item.id)
+      )
+      // avoid node overlaps
+      .force("collide", d3.forceCollide().radius(radius))
+      // attraction or repulsion between nodes
+      .force("charge", d3.forceManyBody())
+      // nodes are attracted by the center of the chart area
+      .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+      // compute positions without animation
+      .stop()
+      .tick(300);
 
+    // draw links and nodes at computed positions
+    link
+      .attr("x1", (item) => item.source.x)
+      .attr("y1", (item) => item.source.y)
+      .attr("x2", (item) => item.target.x)
+      .attr("y2", (item) => item.target.y);
+
+    node.attr("cx", (item) => item.x).attr("cy", (item) => item.y);
+
+    // zoom to network
+    this.fitExtent(this.svg.select("g").node().getBBox());
+
+    if (!this.tooltip.empty()) {
       this.svg
         .selectAll("circle")
         .on("mouseover", (event) => this.mouseover(event.currentTarget))
@@ -63,33 +86,23 @@ export default class Network2D extends D3Visualization {
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
     }
 
-    // This function is run at each iteration of the force algorithm, updating the nodes position.
-    const onTick = () => {
-      link
-        .attr("x1", (item) => item.source.x)
-        .attr("y1", (item) => item.source.y)
-        .attr("x2", (item) => item.target.x)
-        .attr("y2", (item) => item.target.y);
-
-      node.attr("cx", (item) => item.x).attr("cy", (item) => item.y);
-    };
-
-    d3.forceSimulation(data.nodes)
-      // links between nodes
-      .force(
-        "link",
-        d3.forceLink(data.links).id((item) => item.id)
-      )
-      // avoid node overlaps
-      .force("collide", d3.forceCollide().radius(radius))
-      // attraction or repulsion between nodes
-      .force("charge", d3.forceManyBody())
-      // nodes are attracted by the center of the chart area
-      .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-      // nodes position is updated every tick
-      .on("tick", onTick);
-
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());
+  }
+
+  fitExtent(bbox) {
+    const centerX = bbox.x + bbox.width / 2;
+    const centerY = bbox.y + bbox.height / 2;
+
+    const scale = Math.min(this.width / bbox.width, this.height / bbox.height);
+    const translateX = this.margin.left + this.width / 2 - scale * centerX;
+    const translateY = this.margin.top + this.height / 2 - scale * centerY;
+
+    this.svg
+      .select("g")
+      .attr(
+        "transform",
+        `translate(${translateX},${translateY}) scale(${scale})`
+      );
   }
 }

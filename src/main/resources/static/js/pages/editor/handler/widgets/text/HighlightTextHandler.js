@@ -61,4 +61,26 @@ export default class HighlightTextHandler extends FormHandler {
   }
 }
 
-const data = { spans: [], datasets: [] };
+const data = {
+  spans: [
+    {
+      text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr",
+      style: "text-decoration: underline 2px #00618f;",
+    },
+    {
+      text: ", sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
+    },
+    {
+      text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
+      style: "text-decoration: underline 2px #3a4856;",
+    },
+    {
+      text: " Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
+    },
+    {
+      text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
+      style: "text-decoration: underline 2px #9eadbd;",
+    },
+  ],
+  datasets: [],
+};
