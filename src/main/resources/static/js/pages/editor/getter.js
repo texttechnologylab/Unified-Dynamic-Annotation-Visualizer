@@ -7,6 +7,7 @@ import StaticIFrameHandler from "./handler/widgets/static/StaticIFrameHandler.js
 import StaticImageHandler from "./handler/widgets/static/StaticImageHandler.js";
 import StaticTextHandler from "./handler/widgets/static/StaticTextHandler.js";
 import StaticVideoHandler from "./handler/widgets/static/StaticVideoHandler.js";
+import ScrollableTableHandler from "./handler/widgets/tables/ScrollableTableHandler.js";
 import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js";
 
 export default {
@@ -14,6 +15,7 @@ export default {
   StaticImage: StaticImageHandler,
   StaticVideo: StaticVideoHandler,
   StaticIFrame: StaticIFrameHandler,
+  ScrollableTable: ScrollableTableHandler,
   BarChart: BarChartHandler,
   PieChart: PieChartHandler,
   LineChart: LineChartHandler,

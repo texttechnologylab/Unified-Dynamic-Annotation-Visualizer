@@ -43,15 +43,15 @@ export default class StaticVideoHandler extends FormHandler {
     const srcInput = this.createTextInput("src", "Video-URL", this.item.src);
     const controlsInput = this.createSelect(
       "controls",
-      "Enable controls",
-      ["yes", "no"],
-      this.item.options.controls ? "yes" : "no"
+      "Controls",
+      ["enable", "disable"],
+      this.item.options.controls ? "enable" : "disable"
     );
     const autoplayInput = this.createSelect(
       "autoplay",
-      "Enable autoplay",
-      ["yes", "no"],
-      this.item.options.autoplay ? "yes" : "no"
+      "Autoplay",
+      ["enable", "disable"],
+      this.item.options.autoplay ? "enable" : "disable"
     );
     const titleInput = this.createTextInput(
       "title",

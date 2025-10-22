@@ -156,3 +156,24 @@
     color: var(--primary);
   }
 }
+
+.dv-scrollable-table {
+  width: 100%;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  border-collapse: collapse;
+}
+
+.dv-scrollable-table tr {
+  border: 1px solid var(--border-color);
+}
+
+.dv-scrollable-table > tbody tr:nth-of-type(2n + 1) {
+  background-color: var(--bg-color-emphasis);
+}
+
+.dv-scrollable-table th,
+.dv-scrollable-table td {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+}
