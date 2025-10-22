@@ -1,7 +1,7 @@
 <#macro grid>
   <div class="grid-stack"></div>
 
-  <template id="static-text-template">
+  <template id="default-static-template">
     <div class="grid-stack-item-content">
       <button
         class="dv-btn-autohide"
@@ -10,30 +10,7 @@
       >
         <i class="bi bi-pencil"></i>
       </button>
-      <div id="static-text"></div>
-      <button
-        class="dv-btn-autohide"
-        type="button"
-        title="Remove"
-      >
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-  </template>
-
-  <template id="static-image-template">
-    <div class="grid-stack-item-content">
-      <button
-        class="dv-btn-autohide"
-        type="button"
-        title="Edit"
-      >
-        <i class="bi bi-pencil"></i>
-      </button>
-      <img
-        width="100%"
-        height="100%"
-      />
+      <span></span>
       <button
         class="dv-btn-autohide"
         type="button"

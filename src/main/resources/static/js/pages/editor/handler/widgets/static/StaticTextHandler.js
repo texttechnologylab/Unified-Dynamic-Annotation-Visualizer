@@ -15,11 +15,12 @@ export default class StaticTextHandler extends FormHandler {
   };
 
   constructor(item) {
-    const template = document.querySelector("#static-text-template");
+    const template = document.querySelector("#default-static-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
-    this.div = this.element.querySelector("#static-text");
+    this.div = createElement("div");
+    this.element.querySelector("span").replaceWith(this.div);
   }
 
   init(modal, grid) {

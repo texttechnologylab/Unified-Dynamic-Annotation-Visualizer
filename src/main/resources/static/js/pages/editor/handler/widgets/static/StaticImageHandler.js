@@ -13,15 +13,18 @@ export default class StaticImageHandler extends FormHandler {
   };
 
   constructor(item) {
-    const template = document.querySelector("#static-image-template");
+    const template = document.querySelector("#default-static-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
-    this.img = this.element.querySelector("img");
+    this.img = createElement("img");
+    this.element.querySelector("span").replaceWith(this.img);
   }
 
   init(modal, grid) {
     this.img.src = this.item.src;
+    this.img.setAttribute("width", "100%");
+    this.img.setAttribute("height", "100%");
 
     this.initButtons(modal, "Image Options", grid);
   }

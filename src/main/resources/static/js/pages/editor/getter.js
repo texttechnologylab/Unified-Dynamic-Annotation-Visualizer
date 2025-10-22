@@ -3,13 +3,17 @@ import LineChartHandler from "./handler/widgets/charts/LineChartHandler.js";
 import PieChartHandler from "./handler/widgets/charts/PieChartHandler.js";
 import Map2DHandler from "./handler/widgets/maps/Map2DHandler.js";
 import Network2DHandler from "./handler/widgets/networks/Network2DHandler.js";
+import StaticIFrameHandler from "./handler/widgets/static/StaticIFrameHandler.js";
 import StaticImageHandler from "./handler/widgets/static/StaticImageHandler.js";
 import StaticTextHandler from "./handler/widgets/static/StaticTextHandler.js";
+import StaticVideoHandler from "./handler/widgets/static/StaticVideoHandler.js";
 import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js";
 
 export default {
   StaticText: StaticTextHandler,
   StaticImage: StaticImageHandler,
+  StaticVideo: StaticVideoHandler,
+  StaticIFrame: StaticIFrameHandler,
   BarChart: BarChartHandler,
   PieChart: PieChartHandler,
   LineChart: LineChartHandler,
