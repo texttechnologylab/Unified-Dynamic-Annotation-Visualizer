@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="/css/shared/globals.css" />
     <link rel="stylesheet" href="/css/shared/components.css" />
     <link rel="stylesheet" href="/css/shared/controls.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-5.3.8/package/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-icons-1.13.1/package/font/bootstrap-icons.min.css" />
   </head>
   
   <body>

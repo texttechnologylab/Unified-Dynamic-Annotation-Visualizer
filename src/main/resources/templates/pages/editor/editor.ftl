@@ -11,9 +11,9 @@
     <link rel="stylesheet" href="/css/shared/components.css" />
     <link rel="stylesheet" href="/css/shared/controls.css" />
     <link rel="stylesheet" href="/css/shared/chart.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.3.3/dist/gridstack.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-5.3.8/package/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-icons-1.13.1/package/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/packages/gridstack-12.3.3/package/dist/gridstack.min.css" />
   </head>
 
   <body>
@@ -32,6 +32,9 @@
     </div>
 
     <script type="module">
+      import "/packages/gridstack-12.3.3/package/dist/gridstack-all.js";
+      import "/packages/bootstrap-5.3.8/package/dist/js/bootstrap.bundle.min.js";
+      import "/packages/d3-7.9.0/package/dist/d3.min.js";
       import Editor from "/js/pages/editor/Editor.js";
 
       const config = JSON.parse("${config?json_string}");

@@ -1,4 +1,3 @@
-import { GridStack } from "https://cdn.jsdelivr.net/npm/gridstack@12.3.3/+esm";
 import getter from "./getter.js";
 import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";

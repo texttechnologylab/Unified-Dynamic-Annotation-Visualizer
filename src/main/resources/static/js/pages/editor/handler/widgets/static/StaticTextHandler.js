@@ -5,11 +5,11 @@ export default class StaticTextHandler extends FormHandler {
   static defaults = {
     type: "StaticText",
     title: "Text",
-    text: "The quick brown fox jumps over the lazy dog.",
+    text: "Empty Text",
     options: {
       style: "text-start fs-5 fw-normal fst-normal text-decoration-none",
     },
-    icon: "bi bi-fonts",
+    icon: "bi bi-type",
     w: 2,
     h: 1,
   };

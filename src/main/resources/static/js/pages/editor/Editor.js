@@ -1,4 +1,3 @@
-import { GridStack } from "https://cdn.jsdelivr.net/npm/gridstack@12.3.3/+esm";
 import Modal from "../../shared/classes/Modal.js";
 import { getElementDimensions, randomId } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
