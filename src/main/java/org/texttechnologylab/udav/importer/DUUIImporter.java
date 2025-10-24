@@ -33,6 +33,7 @@ public class DUUIImporter implements ApplicationRunner {
     private static final int iWorkers = 2;
     private static DUUIComposer pComposer = null;
     private final DbProps db;
+    private final PostImportRowCounter postImportRowCounter;
 
     @BeforeAll
     public static void init() throws IOException, URISyntaxException, UIMAException, SAXException {
@@ -100,5 +101,6 @@ public class DUUIImporter implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         init();
         execute();
+        postImportRowCounter.updateRowCounts();
     }
 }
