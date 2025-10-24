@@ -26,7 +26,9 @@ export default class StaticImageHandler extends FormHandler {
     this.img.setAttribute("width", "100%");
     this.img.setAttribute("height", "100%");
 
-    this.initButtons(modal, "Image Options", grid);
+    this.initButtons(modal, "Image Options", () =>
+      grid.removeWidget(this.item.el)
+    );
   }
 
   createForm() {
@@ -45,9 +47,8 @@ export default class StaticImageHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.src = data.src;
-    this.item.title = data.title;
+    this.item.src = form.src;
+    this.item.title = form.title;
 
     this.img.src = this.item.src;
   }

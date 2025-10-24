@@ -10,7 +10,11 @@ import StaticVideoHandler from "./handler/widgets/static/StaticVideoHandler.js";
 import ScrollableTableHandler from "./handler/widgets/tables/ScrollableTableHandler.js";
 import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js";
 
-export default {
+import CategoryNumberColorMappingHandler from "./handler/generators/CategoryNumberColorMappingHandler.js";
+import CategoryNumberMappingHandler from "./handler/generators/CategoryNumberMappingHandler.js";
+import TextFormattingHandler from "./handler/generators/TextFormattingHandler.js";
+
+const widgets = {
   StaticText: StaticTextHandler,
   StaticImage: StaticImageHandler,
   StaticVideo: StaticVideoHandler,
@@ -23,3 +27,11 @@ export default {
   Network2D: Network2DHandler,
   Map2D: Map2DHandler,
 };
+
+const generators = {
+  TextFormatting: TextFormattingHandler,
+  CategoryNumberMapping: CategoryNumberMappingHandler,
+  CategoryNumberColorMapping: CategoryNumberColorMappingHandler,
+};
+
+export default { widgets, generators };

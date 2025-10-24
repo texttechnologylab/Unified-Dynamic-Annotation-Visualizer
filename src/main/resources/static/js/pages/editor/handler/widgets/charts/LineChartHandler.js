@@ -29,7 +29,9 @@ export default class LineChartHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Line Chart Options", grid);
+    this.initButtons(modal, "Line Chart Options", () =>
+      grid.removeWidget(this.item.el)
+    );
 
     this.element._chart = new LineChart(this.element, "", {
       ...getElementDimensions(this.element),
@@ -69,14 +71,13 @@ export default class LineChartHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.title = data.title;
-    this.item.generator.id = data.generator;
-    this.item.options.line = data.line === "yes";
-    this.item.options.dots = data.dots === "yes";
+    this.item.title = form.title;
+    this.item.generator.id = form.generator;
+    this.item.options.line = form.line === "yes";
+    this.item.options.dots = form.dots === "yes";
 
     // Update title
-    this.span.textContent = data.title;
+    this.span.textContent = form.title;
 
     // Update chart
     this.element._chart.line = this.item.options.line;

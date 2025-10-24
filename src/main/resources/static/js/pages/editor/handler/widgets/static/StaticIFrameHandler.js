@@ -30,7 +30,9 @@ export default class StaticIFrameHandler extends FormHandler {
     this.iframe.setAttribute("width", "100%");
     this.iframe.setAttribute("height", "100%");
 
-    this.initButtons(modal, "Inline Frame Options", grid);
+    this.initButtons(modal, "Inline Frame Options", () =>
+      grid.removeWidget(this.item.el)
+    );
   }
 
   createForm() {
@@ -49,9 +51,8 @@ export default class StaticIFrameHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.src = data.src;
-    this.item.title = data.title;
+    this.item.src = form.src;
+    this.item.title = form.title;
 
     this.iframe.src = this.item.src || this.placeholder;
   }

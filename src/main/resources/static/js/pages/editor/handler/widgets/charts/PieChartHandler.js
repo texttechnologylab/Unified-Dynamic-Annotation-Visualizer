@@ -28,7 +28,9 @@ export default class PieChartHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Pie Chart Options", grid);
+    this.initButtons(modal, "Pie Chart Options", () =>
+      grid.removeWidget(this.item.el)
+    );
 
     this.element._chart = new PieChart(this.element, "", {
       ...getElementDimensions(this.element),
@@ -62,13 +64,12 @@ export default class PieChartHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.title = data.title;
-    this.item.generator.id = data.generator;
-    this.item.options.hole = data.hole || 0;
+    this.item.title = form.title;
+    this.item.generator.id = form.generator;
+    this.item.options.hole = form.hole || 0;
 
     // Update title
-    this.span.textContent = data.title;
+    this.span.textContent = form.title;
 
     // Update chart
     this.element._chart.hole = this.item.options.hole;

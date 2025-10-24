@@ -21,25 +21,53 @@
         <input id="identifier-input" type="text" class="dv-text-input" value="${id}" />
       </label>
 
-      <@accordion icon="bi bi-database" title="Sources">
-        <p>Sources are the basic annotation types for the charts.</p>
+      <label class="dv-label">Existing Generators:</label>
+      <div id="added-generators" class="dv-generators-container">
+        <template id="added-generator-template">
+          <div class="dv-generator">
+            <div class="dv-generator-name">
+              <span class="font-monospace"></span>
+              <span></span>
+            </div>
+            <div class="d-flex">
+              <button class="dv-btn" type="button" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="dv-btn" type="button" title="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
 
-      </@accordion>
-
-      <@accordion icon="bi bi-archive" title="DerivedGenerators">
-        <p>Generators are data representations for the charts. They keep record of all the data that is relevant for the final charts.</p>
-
+      <@accordion icon="bi bi-database" title="Generators">
+        <p>Generators are data representations for the charts. They keep record of all the data that is relevant for the charts.</p>
+        <div id="available-generators" class="dv-generators-container">
+          <template id="available-generator-template">
+            <div class="dv-generator">
+              <div class="dv-generator-name-tooltip">
+                <span class="font-monospace"></span>
+                <span></span>
+                <div class="dv-generator-tooltip"><strong>Tooltip</strong><br>Explanation text goes here.</div>
+              </div>
+              <button class="dv-btn" type="button">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+          </template>
+        </div>
       </@accordion>
 
       <@accordion icon="bi bi-grid" title="Widgets">
         <p>Add new widgets by dragging them into the grid area to the right.</p>
-        <div class="dv-add-widgets-container">
-          <template id="add-widget-template">
-            <div class="dv-add-widget">
-              <div class="dv-add-widget-draggable">
+        <div class="dv-available-widgets-container">
+          <template id="available-widget-template">
+            <div class="dv-available-widget">
+              <div class="dv-available-widget-draggable">
                 <i></i>
               </div>
-              <span class="dv-add-widget-title"></span>
+              <span class="dv-available-widget-title"></span>
             </div>
           </template>
         </div>
@@ -48,11 +76,13 @@
 
     <div class="dv-sidebar-footer">
       <div class="dv-btn-group">
-        <button id="cancel-button" type="button" class="dv-btn-outline">
-          Cancel
+        <button id="discard-button" type="button" class="dv-btn-outline">
+          <i class="bi bi-x-lg"></i>
+          <span>Discard</span>
         </button>
         <button id="save-button" type="button" class="dv-btn-primary">
-          Save
+          <i class="bi-floppy"></i>
+          <span>Save</span>
         </button>
       </div>
     </div>

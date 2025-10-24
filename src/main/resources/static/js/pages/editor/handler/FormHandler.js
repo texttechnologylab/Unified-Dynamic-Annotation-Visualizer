@@ -19,14 +19,17 @@ export default class FormHandler {
     throw new Error("Method saveForm() not implemented.");
   }
 
-  initButtons(modal, modalTitle, grid) {
+  initButtons(modal, modalTitle, remove) {
     const buttons = this.element.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {
       const form = this.createForm();
-      modal.render(modalTitle, form, () => this.saveForm(form));
+
+      modal.render(modalTitle, form, () =>
+        this.saveForm(Object.fromEntries(new FormData(form)))
+      );
     });
-    buttons[1].addEventListener("click", () => grid.removeWidget(this.item.el));
+    buttons[1].addEventListener("click", () => remove());
   }
 
   createTextInput(key, title, value) {
