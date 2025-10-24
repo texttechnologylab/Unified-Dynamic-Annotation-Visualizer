@@ -81,7 +81,8 @@
             class="dv-btn-outline"
             type="button"
           >
-            Apply filter
+            <i class="bi bi-funnel"></i>
+            <span>Apply filter</span>
           </button>
         </div>
       </div>

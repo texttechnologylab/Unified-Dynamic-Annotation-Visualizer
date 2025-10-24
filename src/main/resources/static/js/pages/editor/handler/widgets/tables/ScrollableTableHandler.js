@@ -28,7 +28,9 @@ export default class ScrollableTableHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Table Options", grid);
+    this.initButtons(modal, "Table Options", () =>
+      grid.removeWidget(this.item.el)
+    );
 
     this.element._chart = new ScrollableTable(this.element, "", {
       ...getElementDimensions(this.element),
@@ -61,13 +63,12 @@ export default class ScrollableTableHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.title = data.title;
-    this.item.generator.id = data.generator;
-    this.item.options.numbers = data.numbers === "show";
+    this.item.title = form.title;
+    this.item.generator.id = form.generator;
+    this.item.options.numbers = form.numbers === "show";
 
     // Update title
-    this.span.textContent = data.title;
+    this.span.textContent = form.title;
 
     // Update chart
     this.element._chart.numbers = this.item.options.numbers;

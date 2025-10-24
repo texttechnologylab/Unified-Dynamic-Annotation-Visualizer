@@ -26,7 +26,9 @@ export default class Network2DHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Network 2D Options", grid);
+    this.initButtons(modal, "Network 2D Options", () =>
+      grid.removeWidget(this.item.el)
+    );
 
     this.element._chart = new Network2D(this.element, "", {
       ...getElementDimensions(this.element),
@@ -52,12 +54,11 @@ export default class Network2DHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.title = data.title;
-    this.item.generator.id = data.generator;
+    this.item.title = form.title;
+    this.item.generator.id = form.generator;
 
     // Update title
-    this.span.textContent = data.title;
+    this.span.textContent = form.title;
   }
 }
 

@@ -27,7 +27,9 @@ export default class StaticTextHandler extends FormHandler {
     this.div.textContent = this.item.text;
     this.div.className = this.item.options.style;
 
-    this.initButtons(modal, "Text Options", grid);
+    this.initButtons(modal, "Text Options", () =>
+      grid.removeWidget(this.item.el)
+    );
   }
 
   createForm() {
@@ -83,10 +85,9 @@ export default class StaticTextHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.text = data.text;
-    this.item.options.style = `text-${data.align} fs-${data.size} fw-${data.weight} fst-${data.style} text-decoration-${data.decoration}`;
-    this.item.title = data.title;
+    this.item.text = form.text;
+    this.item.options.style = `text-${form.align} fs-${form.size} fw-${form.weight} fst-${form.style} text-decoration-${form.decoration}`;
+    this.item.title = form.title;
 
     this.div.textContent = this.item.text;
     this.div.className = this.item.options.style;

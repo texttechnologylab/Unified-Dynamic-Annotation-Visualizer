@@ -28,7 +28,9 @@ export default class BarChartHandler extends FormHandler {
 
   init(modal, grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Bar Chart Options", grid);
+    this.initButtons(modal, "Bar Chart Options", () =>
+      grid.removeWidget(this.item.el)
+    );
 
     this.element._chart = new BarChart(this.element, "", {
       ...getElementDimensions(this.element),
@@ -61,13 +63,12 @@ export default class BarChartHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.title = data.title;
-    this.item.generator.id = data.generator;
-    this.item.options.horizontal = data.orientation === "horizontal";
+    this.item.title = form.title;
+    this.item.generator.id = form.generator;
+    this.item.options.horizontal = form.orientation === "horizontal";
 
     // Update title
-    this.span.textContent = data.title;
+    this.span.textContent = form.title;
 
     // Update chart
     this.element._chart.horizontal = this.item.options.horizontal;

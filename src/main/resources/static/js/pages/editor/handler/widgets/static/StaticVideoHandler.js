@@ -36,7 +36,9 @@ export default class StaticVideoHandler extends FormHandler {
       this.video.setAttribute("poster", this.poster);
     }
 
-    this.initButtons(modal, "Video Options", grid);
+    this.initButtons(modal, "Video Options", () =>
+      grid.removeWidget(this.item.el)
+    );
   }
 
   createForm() {
@@ -69,11 +71,10 @@ export default class StaticVideoHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    const data = Object.fromEntries(new FormData(form));
-    this.item.src = data.src;
-    this.item.title = data.title;
-    this.item.options.controls = data.controls === "yes";
-    this.item.options.autoplay = data.autoplay === "yes";
+    this.item.src = form.src;
+    this.item.title = form.title;
+    this.item.options.controls = form.controls === "yes";
+    this.item.options.autoplay = form.autoplay === "yes";
 
     this.video.src = this.item.src;
 
