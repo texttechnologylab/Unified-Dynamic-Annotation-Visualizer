@@ -73,8 +73,8 @@ export default class StaticVideoHandler extends FormHandler {
     // Save form input
     this.item.src = form.src;
     this.item.title = form.title;
-    this.item.options.controls = form.controls === "yes";
-    this.item.options.autoplay = form.autoplay === "yes";
+    this.item.options.controls = form.controls === "enable";
+    this.item.options.autoplay = form.autoplay === "enable";
 
     this.video.src = this.item.src;
 

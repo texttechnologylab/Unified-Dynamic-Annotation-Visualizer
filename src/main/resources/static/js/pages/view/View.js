@@ -54,18 +54,20 @@ export default class View {
       const id = node.dataset.dvWidget;
       const config = widgets.find((conf) => conf.id === id);
 
-      const ChartClass = getter[config.type];
+      if (getter._dynamic[config.type]) {
+        const WidgetClass = getter._dynamic[config.type];
 
-      if (ChartClass) {
         const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
         const options = { ...config.options, ...getElementDimensions(node) };
 
-        const chart = new ChartClass(node, endpoint, options);
+        const chart = new WidgetClass(node, endpoint, options);
         chart.init();
 
         this.charts.push(chart);
-      } else {
-        node.classList.remove("hide");
+      } else if (getter._static[config.type]) {
+        const WidgetClass = getter._static[config.type];
+
+        new WidgetClass(node, config.src, config.options).init();
       }
     });
   }

@@ -5,7 +5,7 @@ export default class StaticTextHandler extends FormHandler {
   static defaults = {
     type: "StaticText",
     title: "Text",
-    text: "Empty Text",
+    src: "Empty Text",
     options: {
       style: "text-start fs-5 fw-normal fst-normal text-decoration-none",
     },
@@ -24,7 +24,7 @@ export default class StaticTextHandler extends FormHandler {
   }
 
   init(modal, grid) {
-    this.div.textContent = this.item.text;
+    this.div.textContent = this.item.src;
     this.div.className = this.item.options.style;
 
     this.initButtons(modal, "Text Options", () =>
@@ -35,7 +35,7 @@ export default class StaticTextHandler extends FormHandler {
   createForm() {
     const styles = this.item.options.style.split(" ");
 
-    const textInput = this.createTextArea("text", "Text", this.item.text);
+    const textInput = this.createTextArea("text", "Text", this.item.src);
     const alignInput = this.createSelect(
       "align",
       "Text alignment",
@@ -85,11 +85,11 @@ export default class StaticTextHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    this.item.text = form.text;
+    this.item.src = form.text;
     this.item.options.style = `text-${form.align} fs-${form.size} fw-${form.weight} fst-${form.style} text-decoration-${form.decoration}`;
     this.item.title = form.title;
 
-    this.div.textContent = this.item.text;
+    this.div.textContent = this.item.src;
     this.div.className = this.item.options.style;
   }
 }

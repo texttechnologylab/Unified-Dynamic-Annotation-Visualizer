@@ -6,7 +6,12 @@ import Map2D from "./widgets/maps/Map2D.js";
 import Network2D from "./widgets/networks/Network2D.js";
 import ScrollableTable from "./widgets/tables/ScrollableTable.js";
 
-export default {
+import StaticIFrame from "./widgets/static/StaticIFrame.js";
+import StaticImage from "./widgets/static/StaticImage.js";
+import StaticText from "./widgets/static/StaticText.js";
+import StaticVideo from "./widgets/static/StaticVideo.js";
+
+const _dynamic = {
   BarChart,
   LineChart,
   PieChart,
@@ -15,3 +20,12 @@ export default {
   Network2D,
   ScrollableTable,
 };
+
+const _static = {
+  StaticIFrame,
+  StaticImage,
+  StaticText,
+  StaticVideo,
+};
+
+export default { _dynamic, _static };
