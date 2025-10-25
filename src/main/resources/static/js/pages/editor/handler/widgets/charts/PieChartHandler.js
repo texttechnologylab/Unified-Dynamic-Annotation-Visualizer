@@ -32,6 +32,8 @@ export default class PieChartHandler extends FormHandler {
       grid.removeWidget(this.item.el)
     );
 
+    this.showAlert(!this.item.generator.id);
+
     this.element._chart = new PieChart(this.element, "", {
       ...getElementDimensions(this.element),
       ...this.item.options,
@@ -67,6 +69,8 @@ export default class PieChartHandler extends FormHandler {
     this.item.title = form.title;
     this.item.generator.id = form.generator;
     this.item.options.hole = form.hole || 0;
+
+    this.showAlert(!form.generator);
 
     // Update title
     this.span.textContent = form.title;

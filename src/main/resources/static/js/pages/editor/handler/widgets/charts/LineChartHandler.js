@@ -33,6 +33,8 @@ export default class LineChartHandler extends FormHandler {
       grid.removeWidget(this.item.el)
     );
 
+    this.showAlert(!this.item.generator.id);
+
     this.element._chart = new LineChart(this.element, "", {
       ...getElementDimensions(this.element),
       ...this.item.options,
@@ -75,6 +77,8 @@ export default class LineChartHandler extends FormHandler {
     this.item.generator.id = form.generator;
     this.item.options.line = form.line === "yes";
     this.item.options.dots = form.dots === "yes";
+
+    this.showAlert(!form.generator);
 
     // Update title
     this.span.textContent = form.title;

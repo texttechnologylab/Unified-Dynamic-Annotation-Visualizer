@@ -32,6 +32,8 @@ export default class BarChartHandler extends FormHandler {
       grid.removeWidget(this.item.el)
     );
 
+    this.showAlert(!this.item.generator.id);
+
     this.element._chart = new BarChart(this.element, "", {
       ...getElementDimensions(this.element),
       ...this.item.options,
@@ -66,6 +68,8 @@ export default class BarChartHandler extends FormHandler {
     this.item.title = form.title;
     this.item.generator.id = form.generator;
     this.item.options.horizontal = form.orientation === "horizontal";
+
+    this.showAlert(!form.generator);
 
     // Update title
     this.span.textContent = form.title;

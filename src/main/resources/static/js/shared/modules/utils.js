@@ -30,3 +30,21 @@ export function createElement(tag, attributes = {}, children = []) {
 
   return element;
 }
+
+export function deepClone(object, skip = []) {
+  // Make a copy excluding skipped keys
+  const copy = {};
+  for (const key of Object.keys(object)) {
+    if (!skip.includes(key)) copy[key] = object[key];
+  }
+
+  // Deep clone the remaining properties
+  const clone = structuredClone(copy);
+
+  // Reattach the skipped properties from the original
+  for (const key of skip) {
+    if (key in object) clone[key] = object[key];
+  }
+
+  return clone;
+}

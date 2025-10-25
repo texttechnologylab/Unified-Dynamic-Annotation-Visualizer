@@ -42,7 +42,10 @@
       </div>
 
       <@accordion icon="bi bi-database" title="Generators">
-        <p>Generators are data representations for the charts. They keep record of all the data that is relevant for the charts.</p>
+        <p>
+          Generators are data representations for the charts. 
+          They keep record of all the data that is relevant for the charts.
+        </p>
         <div id="available-generators" class="dv-generators-container">
           <template id="available-generator-template">
             <div class="dv-generator">
@@ -60,7 +63,10 @@
       </@accordion>
 
       <@accordion icon="bi bi-grid" title="Widgets">
-        <p>Add new widgets by dragging them into the grid area to the right.</p>
+        <p>
+          Add new widgets by dragging them into the grid area to the right.<br>
+          <strong>Note:</strong> Dynamic widgets in the editor will display sample data for preview purposes.
+        </p>
         <div class="dv-available-widgets-container">
           <template id="available-widget-template">
             <div class="dv-available-widget">

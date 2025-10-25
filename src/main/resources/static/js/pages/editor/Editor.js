@@ -1,5 +1,9 @@
 import Modal from "../../shared/classes/Modal.js";
-import { getElementDimensions, randomId } from "../../shared/modules/utils.js";
+import {
+  deepClone,
+  getElementDimensions,
+  randomId,
+} from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
 
@@ -65,6 +69,7 @@ export default class Editor {
     // Append and initialize added widgets to item content
     this.grid.on("added", (_, items) => {
       items.forEach((item) => {
+        item = deepClone(item, ["el", "grid"]);
         item.id = item.id || randomId(item.type);
 
         const HandlerClass = getter.widgets[item.type];
@@ -103,17 +108,19 @@ export default class Editor {
     const available = document.querySelector("#available-generators");
     const template = document.querySelector("#available-generator-template");
 
-    defaults.generators.forEach((generator) => {
+    defaults.generators.forEach((defaultValues) => {
       const element = template.content.cloneNode(true);
 
-      element.querySelectorAll("span")[0].textContent = generator.short;
-      element.querySelectorAll("span")[1].textContent = generator.name;
+      element.querySelectorAll("span")[0].textContent = defaultValues.short;
+      element.querySelectorAll("span")[1].textContent = defaultValues.name;
       element.querySelector("button").addEventListener("click", () => {
+        // Create generator
+        const generator = deepClone(defaultValues);
         generator.id = generator.id || randomId(generator.type);
         generator.name = "New " + generator.name;
+
         this.generators.push(generator);
 
-        // Create generator
         const HandlerClass = getter.generators[generator.type];
         const handler = new HandlerClass(generator);
 

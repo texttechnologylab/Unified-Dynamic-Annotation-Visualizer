@@ -5,6 +5,7 @@ export default class FormHandler {
 
   constructor(element) {
     this.element = element;
+    this.alert = this.element.querySelector(".dv-chart-alert");
   }
 
   init() {
@@ -17,6 +18,11 @@ export default class FormHandler {
 
   saveForm() {
     throw new Error("Method saveForm() not implemented.");
+  }
+
+  showAlert(show) {
+    const classes = this.alert.classList;
+    show ? classes.add("show") : classes.remove("show");
   }
 
   initButtons(modal, modalTitle, remove) {
