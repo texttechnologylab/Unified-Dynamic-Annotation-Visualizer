@@ -1,4 +1,4 @@
-# Unified-Dynamic-Annotation-Generator
+# Unified Dynamic Annotation Visualizer
 Short introduction
 
 ## Features
