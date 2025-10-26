@@ -27,9 +27,9 @@ export default class LineChartHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Line Chart Options", () =>
+    this.initButtons("Line Chart Options", () =>
       grid.removeWidget(this.item.el)
     );
 

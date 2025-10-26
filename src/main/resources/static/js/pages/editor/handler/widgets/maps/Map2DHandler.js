@@ -24,11 +24,9 @@ export default class Map2DHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Map 2D Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Map 2D Options", () => grid.removeWidget(this.item.el));
 
     this.showAlert(!this.item.generator.id);
 

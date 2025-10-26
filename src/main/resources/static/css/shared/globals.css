@@ -182,3 +182,16 @@
   padding: 0.5rem;
   border: 1px solid var(--border-color);
 }
+
+.dv-tooltip {
+  display: none;
+  position: absolute;
+  max-width: 20rem;
+  background-color: var(--bg-color);
+  padding: 0.375rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  opacity: 0.9;
+  box-shadow: var(--shadow-sm);
+  z-index: 100;
+}

@@ -26,7 +26,7 @@ export default class StaticVideoHandler extends FormHandler {
     this.element.querySelector("span").replaceWith(this.video);
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.video.src = this.item.src;
     this.element.style.overflow = "hidden";
     this.video.setAttribute("width", "100%");
@@ -36,9 +36,7 @@ export default class StaticVideoHandler extends FormHandler {
       this.video.setAttribute("poster", this.poster);
     }
 
-    this.initButtons(modal, "Video Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Video Options", () => grid.removeWidget(this.item.el));
   }
 
   createForm() {

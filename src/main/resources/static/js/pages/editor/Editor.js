@@ -1,4 +1,4 @@
-import Modal from "../../shared/classes/Modal.js";
+import { modal } from "../../shared/classes/Modal.js";
 import {
   deepClone,
   getElementDimensions,
@@ -6,6 +6,7 @@ import {
 } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
+import { tooltip } from "../../shared/classes/Tooltip.js";
 
 const defaults = {
   widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
@@ -16,8 +17,6 @@ const defaults = {
 
 export default class Editor {
   constructor() {
-    this.modal = new Modal(document.querySelector(".dv-modal").parentElement);
-
     this.input = document.querySelector("#identifier-input");
     this.sources = [];
     this.derivedGenerators = [];
@@ -87,7 +86,7 @@ export default class Editor {
           item.el.prepend(handler.element);
         }
 
-        handler.init(this.modal, this.grid);
+        handler.init(this.grid);
       });
     });
 
@@ -108,25 +107,33 @@ export default class Editor {
     const available = document.querySelector("#available-generators");
     const template = document.querySelector("#available-generator-template");
 
-    defaults.generators.forEach((defaultValues) => {
-      const element = template.content.cloneNode(true);
+    defaults.generators.forEach((values) => {
+      const element = template.content.cloneNode(true).children[0];
+      const HandlerClass = getter.generators[values.type];
 
-      element.querySelectorAll("span")[0].textContent = defaultValues.short;
-      element.querySelectorAll("span")[1].textContent = defaultValues.name;
+      tooltip.create(
+        element.querySelector(".dv-generator-title"),
+        values.name,
+        HandlerClass.description,
+        element,
+        "right"
+      );
+
+      element.querySelector(".dv-generator-token").textContent =
+        HandlerClass.token;
+      element.querySelector(".dv-generator-type").textContent = values.name;
       element.querySelector("button").addEventListener("click", () => {
         // Create generator
-        const generator = deepClone(defaultValues);
+        const generator = deepClone(values);
         generator.id = generator.id || randomId(generator.type);
         generator.name = "New " + generator.name;
 
         this.generators.push(generator);
 
-        const HandlerClass = getter.generators[generator.type];
         const handler = new HandlerClass(generator);
-
         added.append(handler.element);
 
-        handler.init(this.modal, this.generators);
+        handler.init(this.generators);
       });
 
       available.append(element);
@@ -163,18 +170,18 @@ export default class Editor {
     );
 
     if (config.id.trim() === "") {
-      this.modal.alert(
+      modal.alert(
         "Missing Identifier",
         "Please provide an identifier for the pipeline."
       );
     } else if (missing.length > 0) {
-      this.modal.alert(
+      modal.alert(
         "Missing Generators",
         "The following widgets have no generator assigned: " +
           missing.map((w) => w.title).join(", ")
       );
     } else if (pipelines.includes(this.input.value)) {
-      this.modal.confirm(
+      modal.confirm(
         `Overwrite "${this.input.value}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         () => this.saveConfig("PUT", config)

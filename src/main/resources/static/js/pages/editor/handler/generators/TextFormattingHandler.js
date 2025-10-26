@@ -2,9 +2,10 @@ import { createElement } from "../../../../shared/modules/utils.js";
 import FormHandler from "../FormHandler.js";
 
 export default class TextFormattingHandler extends FormHandler {
+  static token = "TX";
+  static description = "Description of the TextFormatting generator.";
   static defaults = {
     name: "TextFormatting",
-    short: "TX",
     type: "TextFormatting",
     source: "",
     settings: {
@@ -17,14 +18,17 @@ export default class TextFormattingHandler extends FormHandler {
     super(template.content.cloneNode(true).children[0]);
 
     this.generator = generator;
-    this.spans = this.element.querySelectorAll("span");
+    this.body = this.element.querySelector(".dv-generator-body");
   }
 
-  init(modal, generators) {
-    this.spans[0].textContent = this.generator.short;
-    this.spans[1].textContent = this.generator.name;
+  init(generators) {
+    this.element.querySelector(".dv-generator-token").textContent =
+      TextFormattingHandler.token;
+    this.element.querySelector(".dv-generator-type").textContent =
+      this.generator.type;
+    this.body.textContent = this.generator.name;
 
-    this.initButtons(modal, "Generator Options", () => {
+    this.initButtons("Generator Options", () => {
       this.element.remove();
       generators.filter((item) => item.id !== this.generator.id);
     });
@@ -58,6 +62,6 @@ export default class TextFormattingHandler extends FormHandler {
     this.generator.settings.style = form.style;
 
     // Update name
-    this.spans[1].textContent = form.name;
+    this.body.textContent = form.name;
   }
 }

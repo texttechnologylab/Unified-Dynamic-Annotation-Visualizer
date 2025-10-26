@@ -23,13 +23,11 @@ export default class StaticTextHandler extends FormHandler {
     this.element.querySelector("span").replaceWith(this.div);
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.div.textContent = this.item.src;
     this.div.className = this.item.options.style;
 
-    this.initButtons(modal, "Text Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Text Options", () => grid.removeWidget(this.item.el));
   }
 
   createForm() {

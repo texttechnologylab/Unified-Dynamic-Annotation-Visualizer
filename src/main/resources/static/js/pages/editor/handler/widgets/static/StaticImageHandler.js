@@ -21,14 +21,12 @@ export default class StaticImageHandler extends FormHandler {
     this.element.querySelector("span").replaceWith(this.img);
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.img.src = this.item.src;
     this.img.setAttribute("width", "100%");
     this.img.setAttribute("height", "100%");
 
-    this.initButtons(modal, "Image Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Image Options", () => grid.removeWidget(this.item.el));
   }
 
   createForm() {

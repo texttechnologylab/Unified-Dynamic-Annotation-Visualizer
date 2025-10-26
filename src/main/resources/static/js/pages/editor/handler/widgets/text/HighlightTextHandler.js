@@ -24,9 +24,9 @@ export default class HighlightTextHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Highlight Text Options", () =>
+    this.initButtons("Highlight Text Options", () =>
       grid.removeWidget(this.item.el)
     );
 

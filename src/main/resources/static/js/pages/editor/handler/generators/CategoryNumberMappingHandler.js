@@ -2,9 +2,10 @@ import { createElement } from "../../../../shared/modules/utils.js";
 import FormHandler from "../FormHandler.js";
 
 export default class CategoryNumberMappingHandler extends FormHandler {
+  static token = "NU";
+  static description = "Description of the CategoryNumberMapping generator.";
   static defaults = {
     name: "CategoryNumberMapping",
-    short: "NU",
     type: "CategoryNumberMapping",
     source: "",
     settings: {},
@@ -15,14 +16,17 @@ export default class CategoryNumberMappingHandler extends FormHandler {
     super(template.content.cloneNode(true).children[0]);
 
     this.generator = generator;
-    this.spans = this.element.querySelectorAll("span");
+    this.body = this.element.querySelector(".dv-generator-body");
   }
 
-  init(modal, generators) {
-    this.spans[0].textContent = this.generator.short;
-    this.spans[1].textContent = this.generator.name;
+  init(generators) {
+    this.element.querySelector(".dv-generator-token").textContent =
+      CategoryNumberMappingHandler.token;
+    this.element.querySelector(".dv-generator-type").textContent =
+      this.generator.type;
+    this.body.textContent = this.generator.name;
 
-    this.initButtons(modal, "Generator Options", () => {
+    this.initButtons("Generator Options", () => {
       this.element.remove();
       generators.filter((item) => item.id !== this.generator.id);
     });
@@ -48,6 +52,6 @@ export default class CategoryNumberMappingHandler extends FormHandler {
     this.generator.source = form.source;
 
     // Update name
-    this.spans[1].textContent = form.name;
+    this.body.textContent = form.name;
   }
 }

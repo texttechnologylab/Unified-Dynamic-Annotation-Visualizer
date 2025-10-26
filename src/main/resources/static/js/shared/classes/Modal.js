@@ -1,9 +1,9 @@
 export default class Modal {
-  constructor(element) {
-    this.element = element;
-    this.title = element.querySelector(".dv-title");
-    this.body = element.querySelector(".dv-modal-body");
-    this.buttons = element.querySelectorAll("button");
+  constructor() {
+    this.element = document.querySelector(".dv-modal").parentElement;
+    this.title = this.element.querySelector(".dv-title");
+    this.body = this.element.querySelector(".dv-modal-body");
+    this.buttons = this.element.querySelectorAll("button");
     this.listener;
 
     this.buttons[0].addEventListener("click", () => this.hide());
@@ -66,3 +66,5 @@ export default class Modal {
     document.body.classList.remove("modal-open");
   }
 }
+
+export const modal = new Modal();

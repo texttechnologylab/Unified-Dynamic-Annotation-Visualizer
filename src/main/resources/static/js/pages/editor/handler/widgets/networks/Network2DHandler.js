@@ -24,9 +24,9 @@ export default class Network2DHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Network 2D Options", () =>
+    this.initButtons("Network 2D Options", () =>
       grid.removeWidget(this.item.el)
     );
 

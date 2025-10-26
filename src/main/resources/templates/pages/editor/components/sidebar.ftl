@@ -16,47 +16,53 @@
       </a>
 
       <div class="dv-menu-title">Pipeline Editor</div>
-      <label class="dv-label">
+      <label class="dv-label w-100">
         <span>Identifier:</span>
         <input id="identifier-input" type="text" class="dv-text-input" value="${id}" />
       </label>
-
-      <label class="dv-label">Existing Generators:</label>
-      <div id="added-generators" class="dv-generators-container">
-        <template id="added-generator-template">
-          <div class="dv-generator">
-            <div class="dv-generator-name">
-              <span class="font-monospace"></span>
-              <span></span>
-            </div>
-            <div class="d-flex">
-              <button class="dv-btn" type="button" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="dv-btn" type="button" title="Remove">
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-          </div>
-        </template>
-      </div>
 
       <@accordion icon="bi bi-database" title="Generators">
         <p>
           Generators are data representations for the charts. 
           They keep record of all the data that is relevant for the charts.
         </p>
+        
+        <div class="dv-title">Existing Generators:</div>
+        <div id="added-generators" class="dv-generators-container">
+          <template id="added-generator-template">
+            <div class="dv-generator">
+              <div class="dv-generator-header">
+                <div class="dv-generator-title">
+                  <span class="dv-generator-token"></span>
+                  <span class="dv-generator-type"></span>
+                </div>
+                <div class="d-flex">
+                  <button class="dv-btn" type="button" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="dv-btn" type="button" title="Remove">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="dv-generator-body"></div>
+            </div>
+          </template>
+        </div>
+        
+        <div class="dv-title">Available Generators:</div>
         <div id="available-generators" class="dv-generators-container">
           <template id="available-generator-template">
             <div class="dv-generator">
-              <div class="dv-generator-name-tooltip">
-                <span class="font-monospace"></span>
-                <span></span>
-                <div class="dv-generator-tooltip"><strong>Tooltip</strong><br>Explanation text goes here.</div>
+              <div class="dv-generator-header">
+                <div class="dv-generator-title">
+                  <span class="dv-generator-token"></span>
+                  <span class="dv-generator-type"></span>
+                </div>
+                <button class="dv-btn" type="button">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
               </div>
-              <button class="dv-btn" type="button">
-                <i class="bi bi-plus-lg"></i>
-              </button>
             </div>
           </template>
         </div>

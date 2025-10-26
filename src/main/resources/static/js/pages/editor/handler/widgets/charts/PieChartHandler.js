@@ -26,9 +26,9 @@ export default class PieChartHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Pie Chart Options", () =>
+    this.initButtons("Pie Chart Options", () =>
       grid.removeWidget(this.item.el)
     );
 

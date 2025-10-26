@@ -1,3 +1,4 @@
+import { modal } from "../../../shared/classes/Modal.js";
 import { createElement } from "../../../shared/modules/utils.js";
 
 export default class FormHandler {
@@ -25,7 +26,7 @@ export default class FormHandler {
     show ? classes.add("show") : classes.remove("show");
   }
 
-  initButtons(modal, modalTitle, remove) {
+  initButtons(modalTitle, remove) {
     const buttons = this.element.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {

@@ -26,11 +26,9 @@ export default class ScrollableTableHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(modal, grid) {
+  init(grid) {
     this.span.textContent = this.item.title;
-    this.initButtons(modal, "Table Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Table Options", () => grid.removeWidget(this.item.el));
 
     this.showAlert(!this.item.generator.id);
 
