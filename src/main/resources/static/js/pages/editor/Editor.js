@@ -7,6 +7,11 @@ import {
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
 import { tooltip } from "../../shared/classes/Tooltip.js";
+import {
+  generatorsValid,
+  identifierValid,
+  widgetsValid,
+} from "./utils/validate.js";
 
 const defaults = {
   widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
@@ -72,7 +77,7 @@ export default class Editor {
         item.id = item.id || randomId(item.type);
 
         const HandlerClass = getter.widgets[item.type];
-        const handler = new HandlerClass(item);
+        const handler = new HandlerClass(item, this.generators);
 
         item.el.classList.remove("dv-available-widget-draggable");
         item.el.querySelector("i")?.remove();
@@ -163,30 +168,22 @@ export default class Editor {
       id: this.input.value,
       sources: this.sources,
       derivedGenerators: this.derivedGenerators,
+      generators: this.generators,
       widgets: this.grid.save(false),
     };
-    const missing = config.widgets.filter(
-      (widget) => widget?.generator?.id.trim() === ""
-    );
 
-    if (config.id.trim() === "") {
-      modal.alert(
-        "Missing Identifier",
-        "Please provide an identifier for the pipeline."
-      );
-    } else if (missing.length > 0) {
-      modal.alert(
-        "Missing Generators",
-        "The following widgets have no generator assigned: " +
-          missing.map((w) => w.title).join(", ")
-      );
-    } else if (pipelines.includes(this.input.value)) {
+    const ok =
+      identifierValid(config) &&
+      generatorsValid(config) &&
+      widgetsValid(config);
+
+    if (ok && pipelines.includes(config.id)) {
       modal.confirm(
-        `Overwrite "${this.input.value}"`,
+        `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         () => this.saveConfig("PUT", config)
       );
-    } else {
+    } else if (ok) {
       this.saveConfig("POST", config);
     }
   }

@@ -93,13 +93,16 @@ export default class FormHandler {
         name: key,
         className: "dv-select",
       },
-      options.map((opt) =>
-        createElement("option", {
-          textContent: opt,
-          value: opt,
-          selected: opt === selected,
-        })
-      )
+      options.map((opt) => {
+        const textContent = typeof opt === "string" ? opt : opt.label;
+        const value = typeof opt === "string" ? opt : opt.value;
+
+        return createElement("option", {
+          textContent,
+          value,
+          selected: value === selected,
+        });
+      })
     );
 
     const label = createElement("label", { className: "d-flex flex-column" }, [

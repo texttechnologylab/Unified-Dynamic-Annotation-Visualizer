@@ -27,8 +27,11 @@ export default class CategoryNumberMappingHandler extends FormHandler {
     this.body.textContent = this.generator.name;
 
     this.initButtons("Generator Options", () => {
+      // Remove generator from the dom
       this.element.remove();
-      generators.filter((item) => item.id !== this.generator.id);
+
+      // Remove generator from the state list
+      generators.splice(generators.indexOf(this.generator), 1);
     });
   }
 

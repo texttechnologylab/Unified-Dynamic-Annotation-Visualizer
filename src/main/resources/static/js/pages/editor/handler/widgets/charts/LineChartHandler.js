@@ -4,6 +4,7 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import LineChart from "../../../../view/widgets/charts/LineChart.js";
+import { prepareGenerators, safeValue } from "../../../utils/helper.js";
 
 export default class LineChartHandler extends FormHandler {
   static defaults = {
@@ -19,11 +20,12 @@ export default class LineChartHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(item) {
+  constructor(item, generators) {
     const template = document.querySelector("#default-chart-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
+    this.generators = generators;
     this.span = this.element.querySelector("span");
   }
 
@@ -44,11 +46,14 @@ export default class LineChartHandler extends FormHandler {
   }
 
   createForm() {
+    const generatorOptions = prepareGenerators(this.generators, []);
+
     const titleInput = this.createTextInput("title", "Title", this.item.title);
-    const generatorInput = this.createTextInput(
+    const generatorInput = this.createSelect(
       "generator",
       "Generator",
-      this.item.generator.id
+      generatorOptions,
+      safeValue(generatorOptions, this.item.generator.id)
     );
     const lineInput = this.createSelect(
       "line",

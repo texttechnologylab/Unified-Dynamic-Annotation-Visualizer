@@ -4,6 +4,7 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import PieChart from "../../../../view/widgets/charts/PieChart.js";
+import { prepareGenerators, safeValue } from "../../../utils/helper.js";
 
 export default class PieChartHandler extends FormHandler {
   static defaults = {
@@ -18,11 +19,12 @@ export default class PieChartHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(item) {
+  constructor(item, generators) {
     const template = document.querySelector("#default-chart-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
+    this.generators = generators;
     this.span = this.element.querySelector("span");
   }
 
@@ -43,11 +45,17 @@ export default class PieChartHandler extends FormHandler {
   }
 
   createForm() {
+    const generatorOptions = prepareGenerators(this.generators, [
+      "CategoryNumberMapping",
+      "CategoryNumberColorMapping",
+    ]);
+
     const titleInput = this.createTextInput("title", "Title", this.item.title);
-    const generatorInput = this.createTextInput(
+    const generatorInput = this.createSelect(
       "generator",
       "Generator",
-      this.item.generator.id
+      generatorOptions,
+      safeValue(generatorOptions, this.item.generator.id)
     );
     const holeInput = this.createNumberInput(
       "hole",
