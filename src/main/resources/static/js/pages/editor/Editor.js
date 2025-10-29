@@ -39,6 +39,7 @@ export default class Editor {
     // Load existing data
     this.sources = config.sources || [];
     this.derivedGenerators = config.derivedGenerators || [];
+    this.loadGenerators(config.generators || []);
     this.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
@@ -133,10 +134,10 @@ export default class Editor {
         generator.id = generator.id || randomId(generator.type);
         generator.name = "New " + generator.name;
 
-        this.generators.push(generator);
-
         const handler = new HandlerClass(generator);
+
         added.append(handler.element);
+        this.generators.push(generator);
 
         handler.init(this.generators);
       });
@@ -158,6 +159,20 @@ export default class Editor {
 
       container.append(element);
     });
+  }
+
+  loadGenerators(generators) {
+    const added = document.querySelector("#added-generators");
+
+    for (const generator of generators) {
+      const HandlerClass = getter.generators[generator.type];
+      const handler = new HandlerClass(generator);
+
+      added.append(handler.element);
+      this.generators.push(generator);
+
+      handler.init(this.generators);
+    }
   }
 
   async validate() {

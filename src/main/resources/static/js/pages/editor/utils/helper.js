@@ -7,11 +7,10 @@ export function prepareGenerators(available, allowed) {
     return { label: generator.name, value: generator.id };
   });
 
-  mapped.push({ label: "Choose...", value: "" });
-
   return mapped;
 }
 
 export function safeValue(list, item) {
+  list = list.map((o) => o.value);
   return list.includes(item) ? item : "";
 }

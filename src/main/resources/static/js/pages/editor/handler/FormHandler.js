@@ -88,6 +88,10 @@ export default class FormHandler {
   }
 
   createSelect(key, title, options, selected) {
+    if (!selected) {
+      options.unshift({ label: "Choose...", value: "", disabled: true });
+    }
+
     const select = createElement(
       "select",
       {
@@ -102,6 +106,7 @@ export default class FormHandler {
           textContent,
           value,
           selected: value === selected,
+          disabled: opt.disabled,
         });
       })
     );
