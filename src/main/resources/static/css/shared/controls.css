@@ -168,3 +168,57 @@
   font-size: var(--font-size-sm);
   color: var(--secondary);
 }
+
+.dv-searchbox-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  padding: 0.25rem 0.5rem;
+
+  input {
+    appearance: none;
+    border: none;
+    outline: none;
+    flex-grow: 1;
+  }
+
+  i {
+    color: var(--secondary);
+    cursor: pointer;
+  }
+}
+
+.dv-searchbox-input:focus-within {
+  outline: 1px solid var(--primary);
+}
+
+.dv-searchbox-container {
+  max-height: 9rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.dv-searchbox-header {
+  font-weight: bold;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dv-searchbox-header,
+.dv-searchbox-result {
+  display: flex;
+  padding: 0.25rem;
+  overflow: hidden;
+
+  span:first-child {
+    width: 80%;
+  }
+
+  span:last-child {
+    width: 20%;
+    color: var(--secondary);
+    text-align: end;
+  }
+}

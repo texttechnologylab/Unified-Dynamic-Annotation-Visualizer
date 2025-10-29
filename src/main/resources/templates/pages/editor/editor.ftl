@@ -18,6 +18,7 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
+    <#include "/shared/searchbox.ftl"> 
     <#include "/pages/editor/components/sidebar.ftl">
     <#include "/pages/editor/components/grid.ftl">
 
@@ -29,6 +30,7 @@
       </main>
 
       <@modal />
+      <@searchbox />
     </div>
 
     <script type="module">

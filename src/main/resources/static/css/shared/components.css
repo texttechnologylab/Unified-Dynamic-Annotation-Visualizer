@@ -134,3 +134,24 @@ body.modal-open {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+.dv-dropdown-container {
+  position: relative;
+}
+
+.dv-dropdown {
+  position: absolute;
+  width: 100%;
+  display: none;
+  background-color: var(--bg-color);
+  padding: 0.2rem;
+  border-radius: var(--border-radius);
+  margin-top: 0.2rem;
+  box-shadow: var(--shadow);
+  outline: 1px solid var(--border-color);
+  z-index: 99;
+}
+
+.dv-dropdown.show {
+  display: block;
+}

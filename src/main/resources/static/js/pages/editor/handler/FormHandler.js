@@ -1,4 +1,5 @@
 import { modal } from "../../../shared/classes/Modal.js";
+import Searchbox from "../../../shared/classes/Searchbox.js";
 import { createElement } from "../../../shared/modules/utils.js";
 
 export default class FormHandler {
@@ -111,5 +112,12 @@ export default class FormHandler {
     ]);
 
     return label;
+  }
+
+  createSearchbox(key, title, endpoint, selected) {
+    const searchbox = new Searchbox(endpoint);
+    const element = searchbox.create(key, title, selected);
+
+    return element;
   }
 }

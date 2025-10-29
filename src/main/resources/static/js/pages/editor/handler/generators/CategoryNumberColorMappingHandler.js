@@ -38,9 +38,10 @@ export default class CategoryNumberColorMappingHandler extends FormHandler {
 
   createForm() {
     const nameInput = this.createTextInput("name", "Name", this.generator.name);
-    const sourceInput = this.createTextInput(
+    const sourceInput = this.createSearchbox(
       "source",
       "Data source",
+      "/api/annotations",
       this.generator.source
     );
 
