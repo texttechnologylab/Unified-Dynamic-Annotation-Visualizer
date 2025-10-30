@@ -59,9 +59,9 @@ export default class FormHandler {
     const input = createElement("input", {
       name: key,
       type: "number",
-      value,
       min,
       max,
+      value,
       className: "dv-text-input",
     });
     const label = createElement("label", { className: "d-flex flex-column" }, [
@@ -124,5 +124,43 @@ export default class FormHandler {
     const element = searchbox.create(key, title, selected);
 
     return element;
+  }
+
+  createRangeSlider(key, title, value, min, max) {
+    const input = createElement("input", {
+      name: key,
+      type: "range",
+      min,
+      max,
+      value,
+      className: "dv-slider",
+    });
+    const output = createElement("output", { textContent: value });
+    input.addEventListener(
+      "input",
+      (event) => (output.textContent = event.target.value)
+    );
+    const label = createElement("label", { className: "d-flex flex-column" }, [
+      createElement("span", { textContent: title }),
+      input,
+      output,
+    ]);
+
+    return label;
+  }
+
+  createSwitch(key, title, on) {
+    const input = createElement("input", {
+      name: key,
+      type: "checkbox",
+      checked: on,
+    });
+    const label = createElement("label", { className: "dv-switch" }, [
+      input,
+      createElement("span", { className: "dv-switch-track" }),
+      createElement("span", { textContent: title }),
+    ]);
+
+    return label;
   }
 }

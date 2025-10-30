@@ -51,7 +51,11 @@ export default class Editor {
     // Initialize buttons
     document
       .querySelector("#discard-button")
-      .addEventListener("click", () => window.open("/", "_self"));
+      .addEventListener("click", () =>
+        modal.confirm("Discard Changes", "Are you sure?", () =>
+          window.open("/", "_self")
+        )
+      );
 
     document
       .querySelector("#save-button")

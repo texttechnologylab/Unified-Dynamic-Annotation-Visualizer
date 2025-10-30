@@ -57,12 +57,12 @@ export default class PieChartHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id)
     );
-    const holeInput = this.createNumberInput(
+    const holeInput = this.createRangeSlider(
       "hole",
       "Hole (Doughnut)",
       this.item.options.hole,
       0,
-      1000
+      500
     );
 
     return createElement("form", { className: "dv-form-column" }, [
@@ -76,7 +76,7 @@ export default class PieChartHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.hole = form.hole || 0;
+    this.item.options.hole = parseFloat(form.hole) || 0;
 
     this.showAlert(!form.generator);
 

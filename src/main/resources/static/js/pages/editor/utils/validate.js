@@ -31,20 +31,29 @@ export function generatorsValid(config) {
 }
 
 export function widgetsValid(config) {
-  // Check for empty or removed generators
-  const missing = config.widgets.filter(
-    (widget) =>
-      !config.generators.find((gen) => gen.id === widget?.generator?.id)
-  );
-  const valid = missing.length === 0;
-
-  if (!valid) {
-    modal.alert(
-      "Missing Generators",
-      "The following widgets have no generator assigned: " +
-        missing.map((w) => w.title).join(", ")
+  if (config.widgets.length > 0) {
+    // Check for empty or removed generators
+    const missing = config.widgets.filter(
+      (widget) =>
+        !config.generators.find((gen) => gen.id === widget?.generator?.id)
     );
-  }
+    const valid = missing.length === 0;
 
-  return valid;
+    if (!valid) {
+      modal.alert(
+        "Missing Generators",
+        "The following widgets have no generator assigned: " +
+          missing.map((w) => w.title).join(", ")
+      );
+    }
+
+    return valid;
+  } else {
+    modal.alert(
+      "No Widgets Found",
+      "Place at least one widget at the grid area."
+    );
+
+    return false;
+  }
 }

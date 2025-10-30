@@ -41,29 +41,27 @@ export default class StaticVideoHandler extends FormHandler {
 
   createForm() {
     const srcInput = this.createTextInput("src", "Video-URL", this.item.src);
-    const controlsInput = this.createSelect(
-      "controls",
-      "Controls",
-      ["enable", "disable"],
-      this.item.options.controls ? "enable" : "disable"
-    );
-    const autoplayInput = this.createSelect(
-      "autoplay",
-      "Autoplay",
-      ["enable", "disable"],
-      this.item.options.autoplay ? "enable" : "disable"
-    );
     const titleInput = this.createTextInput(
       "title",
       "Tooltip",
       this.item.title
     );
+    const controlsInput = this.createSwitch(
+      "controls",
+      "Controls",
+      this.item.options.controls
+    );
+    const autoplayInput = this.createSwitch(
+      "autoplay",
+      "Autoplay",
+      this.item.options.autoplay
+    );
 
     return createElement("form", { className: "dv-form-column" }, [
       srcInput,
+      titleInput,
       controlsInput,
       autoplayInput,
-      titleInput,
     ]);
   }
 
@@ -71,8 +69,8 @@ export default class StaticVideoHandler extends FormHandler {
     // Save form input
     this.item.src = form.src;
     this.item.title = form.title;
-    this.item.options.controls = form.controls === "enable";
-    this.item.options.autoplay = form.autoplay === "enable";
+    this.item.options.controls = form.controls === "on";
+    this.item.options.autoplay = form.autoplay === "on";
 
     this.video.src = this.item.src;
 

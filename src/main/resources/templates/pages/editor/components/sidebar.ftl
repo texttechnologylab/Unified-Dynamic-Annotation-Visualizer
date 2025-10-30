@@ -7,14 +7,6 @@
     </div>
 
     <div class="dv-sidebar-body">
-      <a 
-        class="dv-btn dv-menu-link"
-        href="/"
-      >
-        <i class="bi bi-list"></i>
-        <span>Menu</span>
-      </a>
-
       <div class="dv-menu-title">Pipeline Editor</div>
       <label class="dv-label w-100">
         <span>Identifier:</span>

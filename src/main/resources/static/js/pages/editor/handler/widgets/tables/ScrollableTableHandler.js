@@ -52,11 +52,10 @@ export default class ScrollableTableHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id)
     );
-    const numbersInput = this.createSelect(
+    const numbersInput = this.createSwitch(
       "numbers",
       "Row numbers",
-      ["show", "hide"],
-      this.item.options.numbers ? "show" : "hide"
+      this.item.options.numbers
     );
 
     return createElement("form", { className: "dv-form-column" }, [
@@ -70,7 +69,7 @@ export default class ScrollableTableHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.numbers = form.numbers === "show";
+    this.item.options.numbers = form.numbers === "on";
 
     this.showAlert(!form.generator);
 

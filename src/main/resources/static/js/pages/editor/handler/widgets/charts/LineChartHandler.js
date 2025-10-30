@@ -55,18 +55,26 @@ export default class LineChartHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id)
     );
-    const lineInput = this.createSelect(
+    const lineInput = this.createSwitch(
       "line",
       "Draw lines",
-      ["yes", "no"],
-      this.item.options.line ? "yes" : "no"
+      this.item.options.line
     );
-    const dotsInput = this.createSelect(
+    const dotsInput = this.createSwitch(
       "dots",
       "Draw dots",
-      ["yes", "no"],
-      this.item.options.dots ? "yes" : "no"
+      this.item.options.dots
     );
+    lineInput.querySelector("input").addEventListener("change", (event) => {
+      if (!event.target.checked) {
+        dotsInput.querySelector("input").checked = true;
+      }
+    });
+    dotsInput.querySelector("input").addEventListener("change", (event) => {
+      if (!event.target.checked) {
+        lineInput.querySelector("input").checked = true;
+      }
+    });
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
@@ -80,8 +88,8 @@ export default class LineChartHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.line = form.line === "yes";
-    this.item.options.dots = form.dots === "yes";
+    this.item.options.line = form.line === "on";
+    this.item.options.dots = form.dots === "on";
 
     this.showAlert(!form.generator);
 
