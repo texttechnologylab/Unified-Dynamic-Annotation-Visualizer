@@ -1,4 +1,5 @@
 import { createElement } from "../../../../shared/modules/utils.js";
+import { removeGenerator } from "../../utils/actions.js";
 import FormHandler from "../FormHandler.js";
 
 export default class CategoryNumberMappingHandler extends FormHandler {
@@ -19,7 +20,7 @@ export default class CategoryNumberMappingHandler extends FormHandler {
     this.body = this.element.querySelector(".dv-generator-body");
   }
 
-  init(generators) {
+  init() {
     this.element.querySelector(".dv-generator-token").textContent =
       CategoryNumberMappingHandler.token;
     this.element.querySelector(".dv-generator-type").textContent =
@@ -31,7 +32,7 @@ export default class CategoryNumberMappingHandler extends FormHandler {
       this.element.remove();
 
       // Remove generator from the state list
-      generators.splice(generators.indexOf(this.generator), 1);
+      removeGenerator(this.generator);
     });
   }
 

@@ -4,7 +4,12 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import Network2D from "../../../../view/widgets/networks/Network2D.js";
-import { prepareGenerators, safeValue } from "../../../utils/helper.js";
+import {
+  prepareGenerators,
+  removeWidget,
+  safeValue,
+} from "../../../utils/actions.js";
+import state from "../../../utils/state.js";
 
 export default class Network2DHandler extends FormHandler {
   static defaults = {
@@ -26,11 +31,12 @@ export default class Network2DHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(grid) {
+  init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Network 2D Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Network 2D Options", () => {
+      removeWidget(this.item);
+      state.grid.removeWidget(this.item.el);
+    });
 
     this.showAlert(!this.item.generator.id);
 

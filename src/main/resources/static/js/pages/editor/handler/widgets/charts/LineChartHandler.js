@@ -4,7 +4,12 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import LineChart from "../../../../view/widgets/charts/LineChart.js";
-import { prepareGenerators, safeValue } from "../../../utils/helper.js";
+import {
+  prepareGenerators,
+  removeWidget,
+  safeValue,
+} from "../../../utils/actions.js";
+import state from "../../../utils/state.js";
 
 export default class LineChartHandler extends FormHandler {
   static defaults = {
@@ -29,11 +34,12 @@ export default class LineChartHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(grid) {
+  init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Line Chart Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Line Chart Options", () => {
+      removeWidget(this.item);
+      state.grid.removeWidget(this.item.el);
+    });
 
     this.showAlert(!this.item.generator.id);
 

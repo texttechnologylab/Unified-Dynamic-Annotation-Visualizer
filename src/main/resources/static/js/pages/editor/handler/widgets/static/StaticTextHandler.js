@@ -1,4 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
+import { removeWidget } from "../../../utils/actions.js";
+import state from "../../../utils/state.js";
 import FormHandler from "../../FormHandler.js";
 
 export default class StaticTextHandler extends FormHandler {
@@ -23,11 +25,14 @@ export default class StaticTextHandler extends FormHandler {
     this.element.querySelector("span").replaceWith(this.div);
   }
 
-  init(grid) {
+  init() {
     this.div.textContent = this.item.src;
     this.div.className = this.item.options.style;
 
-    this.initButtons("Text Options", () => grid.removeWidget(this.item.el));
+    this.initButtons("Text Options", () => {
+      removeWidget(this.item);
+      state.grid.removeWidget(this.item.el);
+    });
   }
 
   createForm() {

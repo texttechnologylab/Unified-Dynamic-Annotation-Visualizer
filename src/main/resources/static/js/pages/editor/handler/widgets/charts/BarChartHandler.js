@@ -4,7 +4,12 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import BarChart from "../../../../view/widgets/charts/BarChart.js";
-import { prepareGenerators, safeValue } from "../../../utils/helper.js";
+import {
+  prepareGenerators,
+  removeWidget,
+  safeValue,
+} from "../../../utils/actions.js";
+import state from "../../../utils/state.js";
 
 export default class BarChartHandler extends FormHandler {
   static defaults = {
@@ -28,11 +33,12 @@ export default class BarChartHandler extends FormHandler {
     this.span = this.element.querySelector("span");
   }
 
-  init(grid) {
+  init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Bar Chart Options", () =>
-      grid.removeWidget(this.item.el)
-    );
+    this.initButtons("Bar Chart Options", () => {
+      removeWidget(this.item);
+      state.grid.removeWidget(this.item.el);
+    });
 
     this.showAlert(!this.item.generator.id);
 

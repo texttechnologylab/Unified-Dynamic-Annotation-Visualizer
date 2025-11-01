@@ -1,4 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
+import { removeWidget } from "../../../utils/actions.js";
+import state from "../../../utils/state.js";
 import FormHandler from "../../FormHandler.js";
 
 export default class StaticVideoHandler extends FormHandler {
@@ -26,7 +28,7 @@ export default class StaticVideoHandler extends FormHandler {
     this.element.querySelector("span").replaceWith(this.video);
   }
 
-  init(grid) {
+  init() {
     this.video.src = this.item.src;
     this.element.style.overflow = "hidden";
     this.video.setAttribute("width", "100%");
@@ -36,7 +38,10 @@ export default class StaticVideoHandler extends FormHandler {
       this.video.setAttribute("poster", this.poster);
     }
 
-    this.initButtons("Video Options", () => grid.removeWidget(this.item.el));
+    this.initButtons("Video Options", () => {
+      removeWidget(this.item);
+      state.grid.removeWidget(this.item.el);
+    });
   }
 
   createForm() {

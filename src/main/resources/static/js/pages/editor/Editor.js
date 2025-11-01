@@ -12,21 +12,17 @@ import {
   identifierValid,
   widgetsValid,
 } from "./utils/validate.js";
-
-const defaults = {
-  widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
-  generators: Object.values(getter.generators).map(
-    (Handler) => Handler.defaults
-  ),
-};
+import state from "./utils/state.js";
 
 export default class Editor {
   constructor() {
     this.input = document.querySelector("#identifier-input");
-    this.sources = [];
-    this.derivedGenerators = [];
-    this.generators = [];
-    this.grid = null;
+    this.defaults = {
+      widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
+      generators: Object.values(getter.generators).map(
+        (Handler) => Handler.defaults
+      ),
+    };
   }
 
   init(config) {
@@ -37,10 +33,10 @@ export default class Editor {
     this.initGrid();
 
     // Load existing data
-    this.sources = config.sources || [];
-    this.derivedGenerators = config.derivedGenerators || [];
+    state.sources = config.sources || [];
+    state.derivedGenerators = config.derivedGenerators || [];
     this.loadGenerators(config.generators || []);
-    this.grid.load(config.widgets || []);
+    state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
     this.input.addEventListener(
@@ -63,7 +59,7 @@ export default class Editor {
   }
 
   initGrid() {
-    this.grid = GridStack.init({
+    state.grid = GridStack.init({
       minRow: 6,
       float: true,
       acceptWidgets: ".dv-available-widget-draggable",
@@ -72,17 +68,18 @@ export default class Editor {
     GridStack.setupDragIn(
       ".dv-available-widget-draggable",
       { helper: "clone" },
-      defaults.widgets
+      this.defaults.widgets
     );
 
     // Append and initialize added widgets to item content
-    this.grid.on("added", (_, items) => {
+    state.grid.on("added", (_, items) => {
       items.forEach((item) => {
         item = deepClone(item, ["el", "grid"]);
         item.id = item.id || randomId(item.type);
+        state.widgets.push(item);
 
         const HandlerClass = getter.widgets[item.type];
-        const handler = new HandlerClass(item, this.generators);
+        const handler = new HandlerClass(item, state.generators);
 
         item.el.classList.remove("dv-available-widget-draggable");
         item.el.querySelector("i")?.remove();
@@ -96,12 +93,12 @@ export default class Editor {
           item.el.prepend(handler.element);
         }
 
-        handler.init(this.grid);
+        handler.init();
       });
     });
 
     // Re-render chart with new dimensions after resize
-    this.grid.on("resizestop", (_, el) => {
+    state.grid.on("resizestop", (_, el) => {
       const content = el.querySelector(".grid-stack-item-content");
 
       if (content._chart) {
@@ -117,7 +114,7 @@ export default class Editor {
     const available = document.querySelector("#available-generators");
     const template = document.querySelector("#available-generator-template");
 
-    defaults.generators.forEach((values) => {
+    this.defaults.generators.forEach((values) => {
       const element = template.content.cloneNode(true).children[0];
       const HandlerClass = getter.generators[values.type];
 
@@ -141,9 +138,9 @@ export default class Editor {
         const handler = new HandlerClass(generator);
 
         added.append(handler.element);
-        this.generators.push(generator);
+        state.generators.push(generator);
 
-        handler.init(this.generators);
+        handler.init();
       });
 
       available.append(element);
@@ -154,7 +151,7 @@ export default class Editor {
     const container = document.querySelector(".dv-available-widgets-container");
     const template = document.querySelector("#available-widget-template");
 
-    defaults.widgets.forEach((widget) => {
+    this.defaults.widgets.forEach((widget) => {
       const element = template.content.cloneNode(true);
 
       element.querySelector("i").className = widget.icon;
@@ -173,10 +170,17 @@ export default class Editor {
       const handler = new HandlerClass(generator);
 
       added.append(handler.element);
-      this.generators.push(generator);
+      state.generators.push(generator);
 
-      handler.init(this.generators);
+      handler.init();
     }
+  }
+
+  saveWidgets() {
+    return state.widgets.map((item) => {
+      const { el, grid, icon, _id, _initDD, ...widget } = item;
+      return widget;
+    });
   }
 
   async validate() {
@@ -185,10 +189,10 @@ export default class Editor {
     );
     const config = {
       id: this.input.value,
-      sources: this.sources,
-      derivedGenerators: this.derivedGenerators,
-      generators: this.generators,
-      widgets: this.grid.save(false),
+      sources: state.sources,
+      derivedGenerators: state.derivedGenerators,
+      generators: state.generators,
+      widgets: this.saveWidgets(),
     };
 
     const ok =
