@@ -2,6 +2,9 @@ package org.texttechnologylab.udav.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.util.Json;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -9,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.texttechnologylab.udav.api.service.utils.GeneratorExtractor;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -74,7 +78,26 @@ public class PipelineService {
                     .where(DSL.field(COL_ID).eq(id))
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
-            return parseJson(json);
+
+            JsonNode parsedJson = parseJson(json);
+
+            List<ObjectNode> generators = GeneratorExtractor.extractGenerators(parsedJson);
+            System.out.println(generators);
+            // cast to ObjectNode to modify (parsedJson may be an ObjectNode already)
+            ObjectNode obj = parsedJson.deepCopy();
+
+            // build ArrayNode
+            ArrayNode arr = obj.arrayNode();
+            for (ObjectNode gen : generators) {
+                arr.add(gen);
+            }
+
+            // attach to root
+            obj.set("generators", arr);
+            obj.remove("sources");
+            obj.remove("derivedGenerators");
+
+            return obj;
         }
     }
 
