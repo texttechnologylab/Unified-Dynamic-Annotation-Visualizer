@@ -71,7 +71,9 @@ Create a new JavaScript class in the widgets folder of the view page. This class
 
 The new class can optionally extend the `D3Visualization` class, which already has methods for fetching the data, creating and clearing the chart svg and the tooltip event handlers. To support the controls and export functionality of the toolbar, a `ControlsHandler` and an `ExportHandler` should be created and updated.
 
-The new class also needs to provide an `init` and a `render` method. The init method will be called once after creation of the widget and should contain the first data fetch and rendering as well as the configuration of the controls. The render method will be called every time the chart data changes, for example after a filter is applied. You can use the following code as a starting point:
+The new class also needs to provide an `init` and a `render` method. The init method will be called once after creation of the widget and should contain the first data fetch and rendering as well as the configuration of the controls. The render method will be called every time the chart data changes, for example after a filter is applied.
+
+You can use the following code as a starting point:
 
 ```js
 export default class NewChart extends D3Visualization {
@@ -117,9 +119,11 @@ Create a new JavaScript class in the `handler/widgets` folder of the editor page
 
 The new handler can optionally extend the `FormHandler` class, which already has some methods for creating formular fields like text inputs and selects and initialization of the buttons.
 
-A static field with default values for the widget configuration is required.
+A static field with default values for the widget configuration must be set.
 
-The handler needs to provide an `init`, a `createForm` and a `saveForm` method. The init method will be called once after creation of the handler and should contain the initialization of the buttons. The other two methods get called when the options formular opens/closes. They are for creating and saving the the formular data. You can use the following code as a starting point:
+The handler must define three methods: `init`, `createForm`, and `saveForm`. The `init` method is called once when the handler is created and should contain the initialization logic, such as setting up buttons or event listeners. The `createForm` method is executed each time the settings modal is opened. It must return a DOM element that contains the form fields used to modify the configuration. The `saveForm` method is triggered whenever the user saves changes in the modal. It should apply those changes to both the internal state and the DOM.
+
+You can use the following code as a starting point:
 
 ```js
 export default class NewChartHandler extends FormHandler {
@@ -140,8 +144,10 @@ export default class NewChartHandler extends FormHandler {
     this.item = item;
   }
 
-  init(grid) {
-    this.initButtons("Chart Options", () => grid.removeWidget(this.item.el));
+  init() {
+    this.initButtons("Chart Options", () => {
+      state.grid.removeWidget(this.item.el);
+    });
 
     // Set title, render chart preview ...
   }
@@ -170,9 +176,19 @@ const widgets = {
 
 ### Adding a new generator to the editor
 
+Create a new JavaScript class in the `handler/generators` folder of the editor page. This class will get the generator configuration.
+
+The new handler can optionally extend the `FormHandler` class, which already has some methods for creating formular fields like text inputs and selects and initialization of the buttons.
+
+Static fields for the generator token (will be displayed as an icon for the generator), a short description of the generator (will be displayed in a tooltip) and the default values for the generator configuration must be set.
+
+The handler must define three methods: `init`, `createForm`, and `saveForm`. The `init` method is called once when the handler is created and should contain the initialization logic, such as setting up buttons or event listeners. The `createForm` method is executed each time the settings modal is opened. It must return a DOM element that contains the form fields used to modify the configuration. The `saveForm` method is triggered whenever the user saves changes in the modal. It should apply those changes to both the internal state and the DOM.
+
+You can use the following code as a starting point:
+
 ```js
 export default class NewGeneratorHandler extends FormHandler {
-  static token = "TX";
+  static token = "NG";
   static description = "Description of the NewGenerator generator.";
   static defaults = {
     name: "NewGenerator",
@@ -188,10 +204,13 @@ export default class NewGeneratorHandler extends FormHandler {
     this.generator = generator;
   }
 
-  init(generators) {
+  init() {
     this.initButtons("Generator Options", () => {
+      // Remove generator from the dom
       this.element.remove();
-      generators.filter((item) => item.id !== this.generator.id);
+
+      // Remove generator from the state list
+      removeGenerator(this.generator);
     });
 
     // Set title ...
@@ -217,6 +236,7 @@ const generators = {
   NewGenerator: NewGeneratorHandler,
 };
 ```
+
 
 ## Contributing
 Guidelines for contributing
