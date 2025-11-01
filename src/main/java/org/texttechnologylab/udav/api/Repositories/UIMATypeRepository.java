@@ -31,7 +31,7 @@ public class UIMATypeRepository {
 
         return dsl.select(F_URI, F_CNT)
                 .from(REG)
-                .where(cond)
+                .where(cond).and(DSL.field(("row_count")).greaterThan(0))
                 .orderBy(F_CNT.desc().nullsLast())      // numeric sort, NULLS LAST
                 .offset(p * s)
                 .limit(s)
