@@ -4,11 +4,7 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import BarChart from "../../../../view/widgets/charts/BarChart.js";
-import {
-  prepareGenerators,
-  removeWidget,
-  safeValue,
-} from "../../../utils/actions.js";
+import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 
 export default class BarChartHandler extends FormHandler {
@@ -24,19 +20,17 @@ export default class BarChartHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(item, generators) {
+  constructor(item) {
     const template = document.querySelector("#default-chart-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
-    this.generators = generators;
     this.span = this.element.querySelector("span");
   }
 
   init() {
     this.span.textContent = this.item.title;
     this.initButtons("Bar Chart Options", () => {
-      removeWidget(this.item);
       state.grid.removeWidget(this.item.el);
     });
 
@@ -51,7 +45,7 @@ export default class BarChartHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators(this.generators, [
+    const generatorOptions = prepareGenerators([
       "CategoryNumberMapping",
       "CategoryNumberColorMapping",
     ]);

@@ -33,10 +33,11 @@ export function generatorsValid(config) {
 export function widgetsValid(config) {
   if (config.widgets.length > 0) {
     // Check for empty or removed generators
-    const missing = config.widgets.filter(
-      (widget) =>
-        !config.generators.find((gen) => gen.id === widget?.generator?.id)
-    );
+    const missing = config.widgets.filter((widget) => {
+      if (widget.generator) {
+        return !config.generators.find((gen) => gen.id === widget.generator.id);
+      }
+    });
     const valid = missing.length === 0;
 
     if (!valid) {

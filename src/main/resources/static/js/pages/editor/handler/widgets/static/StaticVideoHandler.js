@@ -1,5 +1,4 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
-import { removeWidget } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 import FormHandler from "../../FormHandler.js";
 
@@ -39,7 +38,6 @@ export default class StaticVideoHandler extends FormHandler {
     }
 
     this.initButtons("Video Options", () => {
-      removeWidget(this.item);
       state.grid.removeWidget(this.item.el);
     });
   }
