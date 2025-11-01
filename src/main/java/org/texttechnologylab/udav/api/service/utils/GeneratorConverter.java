@@ -80,7 +80,6 @@ public final class GeneratorConverter {
 
             // Build old root
             ObjectNode out = MAPPER.createObjectNode();
-            out.put("id", "restored");
 
             ArrayNode sources = MAPPER.createArrayNode();
             out.set("sources", sources);
@@ -161,6 +160,7 @@ public final class GeneratorConverter {
                 """;
 
         System.out.println(toOldFormat(newFormat));
+        System.out.println(toNewFormat(toOldFormat(newFormat)));
     }
 
     /**
@@ -237,12 +237,6 @@ public final class GeneratorConverter {
                 out.set("settings", settings.deepCopy());
             } else {
                 out.set("settings", MAPPER.createObjectNode());
-            }
-
-            if (id != null) {
-                out.put("id", id);
-            } else {
-                out.put("id", type + "-restored");
             }
 
             return out;
