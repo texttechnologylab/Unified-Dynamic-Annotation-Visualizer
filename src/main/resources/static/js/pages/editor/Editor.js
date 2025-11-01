@@ -74,12 +74,12 @@ export default class Editor {
     // Append and initialize added widgets to item content
     state.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        item = deepClone(item, ["el", "grid"]);
+        Object.assign(item, deepClone(item, ["el", "grid"]));
+
         item.id = item.id || randomId(item.type);
-        state.widgets.push(item);
 
         const HandlerClass = getter.widgets[item.type];
-        const handler = new HandlerClass(item, state.generators);
+        const handler = new HandlerClass(item);
 
         item.el.classList.remove("dv-available-widget-draggable");
         item.el.querySelector("i")?.remove();
@@ -176,13 +176,6 @@ export default class Editor {
     }
   }
 
-  saveWidgets() {
-    return state.widgets.map((item) => {
-      const { el, grid, icon, _id, _initDD, ...widget } = item;
-      return widget;
-    });
-  }
-
   async validate() {
     const pipelines = await fetch("/api/pipelines").then((response) =>
       response.json()
@@ -192,7 +185,7 @@ export default class Editor {
       sources: state.sources,
       derivedGenerators: state.derivedGenerators,
       generators: state.generators,
-      widgets: this.saveWidgets(),
+      widgets: state.grid.save(false),
     };
 
     const ok =

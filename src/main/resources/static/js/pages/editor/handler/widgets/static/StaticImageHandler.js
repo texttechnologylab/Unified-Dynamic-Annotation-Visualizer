@@ -1,5 +1,4 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
-import { removeWidget } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 import FormHandler from "../../FormHandler.js";
 
@@ -29,7 +28,6 @@ export default class StaticImageHandler extends FormHandler {
     this.img.setAttribute("height", "100%");
 
     this.initButtons("Image Options", () => {
-      removeWidget(this.item);
       state.grid.removeWidget(this.item.el);
     });
   }

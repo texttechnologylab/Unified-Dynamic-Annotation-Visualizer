@@ -4,11 +4,7 @@ import {
 } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import PieChart from "../../../../view/widgets/charts/PieChart.js";
-import {
-  prepareGenerators,
-  removeWidget,
-  safeValue,
-} from "../../../utils/actions.js";
+import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 
 export default class PieChartHandler extends FormHandler {
@@ -24,12 +20,11 @@ export default class PieChartHandler extends FormHandler {
     h: 3,
   };
 
-  constructor(item, generators) {
+  constructor(item) {
     const template = document.querySelector("#default-chart-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.item = item;
-    this.generators = generators;
     this.span = this.element.querySelector("span");
   }
 
@@ -51,7 +46,7 @@ export default class PieChartHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators(this.generators, [
+    const generatorOptions = prepareGenerators([
       "CategoryNumberMapping",
       "CategoryNumberColorMapping",
     ]);
