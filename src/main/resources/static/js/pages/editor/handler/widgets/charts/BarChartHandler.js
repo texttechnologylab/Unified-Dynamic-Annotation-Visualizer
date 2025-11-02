@@ -48,6 +48,8 @@ export default class BarChartHandler extends FormHandler {
     const generatorOptions = prepareGenerators([
       "CategoryNumberMapping",
       "CategoryNumberColorMapping",
+      "CombinedGenerator",
+      "DerivedGenerator",
     ]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
@@ -72,6 +74,8 @@ export default class BarChartHandler extends FormHandler {
   }
 
   saveForm(form) {
+    form = Object.fromEntries(form);
+
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;

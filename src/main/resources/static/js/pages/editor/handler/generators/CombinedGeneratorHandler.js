@@ -1,17 +1,16 @@
 import { createElement } from "../../../../shared/modules/utils.js";
-import { removeGenerator } from "../../utils/actions.js";
+import { removeGenerator, safeValue } from "../../utils/actions.js";
+import state from "../../utils/state.js";
 import FormHandler from "../FormHandler.js";
 
-export default class TextFormattingHandler extends FormHandler {
-  static token = "TX";
-  static description = "Description of the TextFormatting generator.";
+export default class CombinedGeneratorHandler extends FormHandler {
+  static token = "CG";
+  static description = "Description of the CombinedGenerator generator.";
   static defaults = {
-    name: "TextFormatting",
-    type: "TextFormatting",
-    source: "",
-    settings: {
-      style: "underline",
-    },
+    name: "CombinedGenerator",
+    type: "CombinedGenerator",
+    source: [],
+    settings: {},
   };
 
   constructor(generator) {
@@ -24,7 +23,7 @@ export default class TextFormattingHandler extends FormHandler {
 
   init() {
     this.element.querySelector(".dv-generator-token").textContent =
-      TextFormattingHandler.token;
+      CombinedGeneratorHandler.token;
     this.element.querySelector(".dv-generator-type").textContent =
       this.generator.type;
     this.body.textContent = this.generator.name;
@@ -39,36 +38,32 @@ export default class TextFormattingHandler extends FormHandler {
   }
 
   createForm() {
+    const generatorOptions = state.generators
+      .filter((g) => g.id !== this.generator.id)
+      .map((g) => {
+        return { label: g.name, value: g.id };
+      });
+
     const nameInput = this.createTextInput("name", "Name", this.generator.name);
-    const sourceInput = this.createSearchbox(
+    const sourceInput = this.createMultiselect(
       "source",
-      "Data source",
-      "/api/annotations",
+      "Source generators",
+      generatorOptions,
       this.generator.source
-    );
-    const styleInput = this.createSelect(
-      "style",
-      "Style",
-      ["underline", "highlight", "bold"],
-      this.generator.settings.style
     );
 
     return createElement("form", { className: "dv-form-column" }, [
       nameInput,
       sourceInput,
-      styleInput,
     ]);
   }
 
   saveForm(form) {
-    form = Object.fromEntries(form);
-
     // Save form input
-    this.generator.name = form.name;
-    this.generator.source = form.source;
-    this.generator.settings.style = form.style;
+    this.generator.name = form.get("name");
+    this.generator.source = form.getAll("source");
 
     // Update name
-    this.body.textContent = form.name;
+    this.body.textContent = form.get("name");
   }
 }

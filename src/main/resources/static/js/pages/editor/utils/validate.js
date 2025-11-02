@@ -16,7 +16,11 @@ export function identifierValid(config) {
 
 export function generatorsValid(config) {
   // Check for missing sources
-  const missing = config.generators.filter((gen) => gen.source.trim() === "");
+  const missing = config.generators.filter((gen) =>
+    typeof gen.source === "string"
+      ? gen.source.trim() === ""
+      : gen.source.length === 0
+  );
   const valid = missing.length === 0;
 
   if (!valid) {

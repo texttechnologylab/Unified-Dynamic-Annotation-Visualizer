@@ -33,9 +33,7 @@ export default class FormHandler {
     buttons[0].addEventListener("click", () => {
       const form = this.createForm();
 
-      modal.render(modalTitle, form, () =>
-        this.saveForm(Object.fromEntries(new FormData(form)))
-      );
+      modal.render(modalTitle, form, () => this.saveForm(new FormData(form)));
     });
     buttons[1].addEventListener("click", () => remove());
   }
@@ -107,6 +105,32 @@ export default class FormHandler {
           value,
           selected: value === selected,
           disabled: opt.disabled,
+        });
+      })
+    );
+
+    const label = createElement("label", { className: "d-flex flex-column" }, [
+      createElement("span", { textContent: title }),
+      select,
+    ]);
+
+    return label;
+  }
+
+  createMultiselect(key, title, options, selected) {
+    const select = createElement(
+      "select",
+      {
+        name: key,
+        className: "dv-select",
+        multiple: true,
+        size: 3,
+      },
+      options.map((opt) => {
+        return createElement("option", {
+          textContent: opt.label,
+          value: opt.value,
+          selected: selected.includes(opt.value),
         });
       })
     );

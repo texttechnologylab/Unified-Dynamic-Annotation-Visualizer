@@ -85,6 +85,8 @@ export default class StaticTextHandler extends FormHandler {
   }
 
   saveForm(form) {
+    form = Object.fromEntries(form);
+
     // Save form input
     this.item.src = form.text;
     this.item.options.style = `text-${form.align} fs-${form.size} fw-${form.weight} fst-${form.style} text-decoration-${form.decoration}`;

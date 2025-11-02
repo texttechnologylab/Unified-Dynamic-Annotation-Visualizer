@@ -13,6 +13,8 @@ import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js
 import CategoryNumberColorMappingHandler from "./handler/generators/CategoryNumberColorMappingHandler.js";
 import CategoryNumberMappingHandler from "./handler/generators/CategoryNumberMappingHandler.js";
 import TextFormattingHandler from "./handler/generators/TextFormattingHandler.js";
+import CombinedGeneratorHandler from "./handler/generators/CombinedGeneratorHandler.js";
+import DerivedGeneratorHandler from "./handler/generators/DerivedGeneratorHandler.js";
 
 const widgets = {
   StaticText: StaticTextHandler,
@@ -32,6 +34,8 @@ const generators = {
   TextFormatting: TextFormattingHandler,
   CategoryNumberMapping: CategoryNumberMappingHandler,
   CategoryNumberColorMapping: CategoryNumberColorMappingHandler,
+  CombinedGenerator: CombinedGeneratorHandler,
+  DerivedGenerator: DerivedGeneratorHandler,
 };
 
 export default { widgets, generators };

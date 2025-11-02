@@ -69,6 +69,8 @@ export default class StaticVideoHandler extends FormHandler {
   }
 
   saveForm(form) {
+    form = Object.fromEntries(form);
+
     // Save form input
     this.item.src = form.src;
     this.item.title = form.title;
