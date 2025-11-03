@@ -1,6 +1,6 @@
 export default class CheckboxSearch {
-  constructor(id) {
-    this.id = id;
+  constructor(id, endpoint) {
+    this.endpoint = endpoint;
     this.templates = {
       result: document.querySelector("#result-template"),
       checkbox: document.querySelector("#checkbox-template"),
@@ -10,7 +10,17 @@ export default class CheckboxSearch {
     this.input = root.querySelector(".dv-autocomplete-input");
     this.results = root.querySelector(".dv-dropdown");
     this.checkboxes = root.querySelector(".dv-filter-checkboxes");
-    this.addedIds = [];
+    this.info = root.querySelector(".dv-info-text");
+    this.addedCheckboxes = [];
+
+    fetch(this.endpoint)
+      .then((response) => response.json())
+      .then((data) => {
+        this.total = data.length;
+
+        const items = data.slice(0, 10);
+        items.forEach((item) => this.addCheckbox(item));
+      });
 
     let timeout = null;
     this.input.addEventListener("input", () => {
@@ -33,7 +43,7 @@ export default class CheckboxSearch {
     });
   }
 
-  get() {
+  getValues() {
     const nodes = this.checkboxes.querySelectorAll(".dv-check-input");
     const checked = Array.from(nodes).filter((cb) => cb.checked);
     const values = checked.map((cb) => cb.value);
@@ -46,18 +56,20 @@ export default class CheckboxSearch {
   }
 
   autocomplete(value) {
-    fetch(`/data-${this.id}.json`)
+    fetch(`${this.endpoint}?q=${value}`)
       .then((response) => response.json())
       .then((data) => {
-        const filtered = data.filter(
-          (d) => d.name.includes(value) && !this.addedIds.includes(d.id)
-        );
+        const filtered = data.filter((d) => !this.addedCheckboxes.includes(d));
 
         if (filtered.length > 0) {
           this.updateResults(filtered.slice(0, 5));
         } else {
-          this.results.innerHTML = "No matches found";
+          this.results.innerHTML = "No results found";
         }
+      })
+      .catch((error) => {
+        console.error(error);
+        this.results.innerHTML = "No results found";
       });
   }
 
@@ -67,7 +79,7 @@ export default class CheckboxSearch {
     for (const item of items) {
       const result = this.createFromTemplate("result");
 
-      result.querySelector("span").textContent = item.name;
+      result.querySelector("span").textContent = item;
       result.addEventListener("click", () => this.addCheckbox(item));
 
       this.results.appendChild(result);
@@ -79,14 +91,21 @@ export default class CheckboxSearch {
 
     const checkbox = this.createFromTemplate("checkbox");
 
-    checkbox.querySelector("input").value = item.id;
-    checkbox.querySelector("span").textContent = item.name;
+    checkbox.querySelector("input").value = item;
+    checkbox.querySelector("span").textContent = item;
     checkbox.querySelector("button").addEventListener("click", () => {
       this.checkboxes.removeChild(checkbox);
-      this.addedIds = this.addedIds.filter((id) => id !== item.id);
+      this.addedCheckboxes = this.addedCheckboxes.filter((id) => id !== item);
+      this.updateInfo();
     });
 
     this.checkboxes.appendChild(checkbox);
-    this.addedIds.push(item.id);
+    this.addedCheckboxes.push(item);
+
+    this.updateInfo();
+  }
+
+  updateInfo() {
+    this.info.textContent = `${this.addedCheckboxes.length} of ${this.total} checkboxes added`;
   }
 }

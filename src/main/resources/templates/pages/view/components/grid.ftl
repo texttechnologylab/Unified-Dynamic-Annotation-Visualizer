@@ -6,26 +6,12 @@
     <#list widgets as widget>
       <div class="grid-stack-item" gs-id="${widget.id}">
 
-        <#if widget.type == "Text">
-          <div
-            class="grid-stack-item-content ${widget.options.style} hide"
-            title="${widget.title}"
-            data-dv-widget="${widget.id}"
-          >
-            ${widget.options.text}
-          </div>
-
-        <#elseif widget.type == "Image">
+        <#if widget.type?contains("Static")>
           <div
             class="grid-stack-item-content hide"
             title="${widget.title}"
             data-dv-widget="${widget.id}"
           >
-            <img
-              src="${widget.options.src}"
-              width="100%"
-              height="100%"
-            >
           </div>
 
         <#else>

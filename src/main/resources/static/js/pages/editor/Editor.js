@@ -1,69 +1,210 @@
-import { GridStack } from "https://cdn.jsdelivr.net/npm/gridstack@12.3.3/+esm";
-import Modal from "../../shared/classes/Modal.js";
-import { randomId } from "../../shared/modules/utils.js";
-import defaults from "./defaults.js";
+import { modal } from "../../shared/classes/Modal.js";
+import {
+  deepClone,
+  getElementDimensions,
+  randomId,
+} from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
-
-const newWidget = document.querySelector("#new-widget-template");
-const textPlaceholder = document.querySelector("#text-placeholder");
-const imagePlaceholder = document.querySelector("#image-placeholder");
-const d3ChartPlaceholder = document.querySelector("#d3-chart-placeholder");
-const input = document.querySelector("#identifier-input");
-const modal = new Modal(document.querySelector(".dv-modal").parentElement);
+import getter from "./getter.js";
+import { tooltip } from "../../shared/classes/Tooltip.js";
+import {
+  generatorsValid,
+  identifierValid,
+  widgetsValid,
+} from "./utils/validate.js";
+import state from "./utils/state.js";
 
 export default class Editor {
-  constructor(config = {}) {
-    accordions.init();
-
-    this.sources = config.sources || [];
-    this.derivedGenerators = config.derivedGenerators || [];
-    this.grid = this.createGrid(config.widgets || []);
+  constructor() {
+    this.input = document.querySelector("#identifier-input");
+    this.defaults = {
+      widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
+      generators: Object.values(getter.generators).map(
+        (Handler) => Handler.defaults
+      ),
+    };
   }
 
-  init() {
-    const container = document.querySelector(".dv-widgets-container");
+  init(config) {
+    accordions.init();
 
-    // Create all widgets
-    defaults.forEach((widget) => {
-      const element = this.createNewWidget(widget.icon, widget.title);
+    this.initAvailableGenerators();
+    this.initAvailableWidgets();
+    this.initGrid();
 
-      container.append(element);
-    });
+    // Load existing data
+    state.sources = config.sources || [];
+    state.derivedGenerators = config.derivedGenerators || [];
+    this.loadGenerators(config.generators || []);
+    state.grid.load(config.widgets || []);
+
+    // Replace whitespaces in the id with dashes
+    this.input.addEventListener(
+      "input",
+      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
+    );
+
+    // Initialize buttons
+    document
+      .querySelector("#discard-button")
+      .addEventListener("click", () =>
+        modal.confirm("Discard Changes", "Are you sure?", () =>
+          window.open("/", "_self")
+        )
+      );
 
     document
       .querySelector("#save-button")
-      .addEventListener("click", () => this.onSave());
+      .addEventListener("click", () => this.validate());
   }
 
-  async onSave() {
-    const pipelines = await fetch("/api/pipelines").then((response) =>
-      response.json()
+  initGrid() {
+    state.grid = GridStack.init({
+      minRow: 6,
+      float: true,
+      acceptWidgets: ".dv-available-widget-draggable",
+    });
+
+    GridStack.setupDragIn(
+      ".dv-available-widget-draggable",
+      { helper: "clone" },
+      this.defaults.widgets
     );
 
-    if (input.value.trim() === "") {
-      modal.alert(
-        "Missing Identifier",
-        "Please provide an identifier for the pipeline."
+    // Append and initialize added widgets to item content
+    state.grid.on("added", (_, items) => {
+      items.forEach((item) => {
+        Object.assign(item, deepClone(item, ["el", "grid"]));
+
+        item.id = item.id || randomId(item.type);
+
+        const HandlerClass = getter.widgets[item.type];
+        const handler = new HandlerClass(item);
+
+        item.el.classList.remove("dv-available-widget-draggable");
+        item.el.querySelector("i")?.remove();
+
+        const content = item.el.querySelector(".grid-stack-item-content");
+        if (content) {
+          content.replaceChildren(...handler.element.childNodes);
+          content.className = handler.element.className;
+          handler.element = content;
+        } else {
+          item.el.prepend(handler.element);
+        }
+
+        handler.init();
+      });
+    });
+
+    // Re-render chart with new dimensions after resize
+    state.grid.on("resizestop", (_, el) => {
+      const content = el.querySelector(".grid-stack-item-content");
+
+      if (content._chart) {
+        const dimensions = getElementDimensions(content);
+        content._chart.setDimensions(dimensions.width, dimensions.height);
+        content._chart.render(content._data);
+      }
+    });
+  }
+
+  initAvailableGenerators() {
+    const added = document.querySelector("#added-generators");
+    const available = document.querySelector("#available-generators");
+    const template = document.querySelector("#available-generator-template");
+
+    this.defaults.generators.forEach((values) => {
+      const element = template.content.cloneNode(true).children[0];
+      const HandlerClass = getter.generators[values.type];
+
+      tooltip.create(
+        element.querySelector(".dv-generator-title"),
+        values.name,
+        HandlerClass.description,
+        element,
+        "right"
       );
-    } else if (pipelines.includes(input.value)) {
-      modal.confirm(
-        `Overwrite "${input.value}"`,
-        "This pipeline already exists. Do you want to overwrite it?",
-        () => this.sendConfig("PUT")
-      );
-    } else {
-      this.sendConfig("POST");
+
+      element.querySelector(".dv-generator-token").textContent =
+        HandlerClass.token;
+      element.querySelector(".dv-generator-type").textContent = values.name;
+      element.querySelector("button").addEventListener("click", () => {
+        // Create generator
+        const generator = deepClone(values);
+        generator.id = generator.id || randomId(generator.type);
+        generator.name = "New " + generator.name;
+
+        const handler = new HandlerClass(generator);
+
+        added.append(handler.element);
+        state.generators.push(generator);
+
+        handler.init();
+      });
+
+      available.append(element);
+    });
+  }
+
+  initAvailableWidgets() {
+    const container = document.querySelector(".dv-available-widgets-container");
+    const template = document.querySelector("#available-widget-template");
+
+    this.defaults.widgets.forEach((widget) => {
+      const element = template.content.cloneNode(true);
+
+      element.querySelector("i").className = widget.icon;
+      element.querySelector("span").title = widget.title;
+      element.querySelector("span").textContent = widget.title;
+
+      container.append(element);
+    });
+  }
+
+  loadGenerators(generators) {
+    const added = document.querySelector("#added-generators");
+
+    for (const generator of generators) {
+      const HandlerClass = getter.generators[generator.type];
+      const handler = new HandlerClass(generator);
+
+      added.append(handler.element);
+      state.generators.push(generator);
+
+      handler.init();
     }
   }
 
-  sendConfig(method) {
+  async validate() {
+    const pipelines = await fetch("/api/pipelines").then((response) =>
+      response.json()
+    );
     const config = {
-      id: input.value,
-      sources: this.sources,
-      derivedGenerators: this.derivedGenerators,
-      widgets: this.grid.save(false),
+      id: this.input.value,
+      sources: state.sources,
+      derivedGenerators: state.derivedGenerators,
+      generators: state.generators,
+      widgets: state.grid.save(false),
     };
 
+    const ok =
+      identifierValid(config) &&
+      generatorsValid(config) &&
+      widgetsValid(config);
+
+    if (ok && pipelines.includes(config.id)) {
+      modal.confirm(
+        `Overwrite "${config.id}"`,
+        "This pipeline already exists. Do you want to overwrite it?",
+        () => this.saveConfig("PUT", config)
+      );
+    } else if (ok) {
+      this.saveConfig("POST", config);
+    }
+  }
+
+  saveConfig(method, config) {
     const options = {
       method,
       headers: {
@@ -73,69 +214,5 @@ export default class Editor {
     };
 
     fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
-  }
-
-  createGrid(widgets) {
-    const grid = GridStack.init({
-      minRow: 6,
-      float: true,
-      acceptWidgets: ".dv-widget-draggable",
-    });
-    GridStack.setupDragIn(
-      ".dv-widget-draggable",
-      { helper: "clone" },
-      defaults
-    );
-
-    if (widgets) {
-      grid.load(widgets);
-    }
-
-    grid.on("added", (event, items) => {
-      items.forEach((item) => {
-        item.id = randomId(item.type);
-
-        item.el.classList.remove("dv-widget-draggable");
-        item.el.querySelector("i").replaceWith(this.createGridItem(grid, item));
-      });
-    });
-
-    return grid;
-  }
-
-  createNewWidget(icon, title) {
-    const element = newWidget.content.cloneNode(true);
-    const i = element.querySelector("i");
-    const span = element.querySelector("span");
-
-    i.className = icon;
-    span.textContent = title;
-    span.title = title;
-
-    return element;
-  }
-
-  createGridItem(grid, item) {
-    if (item.type === "Text") {
-      return textPlaceholder.content.cloneNode(true);
-    } else if (item.type === "Image") {
-      return imagePlaceholder.content.cloneNode(true);
-    } else {
-      const element = d3ChartPlaceholder.content.cloneNode(true);
-      const span = element.querySelector("span");
-      const buttons = element.querySelectorAll("button");
-
-      buttons[0].addEventListener("click", () =>
-        modal.prompt(
-          "Options",
-          JSON.stringify(item.options),
-          (value) => (item.options = JSON.parse(value))
-        )
-      );
-      buttons[1].addEventListener("click", () => grid.removeWidget(item.el));
-      span.textContent = item.title;
-
-      return element;
-    }
   }
 }

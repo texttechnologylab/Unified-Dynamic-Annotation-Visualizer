@@ -9,31 +9,6 @@
   background-color: var(--bg-color);
 }
 
-.grid-stack-item-content.hide {
-  opacity: 0;
-}
-
-.dv-dropdown-container {
-  position: relative;
-}
-
-.dv-dropdown {
-  position: absolute;
-  width: 100%;
-  display: none;
-  background-color: var(--bg-color);
-  padding: 0.2rem;
-  border-radius: var(--border-radius);
-  margin-top: 0.2rem;
-  box-shadow: var(--shadow);
-  outline: 1px solid var(--border-color);
-  z-index: 99;
-}
-
-.dv-dropdown.show {
-  display: block;
-}
-
 /* Filter */
 .dv-autocomplete-input {
   width: 100%;
@@ -70,7 +45,6 @@
   margin-top: 0.5rem;
 }
 
-.dv-filter-checkbox-all,
 .dv-filter-checkbox {
   border-radius: var(--border-radius);
   padding: 0.25rem 0.5rem;
@@ -88,13 +62,17 @@
     border-color: var(--primary) !important;
   }
 
-  .dv-btn-delete {
-    font-size: var(--font-size-sm);
-    padding: 0;
+  input:focus {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   &:hover {
     background-color: var(--hover-color);
+
+    .dv-btn-delete {
+      display: block;
+    }
   }
 
   &:active {
@@ -102,8 +80,28 @@
   }
 }
 
-.dv-selection-info {
-  float: right;
+.dv-checkbox-container {
+  display: flex;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.dv-btn-delete {
+  display: none;
+  border: none;
+  background-color: transparent;
+  transition: all 300ms ease;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 0;
+
+  &:hover {
+    color: var(--danger) !important;
+  }
+}
+
+.dv-info-text {
+  float: inline-end;
 }
 
 .dv-filter-date-inputs {

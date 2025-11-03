@@ -1,3 +1,7 @@
+.grid-stack-item-content.hide {
+  opacity: 0;
+}
+
 /* Chart */
 .dv-chart {
   display: flex;

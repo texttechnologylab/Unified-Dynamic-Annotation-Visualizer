@@ -60,7 +60,7 @@
 
 .dv-btn-delete {
   &:hover {
-    color: #dc3545 !important;
+    color: var(--danger) !important;
   }
 
   &:active {

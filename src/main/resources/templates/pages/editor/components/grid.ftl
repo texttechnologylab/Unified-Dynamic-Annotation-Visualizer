@@ -1,74 +1,29 @@
-<#macro grid widgets>
-  <div class="grid-stack">
-    <#list widgets as widget>
-      <div class="grid-stack-item" gs-id="${widget.id}">
-        
-        <#if widget.type == "Text">
-          <div 
-            class="grid-stack-item-content ${widget.options.style}" 
+<#macro grid>
+  <div class="grid-stack"></div>
+
+  <template id="default-static-template">
+    <div class="grid-stack-item-content">
+      <div class="dv-autohide-toolbar">
+        <button
+          class="dv-btn dv-btn-toolbar"
+          type="button"
+          title="Edit"
+        >
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button
+          class="dv-btn dv-btn-toolbar"
+          type="button"
+          title="Remove"
           >
-            ${widget.options.text}
-          </div>
-
-        <#elseif widget.type == "Image">
-          <div 
-            class="grid-stack-item-content" 
-          >
-            <img 
-              src="${widget.options.src}" 
-              width="100%" 
-              height="100%" 
-            >
-          </div>
-
-        <#else>
-          <div class="grid-stack-item-content dv-chart">
-            <div class="dv-toolbar">
-              <button
-                class="dv-btn dv-btn-toolbar"
-                type="button"
-                title="Edit"
-              >
-                <i class="bi bi-pencil"></i>
-              </button>
-
-              <span class="dv-toolbar-title">
-                ${widget.title}
-              </span>
-
-              <button
-                class="dv-btn dv-btn-toolbar"
-                type="button"
-                title="Remove"
-              >
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-            <div class="dv-chart-area"></div>
-          </div>
-        </#if>
-
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
-    </#list>
-  </div>
-
-  <template id="text-placeholder">
-    <div class="grid-stack-item-content">
-      The quick brown fox jumps over the lazy dog.
+      <span></span>
     </div>
   </template>
 
-  <template id="image-placeholder">
-    <div class="grid-stack-item-content">
-      <img
-        src="https://placehold.co/600x400?text=My+Logo"
-        width="100%"
-        height="100%"
-      />
-    </div>
-  </template>
-
-  <template id="d3-chart-placeholder">
+  <template id="default-chart-template">
     <div class="grid-stack-item-content dv-chart">
       <div class="dv-toolbar">
         <button
@@ -89,7 +44,13 @@
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
-      <div class="dv-chart-area"></div>
+
+      <div class="dv-chart-area">
+        <div class="dv-chart-alert">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span class="dv-text-truncate">No generator assigned</span>
+        </div>
+      </div>
     </div>
   </template>
 </#macro>

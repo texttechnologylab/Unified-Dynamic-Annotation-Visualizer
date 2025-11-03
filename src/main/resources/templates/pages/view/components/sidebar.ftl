@@ -1,7 +1,5 @@
 <#include "/shared/accordion.ftl">
 <#include "/pages/view/components/pipelineSwitcher.ftl">
-<#include "/pages/view/components/checkboxSearch.ftl">
-<#include "/pages/view/components/dateRange.ftl">
 
 <#macro sidebar id pipelines>
   <aside class="dv-sidebar">
@@ -24,15 +22,57 @@
       <div class="dv-menu-title">Corpus Filter</div>
       <div class="dv-corpus-filter">
         <@accordion icon="bi bi-file-earmark-text" title="Files">
-            <@checkboxSearch id="files" total=12 />
+          <div id="file-filter">
+            <div class="dv-dropdown-container">
+              <input
+                class="dv-autocomplete-input"
+                type="text"
+                placeholder="Type to search"
+              />
+              <div class="dv-dropdown"></div>
+            </div>
+            <div class="m-1"> 
+              Remove or add checkboxes via the search to customize the filter.
+            </div>
+
+            <div class="dv-filter-checkboxes"></div>
+            <div class="dv-divider"></div>
+            <span class="dv-info-text"></span>
+          </div>
         </@accordion>
 
         <@accordion icon="bi bi-tags" title="Tags">
-          <@checkboxSearch id="tags" total=5 />
+          <div id="tag-filter">
+            <div class="dv-dropdown-container">
+              <input
+                class="dv-autocomplete-input"
+                type="text"
+                placeholder="Type to search"
+              />
+              <div class="dv-dropdown"></div>
+            </div>
+
+            <div class="m-1"> 
+              Remove or add checkboxes via the search to customize the filter.
+            </div>
+
+            <div class="dv-filter-checkboxes"></div>
+            <div class="dv-divider"></div>
+            <span class="dv-info-text"></span>
+          </div>
         </@accordion>
 
         <@accordion icon="bi bi-calendar-week" title="Date">
-            <@dateRange id="date" min="2017-04-01" max="2017-04-30" />
+          <div id="date-filter" class="dv-filter-date-inputs">
+            <div>
+              <span>Start</span>
+              <input type="date" class="dv-date-input" />
+            </div>
+            <div>
+              <span>End</span>
+              <input type="date" class="dv-date-input" />
+            </div>
+          </div>
         </@accordion>
 
         <div class="dv-centered mt-2">
@@ -41,10 +81,34 @@
             class="dv-btn-outline"
             type="button"
           >
-            Apply filter
+            <i class="bi bi-funnel"></i>
+            <span>Apply filter</span>
           </button>
         </div>
       </div>
     </div>
   </aside>
 </#macro>
+
+<template id="result-template">
+  <button class="dv-btn dv-autocomplete-result" type="button">
+    <span></span>
+    <i class="bi bi-plus-lg"></i>
+  </button>
+</template>
+
+<template id="checkbox-template">
+  <label class="dv-filter-checkbox">
+    <div class="dv-checkbox-container">
+      <input
+        class="dv-check-input form-check-input"
+        type="checkbox"
+        checked
+      />
+      <span class="dv-text-truncate"></span>
+    </div>
+    <button class="dv-btn-delete" type="button">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </label>
+</template>

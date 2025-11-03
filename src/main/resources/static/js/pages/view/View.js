@@ -1,17 +1,19 @@
-import { GridStack } from "https://cdn.jsdelivr.net/npm/gridstack@12.3.3/+esm";
 import getter from "./getter.js";
 import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
+import { getElementDimensions } from "../../shared/modules/utils.js";
 
 export default class View {
-  constructor() {
+  constructor(pipeline) {
     corpusFilter.init();
+    corpusFilter.apply();
     sidepanels.init();
     accordions.init();
     dropdowns.init();
 
+    // Initialize pipeline switcher
     const dropdown = document.querySelector(".dv-dropdown");
     const trigger = document.querySelector(".dv-pipeline-switcher-trigger");
     trigger.addEventListener("click", () => {
@@ -22,6 +24,18 @@ export default class View {
         dropdown.classList.remove("show");
       }
     });
+
+    // Initialize corpus filter apply button
+    document.querySelector("#apply-button").addEventListener("click", () => {
+      corpusFilter.apply();
+
+      for (const chart of this.charts) {
+        chart.fetch().then((data) => chart.render(data));
+      }
+    });
+
+    this.pipeline = pipeline;
+    this.charts = [];
   }
 
   initGrid(widgets) {
@@ -40,23 +54,21 @@ export default class View {
       const id = node.dataset.dvWidget;
       const config = widgets.find((conf) => conf.id === id);
 
-      const ChartClass = getter[config.type];
+      if (getter._dynamic[config.type]) {
+        const WidgetClass = getter._dynamic[config.type];
 
-      if (ChartClass) {
-        const endpoint = "/api/data?id=" + id;
-        const options = { ...config.options, ...this.getDimensions(node) };
+        const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
+        const options = { ...config.options, ...getElementDimensions(node) };
 
-        new ChartClass(node, endpoint, options).render();
-      } else {
-        node.classList.remove("hide");
+        const chart = new WidgetClass(node, endpoint, options);
+        chart.init();
+
+        this.charts.push(chart);
+      } else if (getter._static[config.type]) {
+        const WidgetClass = getter._static[config.type];
+
+        new WidgetClass(node, config.src, config.options).init();
       }
     });
-  }
-
-  getDimensions(element) {
-    const area = element.querySelector(".dv-chart-area");
-    const rect = area.getBoundingClientRect();
-
-    return { width: rect.width, height: rect.height };
   }
 }

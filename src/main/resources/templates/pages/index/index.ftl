@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="/css/shared/globals.css" />
     <link rel="stylesheet" href="/css/shared/components.css" />
     <link rel="stylesheet" href="/css/shared/controls.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-5.3.8/package/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/packages/bootstrap-icons-1.13.1/package/font/bootstrap-icons.min.css" />
   </head>
   
   <body>
@@ -29,7 +29,7 @@
         <div class="dv-menu">
           <div class="dv-menu-item-list">
             <#list pipelines?eval_json as pipeline>
-              <div class="dv-btn dv-menu-item">
+              <div id="pipeline-${pipeline}" class="dv-btn dv-menu-item">
                 <a
                   class="dv-menu-link"
                   title="Select pipeline"
@@ -92,24 +92,10 @@
     </div>
 
     <script type="module">
-      import Modal from "/js/shared/classes/Modal.js";
-      import fileInput from "/js/shared/modules/fileInput.js";
-
-      const modal = new Modal(document.querySelector(".dv-modal").parentElement);
+      import Menu from "/js/pages/index/Menu.js";
       
-      document.querySelectorAll("[data-dv-toggle='modal']").forEach((node) => {
-        node.addEventListener("click", () => {
-          modal.confirm(
-            "Delete " + node.dataset.pipeline,
-            "Do you want to delete this pipeline?",
-            () => fetch("/api/pipelines/" + node.dataset.pipeline, {
-              method: "DELETE",
-            }).then(() => window.open("/", "_self"))
-          );
-        });
-      });
-      
-      fileInput.init(modal);
+      const menu = new Menu();
+      menu.init();
     </script>
   </body>
 </html>
