@@ -68,8 +68,6 @@ export default class ScrollableTableHandler extends FormHandler {
   }
 
   saveForm(form) {
-    form = Object.fromEntries(form);
-
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;

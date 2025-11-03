@@ -31,7 +31,6 @@ export default class PieChartHandler extends FormHandler {
   init() {
     this.span.textContent = this.item.title;
     this.initButtons("Pie Chart Options", () => {
-      removeWidget(this.item);
       state.grid.removeWidget(this.item.el);
     });
 
@@ -76,8 +75,6 @@ export default class PieChartHandler extends FormHandler {
   }
 
   saveForm(form) {
-    form = Object.fromEntries(form);
-
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;

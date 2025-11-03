@@ -60,10 +60,10 @@ export default class DerivedGeneratorHandler extends FormHandler {
 
   saveForm(form) {
     // Save form input
-    this.generator.name = form.get("name");
-    this.generator.source = form.getAll("source");
+    this.generator.name = form.name;
+    this.generator.source = JSON.parse(form.source);
 
     // Update name
-    this.body.textContent = form.get("name");
+    this.body.textContent = form.name;
   }
 }

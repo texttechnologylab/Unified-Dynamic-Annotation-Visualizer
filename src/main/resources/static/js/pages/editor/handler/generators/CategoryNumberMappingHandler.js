@@ -52,8 +52,6 @@ export default class CategoryNumberMappingHandler extends FormHandler {
   }
 
   saveForm(form) {
-    form = Object.fromEntries(form);
-
     // Save form input
     this.generator.name = form.name;
     this.generator.source = form.source;

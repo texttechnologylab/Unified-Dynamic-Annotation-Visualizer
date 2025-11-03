@@ -1,4 +1,5 @@
 import { modal } from "../../../shared/classes/Modal.js";
+import Multiselect from "../../../shared/classes/Multiselect.js";
 import Searchbox from "../../../shared/classes/Searchbox.js";
 import { createElement } from "../../../shared/modules/utils.js";
 
@@ -33,7 +34,9 @@ export default class FormHandler {
     buttons[0].addEventListener("click", () => {
       const form = this.createForm();
 
-      modal.render(modalTitle, form, () => this.saveForm(new FormData(form)));
+      modal.render(modalTitle, form, () =>
+        this.saveForm(Object.fromEntries(new FormData(form)))
+      );
     });
     buttons[1].addEventListener("click", () => remove());
   }
@@ -118,22 +121,8 @@ export default class FormHandler {
   }
 
   createMultiselect(key, title, options, selected) {
-    const select = createElement(
-      "select",
-      {
-        name: key,
-        className: "dv-select",
-        multiple: true,
-        size: 3,
-      },
-      options.map((opt) => {
-        return createElement("option", {
-          textContent: opt.label,
-          value: opt.value,
-          selected: selected.includes(opt.value),
-        });
-      })
-    );
+    const multiselect = new Multiselect(options);
+    const select = multiselect.create(key, selected);
 
     const label = createElement("label", { className: "d-flex flex-column" }, [
       createElement("span", { textContent: title }),
@@ -145,9 +134,14 @@ export default class FormHandler {
 
   createSearchbox(key, title, endpoint, selected) {
     const searchbox = new Searchbox(endpoint);
-    const element = searchbox.create(key, title, selected);
+    const input = searchbox.create(key, selected);
 
-    return element;
+    const label = createElement("label", { className: "dv-label" }, [
+      createElement("span", { textContent: title }),
+      input,
+    ]);
+
+    return label;
   }
 
   createRangeSlider(key, title, value, min, max) {
