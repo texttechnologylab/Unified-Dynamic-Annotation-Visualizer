@@ -1,4 +1,4 @@
-# Unified-Dynamic-Annotation-Visualizer
+# Unified Dynamic Annotation Visualizer
 
 UDAV is designed to enable different disciplines
 to display their automatic pre-processing results
