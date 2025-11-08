@@ -67,7 +67,10 @@ export default class Multiselect {
   createPill(label, value) {
     const icon = createElement("i", { className: "bi-x" });
     const pill = createElement("div", { classList: "dv-multiselect-pill" }, [
-      createElement("span", { textContent: label }),
+      createElement("span", {
+        textContent: label,
+        className: "dv-text-truncate",
+      }),
       icon,
     ]);
 

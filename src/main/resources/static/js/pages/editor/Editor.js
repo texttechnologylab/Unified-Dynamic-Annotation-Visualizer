@@ -1,18 +1,15 @@
 import { modal } from "../../shared/classes/Modal.js";
-import {
-  deepClone,
-  getElementDimensions,
-  randomId,
-} from "../../shared/modules/utils.js";
+import { getElementDimensions } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
-import { tooltip } from "../../shared/classes/Tooltip.js";
-import {
-  generatorsValid,
-  identifierValid,
-  widgetsValid,
-} from "./utils/validate.js";
+import { identifierValid, widgetsValid } from "./utils/validate.js";
 import state from "./utils/state.js";
+import {
+  createSource,
+  createWidget,
+  loadSources,
+  saveSources,
+} from "./utils/actions.js";
 
 export default class Editor {
   constructor() {
@@ -28,14 +25,11 @@ export default class Editor {
   init(config) {
     accordions.init();
 
-    this.initAvailableGenerators();
     this.initAvailableWidgets();
     this.initGrid();
 
     // Load existing data
-    state.sources = config.sources || [];
-    state.derivedGenerators = config.derivedGenerators || [];
-    this.loadGenerators(config.generators || []);
+    loadSources(config.sources || []);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
@@ -44,7 +38,18 @@ export default class Editor {
       ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
     );
 
+    const container = document.querySelector(".dv-sources-container");
+
     // Initialize buttons
+    document
+      .querySelector(".dv-add-source-button")
+      .addEventListener("click", () => {
+        const handler = createSource();
+
+        container.prepend(handler.element);
+        handler.init(this.defaults.generators);
+      });
+
     document
       .querySelector("#discard-button")
       .addEventListener("click", () =>
@@ -74,15 +79,7 @@ export default class Editor {
     // Append and initialize added widgets to item content
     state.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        Object.assign(item, deepClone(item, ["el", "grid"]));
-
-        item.id = item.id || randomId(item.type);
-
-        const HandlerClass = getter.widgets[item.type];
-        const handler = new HandlerClass(item);
-
-        item.el.classList.remove("dv-available-widget-draggable");
-        item.el.querySelector("i")?.remove();
+        const handler = createWidget(item);
 
         const content = item.el.querySelector(".grid-stack-item-content");
         if (content) {
@@ -92,7 +89,6 @@ export default class Editor {
         } else {
           item.el.prepend(handler.element);
         }
-
         handler.init();
       });
     });
@@ -109,44 +105,6 @@ export default class Editor {
     });
   }
 
-  initAvailableGenerators() {
-    const added = document.querySelector("#added-generators");
-    const available = document.querySelector("#available-generators");
-    const template = document.querySelector("#available-generator-template");
-
-    this.defaults.generators.forEach((values) => {
-      const element = template.content.cloneNode(true).children[0];
-      const HandlerClass = getter.generators[values.type];
-
-      tooltip.create(
-        element.querySelector(".dv-generator-title"),
-        values.name,
-        HandlerClass.description,
-        element,
-        "right"
-      );
-
-      element.querySelector(".dv-generator-token").textContent =
-        HandlerClass.token;
-      element.querySelector(".dv-generator-type").textContent = values.name;
-      element.querySelector("button").addEventListener("click", () => {
-        // Create generator
-        const generator = deepClone(values);
-        generator.id = generator.id || randomId(generator.type);
-        generator.name = "New " + generator.name;
-
-        const handler = new HandlerClass(generator);
-
-        added.append(handler.element);
-        state.generators.push(generator);
-
-        handler.init();
-      });
-
-      available.append(element);
-    });
-  }
-
   initAvailableWidgets() {
     const container = document.querySelector(".dv-available-widgets-container");
     const template = document.querySelector("#available-widget-template");
@@ -157,23 +115,10 @@ export default class Editor {
       element.querySelector("i").className = widget.icon;
       element.querySelector("span").title = widget.title;
       element.querySelector("span").textContent = widget.title;
+      delete widget.icon;
 
       container.append(element);
     });
-  }
-
-  loadGenerators(generators) {
-    const added = document.querySelector("#added-generators");
-
-    for (const generator of generators) {
-      const HandlerClass = getter.generators[generator.type];
-      const handler = new HandlerClass(generator);
-
-      added.append(handler.element);
-      state.generators.push(generator);
-
-      handler.init();
-    }
   }
 
   async validate() {
@@ -182,29 +127,24 @@ export default class Editor {
     );
     const config = {
       id: this.input.value,
-      sources: state.sources,
-      derivedGenerators: state.derivedGenerators,
-      generators: state.generators,
+      sources: saveSources(),
       widgets: state.grid.save(false),
     };
 
-    const ok =
-      identifierValid(config) &&
-      generatorsValid(config) &&
-      widgetsValid(config);
+    const ok = identifierValid(config) && widgetsValid(config);
 
     if (ok && pipelines.includes(config.id)) {
       modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        () => this.saveConfig("PUT", config)
+        () => this.sendConfig("PUT", config)
       );
     } else if (ok) {
-      this.saveConfig("POST", config);
+      this.sendConfig("POST", config);
     }
   }
 
-  saveConfig(method, config) {
+  sendConfig(method, config) {
     const options = {
       method,
       headers: {
@@ -213,6 +153,7 @@ export default class Editor {
       body: JSON.stringify(config),
     };
 
-    fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
+    // fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
+    console.log(config);
   }
 }

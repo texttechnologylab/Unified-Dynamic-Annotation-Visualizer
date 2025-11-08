@@ -1,4 +1,5 @@
 import { modal } from "../../../shared/classes/Modal.js";
+import state from "./state.js";
 
 export function identifierValid(config) {
   // Check for empty id
@@ -14,32 +15,12 @@ export function identifierValid(config) {
   return valid;
 }
 
-export function generatorsValid(config) {
-  // Check for missing sources
-  const missing = config.generators.filter((gen) =>
-    typeof gen.source === "string"
-      ? gen.source.trim() === ""
-      : gen.source.length === 0
-  );
-  const valid = missing.length === 0;
-
-  if (!valid) {
-    modal.alert(
-      "Missing Sources",
-      "The following generators have no source: " +
-        missing.map((g) => g.name).join(", ")
-    );
-  }
-
-  return valid;
-}
-
 export function widgetsValid(config) {
   if (config.widgets.length > 0) {
     // Check for empty or removed generators
     const missing = config.widgets.filter((widget) => {
       if (widget.generator) {
-        return !config.generators.find((gen) => gen.id === widget.generator.id);
+        return !state.generators.find((gen) => gen.id === widget.generator.id);
       }
     });
     const valid = missing.length === 0;
