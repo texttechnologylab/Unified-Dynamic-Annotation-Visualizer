@@ -153,7 +153,6 @@ export default class Editor {
       body: JSON.stringify(config),
     };
 
-    // fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
-    console.log(config);
+    fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
   }
 }
