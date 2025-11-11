@@ -5,7 +5,7 @@ import FormHandler from "../FormHandler.js";
 
 export default class CategoryNumberMappingHandler extends FormHandler {
   static defaults = {
-    name: "CategoryNumberMapping",
+    name: "New CategoryNumberMapping",
     type: "CategoryNumberMapping",
     settings: {},
     token: "NU",

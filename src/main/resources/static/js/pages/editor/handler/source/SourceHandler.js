@@ -21,6 +21,15 @@ export default class SourceHandler extends FormHandler {
     const dropdown = this.element.querySelector(".dv-dropdown-menu");
     const body = this.element.querySelector(".dv-source-card-body");
 
+    // Load existing generators
+    for (const generator of this.source.createsGenerators) {
+      const handler = createGenerator(generator, this.source.id);
+
+      body.append(handler.element);
+      handler.init();
+    }
+    this.source.createsGenerators = [];
+
     defaults.forEach((item) => {
       const btn = createElement("button", {
         className: "dv-btn",

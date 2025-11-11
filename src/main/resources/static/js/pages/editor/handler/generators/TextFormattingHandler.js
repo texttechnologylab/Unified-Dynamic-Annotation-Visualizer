@@ -5,7 +5,7 @@ import FormHandler from "../FormHandler.js";
 
 export default class TextFormattingHandler extends FormHandler {
   static defaults = {
-    name: "TextFormatting",
+    name: "New TextFormatting",
     type: "TextFormatting",
     settings: {
       style: "underline",

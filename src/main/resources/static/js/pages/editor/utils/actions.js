@@ -3,22 +3,18 @@ import getter from "../getter.js";
 import SourceHandler from "../handler/source/SourceHandler.js";
 import state from "./state.js";
 
-export function loadSources(sources) {
+export function loadSources(sources, defaults, container) {
   for (const source of sources) {
-    state.sources.push(source);
+    const handler = createSource(source);
 
-    for (const generator of source.createsGenerators) {
-      generator.source = source.id;
-      state.generators.push(generator);
-    }
-
-    source.createsGenerators = [];
+    container.prepend(handler.element);
+    handler.init(defaults);
   }
 }
 
-export function createSource() {
-  const source = deepClone(SourceHandler.defaults);
-  source.id = randomId("Source");
+export function createSource(config) {
+  const source = deepClone(config);
+  source.id = source.id || randomId("Source");
 
   state.sources.push(source);
 
@@ -34,7 +30,7 @@ export function saveSources() {
   const sources = structuredClone(state.sources);
 
   for (const generator of state.generators) {
-    const { token, source: id, ...rest } = generator;
+    const { source: id, ...rest } = generator;
     const source = sources.find((item) => item.id === id);
 
     source.createsGenerators.push(rest);
@@ -45,8 +41,7 @@ export function saveSources() {
 
 export function createGenerator(config, source) {
   const generator = deepClone(config);
-  generator.id = randomId(generator.type);
-  generator.name = "New " + generator.name;
+  generator.id = generator.id || randomId(generator.type);
   generator.source = source;
 
   const HandlerClass = getter.generators[config.type];

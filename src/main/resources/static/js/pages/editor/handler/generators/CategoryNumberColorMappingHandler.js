@@ -5,7 +5,7 @@ import FormHandler from "../FormHandler.js";
 
 export default class CategoryNumberColorMappingHandler extends FormHandler {
   static defaults = {
-    name: "CategoryNumberColorMapping",
+    name: "New CategoryNumberColorMapping",
     type: "CategoryNumberColorMapping",
     settings: {},
     token: "CO",

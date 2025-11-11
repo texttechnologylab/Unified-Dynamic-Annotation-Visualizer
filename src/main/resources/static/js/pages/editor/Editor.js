@@ -10,6 +10,7 @@ import {
   loadSources,
   saveSources,
 } from "./utils/actions.js";
+import SourceHandler from "./handler/source/SourceHandler.js";
 
 export default class Editor {
   constructor() {
@@ -23,13 +24,15 @@ export default class Editor {
   }
 
   init(config) {
+    const container = document.querySelector(".dv-sources-container");
+
     accordions.init();
 
     this.initAvailableWidgets();
     this.initGrid();
 
     // Load existing data
-    loadSources(config.sources || []);
+    loadSources(config.sources || [], this.defaults.generators, container);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
@@ -38,13 +41,11 @@ export default class Editor {
       ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
     );
 
-    const container = document.querySelector(".dv-sources-container");
-
     // Initialize buttons
     document
       .querySelector(".dv-add-source-button")
       .addEventListener("click", () => {
-        const handler = createSource();
+        const handler = createSource(SourceHandler.defaults);
 
         container.prepend(handler.element);
         handler.init(this.defaults.generators);
