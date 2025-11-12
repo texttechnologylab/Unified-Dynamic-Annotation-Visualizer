@@ -18,7 +18,8 @@ export default class SourceHandler extends FormHandler {
 
   init(defaults) {
     const buttons = this.element.querySelectorAll("button");
-    const dropdown = this.element.querySelector(".dv-dropdown-menu");
+    const dropdown = this.element.querySelector(".dv-sliding-dropdown");
+    const options = this.element.querySelector(".dv-sliding-dropdown>div");
     const body = this.element.querySelector(".dv-source-card-body");
 
     // Load existing generators
@@ -31,17 +32,46 @@ export default class SourceHandler extends FormHandler {
     this.source.createsGenerators = [];
 
     defaults.forEach((item) => {
-      const btn = createElement("button", {
-        className: "dv-btn",
-        textContent: item.type,
-      });
-      btn.addEventListener("click", () => {
+      const option = createElement(
+        "button",
+        {
+          className: "dv-btn",
+          title: item.type,
+        },
+        [
+          createElement("div", {
+            className: "dv-generator-card-token",
+            textContent: item.token,
+          }),
+          createElement("span", {
+            className: "dv-text-truncate",
+            textContent: item.type,
+          }),
+        ]
+      );
+      option.addEventListener("click", () => {
         const handler = createGenerator(item, this.source.id);
 
         body.append(handler.element);
         handler.init();
+
+        dropdown.classList.remove("show");
       });
-      dropdown.append(btn);
+      options.append(option);
+    });
+
+    dropdown.addEventListener("mouseover", () => {
+      dropdown.classList.add("show");
+    });
+    dropdown.addEventListener("mouseleave", () => {
+      dropdown.classList.remove("show");
+    });
+
+    buttons[0].addEventListener("mouseover", () => {
+      dropdown.classList.add("show");
+    });
+    buttons[0].addEventListener("mouseleave", () => {
+      dropdown.classList.remove("show");
     });
 
     buttons[1].addEventListener("click", () => {
