@@ -19,16 +19,20 @@
           They keep record of all the data that is relevant for the charts.
         </p>
         
-        <div class="dv-title">Existing Generators:</div>
-        <div id="added-generators" class="dv-generators-container">
-          <template id="added-generator-template">
-            <div class="dv-generator">
-              <div class="dv-generator-header">
-                <div class="dv-generator-title">
-                  <span class="dv-generator-token"></span>
-                  <span class="dv-generator-type"></span>
+        <div class="dv-sources-container">
+          <template id="source-card-template">
+            <div class="dv-source-card">
+              <div class="dv-source-card-header">
+                <div>
+                  <button class="dv-btn" type="button" title="New generator">
+                    <i class="bi bi-plus-lg"></i>
+                  </button>
+                  <div class="dv-sliding-dropdown">
+                    <div></div>
+                  </div>
+                  <span class="dv-bold">Source</span>
                 </div>
-                <div class="d-flex">
+                <div>
                   <button class="dv-btn" type="button" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </button>
@@ -37,26 +41,36 @@
                   </button>
                 </div>
               </div>
-              <div class="dv-generator-body"></div>
+              <div class="dv-source-card-body"></div>
             </div>
           </template>
-        </div>
-        
-        <div class="dv-title">Available Generators:</div>
-        <div id="available-generators" class="dv-generators-container">
-          <template id="available-generator-template">
-            <div class="dv-generator">
-              <div class="dv-generator-header">
-                <div class="dv-generator-title">
-                  <span class="dv-generator-token"></span>
-                  <span class="dv-generator-type"></span>
+
+          <template id="generator-card-template">
+            <div class="dv-generator-card">
+              <div class="dv-generator-card-title">
+                <div>
+                  <div class="dv-generator-card-token"></div>
                 </div>
-                <button class="dv-btn" type="button">
-                  <i class="bi bi-plus-lg"></i>
+                <div class="overflow-hidden">
+                  <div class="dv-generator-card-type"></div>
+                  <div class="dv-generator-card-name"></div>
+                </div>
+              </div>
+              <div class="dv-generator-card-buttons">
+                <button class="dv-btn" type="button" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="dv-btn" type="button" title="Remove">
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
             </div>
           </template>
+
+          <button class="dv-add-source-button">
+            <i class="bi bi-plus-lg"></i>
+            <span>New source</span>
+          </button>
         </div>
       </@accordion>
 

@@ -1,4 +1,5 @@
 import { modal } from "../../../shared/classes/Modal.js";
+import Multiselect from "../../../shared/classes/Multiselect.js";
 import Searchbox from "../../../shared/classes/Searchbox.js";
 import { createElement } from "../../../shared/modules/utils.js";
 
@@ -119,11 +120,28 @@ export default class FormHandler {
     return label;
   }
 
+  createMultiselect(key, title, options, selected) {
+    const multiselect = new Multiselect(options);
+    const select = multiselect.create(key, selected);
+
+    const label = createElement("label", { className: "d-flex flex-column" }, [
+      createElement("span", { textContent: title }),
+      select,
+    ]);
+
+    return label;
+  }
+
   createSearchbox(key, title, endpoint, selected) {
     const searchbox = new Searchbox(endpoint);
-    const element = searchbox.create(key, title, selected);
+    const input = searchbox.create(key, selected);
 
-    return element;
+    const label = createElement("label", { className: "dv-label" }, [
+      createElement("span", { textContent: title }),
+      input,
+    ]);
+
+    return label;
   }
 
   createRangeSlider(key, title, value, min, max) {

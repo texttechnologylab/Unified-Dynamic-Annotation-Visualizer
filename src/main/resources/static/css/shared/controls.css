@@ -29,6 +29,54 @@
   }
 }
 
+.dv-multiselect {
+  width: 100%;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+
+  &:focus {
+    outline: 1px solid var(--primary);
+  }
+
+  & > i {
+    color: var(--secondary);
+  }
+}
+
+.dv-multiselect-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.dv-multiselect-pill {
+  display: flex;
+  gap: 0.25rem;
+  color: var(--bg-color);
+  background-color: var(--primary);
+  padding: 0 0.375rem;
+  border-radius: 1rem;
+  cursor: default;
+  overflow: hidden;
+
+  i {
+    cursor: pointer;
+  }
+}
+
+.dv-multiselect-option {
+  padding: 0.25rem 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dv-text-input {
   appearance: none;
   border: 1px solid var(--border-color);
@@ -105,7 +153,7 @@
   height: 1.25rem;
   background-color: var(--secondary);
   border-radius: 1rem;
-  transition: background-color 400ms ease;
+  transition: background-color 200ms ease;
 }
 
 .dv-switch > .dv-switch-track::before {
@@ -118,7 +166,7 @@
   background-color: var(--bg-color);
   border-radius: 50%;
   box-shadow: var(--shadow-sm);
-  transition: transform 400ms;
+  transition: transform 200ms;
 }
 
 .dv-slider {

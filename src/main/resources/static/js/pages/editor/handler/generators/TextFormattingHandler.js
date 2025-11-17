@@ -1,33 +1,33 @@
 import { createElement } from "../../../../shared/modules/utils.js";
 import { removeGenerator } from "../../utils/actions.js";
+import state from "../../utils/state.js";
 import FormHandler from "../FormHandler.js";
 
 export default class TextFormattingHandler extends FormHandler {
-  static token = "TX";
-  static description = "Description of the TextFormatting generator.";
   static defaults = {
-    name: "TextFormatting",
+    name: "New TextFormatting",
     type: "TextFormatting",
-    source: "",
     settings: {
       style: "underline",
     },
+    token: "TX",
+    extends: [],
   };
 
   constructor(generator) {
-    const template = document.querySelector("#added-generator-template");
+    const template = document.querySelector("#generator-card-template");
     super(template.content.cloneNode(true).children[0]);
 
     this.generator = generator;
-    this.body = this.element.querySelector(".dv-generator-body");
+    this.name = this.element.querySelector(".dv-generator-card-name");
   }
 
   init() {
-    this.element.querySelector(".dv-generator-token").textContent =
-      TextFormattingHandler.token;
-    this.element.querySelector(".dv-generator-type").textContent =
+    this.element.querySelector(".dv-generator-card-token").textContent =
+      this.generator.token;
+    this.element.querySelector(".dv-generator-card-type").textContent =
       this.generator.type;
-    this.body.textContent = this.generator.name;
+    this.name.textContent = this.generator.name;
 
     this.initButtons("Generator Options", () => {
       // Remove generator from the dom
@@ -39,34 +39,45 @@ export default class TextFormattingHandler extends FormHandler {
   }
 
   createForm() {
+    const options = state.generators
+      .filter(
+        (gen) =>
+          gen.type === this.generator.type &&
+          gen.id !== this.generator.id &&
+          !gen.extends.includes(this.generator.id)
+      )
+      .map((gen) => {
+        return { label: gen.name, value: gen.id };
+      });
+
     const nameInput = this.createTextInput("name", "Name", this.generator.name);
-    const sourceInput = this.createSearchbox(
-      "source",
-      "Data source",
-      "/api/annotations",
-      this.generator.source
-    );
     const styleInput = this.createSelect(
       "style",
       "Style",
       ["underline", "highlight", "bold"],
       this.generator.settings.style
     );
+    const extendsInput = this.createMultiselect(
+      "extends",
+      "Extends (optional)",
+      options,
+      this.generator.extends
+    );
 
     return createElement("form", { className: "dv-form-column" }, [
       nameInput,
-      sourceInput,
       styleInput,
+      extendsInput,
     ]);
   }
 
   saveForm(form) {
     // Save form input
     this.generator.name = form.name;
-    this.generator.source = form.source;
     this.generator.settings.style = form.style;
+    this.generator.extends = JSON.parse(form.extends);
 
     // Update name
-    this.body.textContent = form.name;
+    this.name.textContent = form.name;
   }
 }

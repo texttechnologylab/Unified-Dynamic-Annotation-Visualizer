@@ -8,17 +8,15 @@ export default class Searchbox {
     this.dom = {};
   }
 
-  create(key, title, selected, header = ["Annotation", "#"]) {
+  create(key, selected, header = ["Annotation", "#"]) {
     const template = document.querySelector("#searchbox-template");
     const root = template.content.cloneNode(true);
 
-    this.dom.label = root.querySelector("span");
     this.dom.input = root.querySelector("input");
     this.dom.dropdown = root.querySelector(".dv-dropdown");
     this.dom.header = root.querySelectorAll(".dv-searchbox-header>span");
     this.dom.container = root.querySelector(".dv-searchbox-container");
 
-    this.dom.label.textContent = title;
     this.dom.header[0].textContent = header[0];
     this.dom.header[1].textContent = header[1];
     this.dom.input.name = key;
