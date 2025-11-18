@@ -1,0 +1,22 @@
+{
+  "id": "voronoi-test",
+  "sources": [],
+  "derivedGenerators": [],
+  "widgets": [
+    {
+      "id": "VoronoiDiagram2D-jsdfksj",
+      "x": 2,
+      "y": 1,
+      "w": 8,
+      "h": 5,
+      "type": "VoronoiDiagram2D",
+      "title": "VoronoiDiagram 2D",
+      "generator": {
+        "id": ""
+      },
+      "options": {
+        "dots": true
+      }
+    }
+  ]
+}
