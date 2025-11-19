@@ -1,0 +1,39 @@
+{
+  "id": "voronoi-demo",
+  "sources": [],
+  "derivedGenerators": [],
+  "widgets": [
+    {
+      "id": "VoronoiDiagram2D-jsdfksj",
+      "x": 0,
+      "y": 1,
+      "w": 6,
+      "h": 5,
+      "type": "VoronoiDiagram2D",
+      "title": "Voronoi Diagram 2D",
+      "generator": {
+        "id": ""
+      },
+      "options": {
+        "axes": false,
+        "dots": false
+      }
+    },
+    {
+      "id": "VoronoiDiagram2D-jsdffsdf",
+      "x": 6,
+      "y": 1,
+      "w": 6,
+      "h": 5,
+      "type": "VoronoiDiagram2D",
+      "title": "Voronoi Diagram 2D",
+      "generator": {
+        "id": ""
+      },
+      "options": {
+        "axes": true,
+        "dots": true
+      }
+    }
+  ]
+}

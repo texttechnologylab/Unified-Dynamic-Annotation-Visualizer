@@ -2,11 +2,17 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class BarChart extends D3Visualization {
-  constructor(root, endpoint, { width = 800, height = 600, dots = true }) {
+  constructor(
+    root,
+    endpoint,
+    { width = 800, height = 600, axes = false, dots = true }
+  ) {
+    const margin = axes ? 30 : 0;
+
     super(
       root,
       endpoint,
-      { top: 0, right: 0, bottom: 0, left: 0 },
+      { top: margin, right: margin, bottom: margin, left: margin },
       width,
       height
     );
@@ -18,6 +24,7 @@ export default class BarChart extends D3Visualization {
       "json",
     ]);
 
+    this.axes = axes;
     this.dots = dots;
   }
 
@@ -39,10 +46,21 @@ export default class BarChart extends D3Visualization {
       .scaleLinear()
       .range([0, this.width])
       .domain(this.domain(data, (d) => d.x));
+
     const yScale = d3
       .scaleLinear()
       .range([0, this.height])
       .domain(this.domain(data, (d) => d.y));
+
+    // Add the axes
+    if (this.axes) {
+      this.svg
+        .select("g")
+        .append("g")
+        .attr("transform", `translate(0, ${this.height})`)
+        .call(d3.axisBottom(xScale));
+      this.svg.select("g").append("g").call(d3.axisLeft(yScale));
+    }
 
     // Add the dots
     if (this.dots) {
@@ -64,7 +82,7 @@ export default class BarChart extends D3Visualization {
     // Add the vertices
     this.svg
       .select("g")
-      .selectAll("path")
+      .selectAll()
       .data(data)
       .join("path")
       .attr("d", (_, i) => voronoi.renderCell(i))
