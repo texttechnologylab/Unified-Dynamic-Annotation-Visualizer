@@ -3,6 +3,8 @@ package org.texttechnologylab.udav.database;
 public final class DBConstants {
     private DBConstants() {}
 
+    public static final String DB_SCHEMA_UIMA = "public";
+
     public static final String TABLENAME_VISUALIZATIONJSONS = "VISUALIZATIONJSONS";
     public static final String TABLENAME_GENERATORTYPE = "GENERATORTYPE";
 

@@ -1,0 +1,79 @@
+{
+  "id": "newformattest",
+  "sources": [
+    {
+      "id": "0",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "createsGenerators": [
+        {
+          "type": "CategoryNumberColorMapping",
+          "id": "total",
+          "settings": {
+            "categoriesWhitelist": []
+          }
+        },
+        {
+          "type": "TextFormatting",
+          "id": "text-color",
+          "settings": {
+            "sofaFile": "ID21200100.xmi",
+            "style": "underline"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "createsGenerators": [
+        {
+          "type": "CategoryNumberColorMapping",
+          "id": "total",
+          "settings": {
+            "categoriesWhitelist": []
+          }
+        },
+        {
+          "type": "TextFormatting",
+          "id": "text-color",
+          "settings": {
+            "sofaFile": "ID21200100.xmi",
+            "style": "underline"
+          }
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "id": "text",
+      "x": 2,
+      "y": 1,
+      "w": 4,
+      "h": 4,
+      "type": "HighlightText",
+      "title": "TextFormatting",
+      "generator": {
+        "id": "text-color"
+      },
+      "options": {},
+      "icon": "bi bi-card-text"
+    },
+    {
+      "id": "bar-chart2",
+      "x": 6,
+      "y": 1,
+      "w": 4,
+      "h": 4,
+      "type": "PieChart",
+      "title": "CategoryNumberMapping",
+      "generator": {
+        "id": "total"
+      },
+      "options": {
+        "hole": 50
+      },
+      "icon": "bi bi-bar-chart"
+    }
+  ]
+}

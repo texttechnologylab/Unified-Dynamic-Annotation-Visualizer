@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.texttechnologylab.udav.generators.Generator;
 import org.texttechnologylab.udav.pipeline.Pipeline;
 import org.texttechnologylab.udav.sources.DBAccess;
 import org.texttechnologylab.udav.sources.SourceBuildOps;
@@ -39,24 +38,19 @@ public class SourceBuildService {
         if (pipelineId == null || pipelineId.isBlank()) {
             pipelineId = "main";
         }
+        DBAccess dbAccess = new DBAccess(dataSource, schema);
 
         // Load pipeline from DB
-        Pipeline pipeline = Pipeline.fromDB(dataSource, pipelineId);
+        Pipeline pipeline = Pipeline.fromDB(dbAccess, pipelineId);
         String id = pipeline.getId();
 
         // Persist visualization JSONs and build types/tables
         Collection<Pipeline> coll = new ArrayList<>();
         coll.add(pipeline);
         ops.savePipelinesVisualizationsJSONs(coll, schema);
-        ops.buildCustomTypes(pipeline, schema);
-        ops.buildGeneratorTables(schema);
 
         // Generate & save generator data
-        DBAccess dbAccess = new DBAccess(dataSource, schema);
-        Collection<Generator> generators = pipeline.generateGenerators(dbAccess);
-        for (Generator g : generators) {
-            g.saveToDB(dbAccess);
-        }
+        pipeline.saveToDB();
 
         logger.info("Build completed for schema=" + schema + ", pipeline=" + id);
     }
