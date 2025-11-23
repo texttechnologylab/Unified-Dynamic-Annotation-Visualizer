@@ -3,7 +3,6 @@ package org.texttechnologylab.udav.sources;
 import lombok.Getter;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
 import javax.sql.DataSource;
@@ -29,12 +28,17 @@ public class DBAccess {
 
     private Set<String> sourceFiles;
 
-    public DBAccess(DataSource dataSource, String schema) {
+    public DBAccess(DataSource dataSource, String schema) throws SQLException {
         this.dataSource = dataSource;
         this.schema = (schema == null || schema.isBlank()) ? "public" : schema;
+
+        try (Connection connection = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+            dsl.createSchemaIfNotExists(DSL.name(schema)).execute();
+        }
     }
 
-    public DBAccess(DataSource dataSource) {
+    public DBAccess(DataSource dataSource) throws SQLException {
         this(dataSource, "public");
     }
 

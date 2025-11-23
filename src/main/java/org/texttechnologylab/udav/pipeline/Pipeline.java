@@ -308,7 +308,7 @@ public class Pipeline {
 
     public void saveGeneratorsToDB() throws SQLException {
         if (currentState != PipelineState.SETUP_GENERATORS) throw new IllegalStateException("Pipeline not in correct state for saving generators to database.");
-        for (Generator g : visualizedGenerators.values()) { g.createOutputTablesDB(); g.writeToDB(); }
+        for (Generator g : visualizedGenerators.values()) g.writeToDB();
         currentState = PipelineState.SAVED_GENERATORS_TO_DB;
     }
 

@@ -33,7 +33,6 @@ public abstract class Generator {
 
     protected Source source;
 
-    private static final Set<Class<? extends Generator>> tablesCreatedDB = new HashSet<>();
 
     public Generator(String id, JSONView configGenerator, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) {
         this.id = id;
@@ -108,7 +107,6 @@ public abstract class Generator {
 
     // --- Post-Setup methods ---
 
-    protected abstract void setupOutputTablesDB() throws SQLException;
     public abstract void writeToDB() throws SQLException;
 
 
@@ -127,12 +125,6 @@ public abstract class Generator {
             throw new IllegalArgumentException("Invalid source for this generator type.");
         }
         this.source = source;
-    }
-
-    public final void createOutputTablesDB() throws SQLException {
-        if (tablesCreatedDB.contains(getClass())) return;
-        tablesCreatedDB.add(getClass());
-        setupOutputTablesDB();
     }
 
     protected final Set<String> generateFilterListSuffixCombinations(Set<String> suffixes) {
