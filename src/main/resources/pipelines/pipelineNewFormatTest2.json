@@ -20,12 +20,14 @@
         {
           "type": "CategoryNumberColorMapping",
           "name": "Gen1",
-          "id": "POS_Numbers"
+          "id": "POS_Numbers",
+          "extends": []
         },
         {
           "type": "TextFormatting",
           "name": "Gen2",
           "id": "POS_Formatting",
+          "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",
             "style": "underline"
@@ -45,12 +47,14 @@
         {
           "type": "CategoryNumberColorMapping",
           "name": "Gen3",
-          "id": "NE_Numbers"
+          "id": "NE_Numbers",
+          "extends": []
         },
         {
           "type": "TextFormatting",
           "name": "Gen4",
           "id": "NE_Formatting",
+          "extends": [],
           "settings": {
             "sofaFile": "ID21200100",
             "sofaID": "_InitialView",

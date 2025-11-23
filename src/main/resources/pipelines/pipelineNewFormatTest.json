@@ -8,6 +8,8 @@
         {
           "type": "CategoryNumberColorMapping",
           "id": "total",
+          "name": "Gen1",
+          "extends": [],
           "settings": {
             "categoriesWhitelist": []
           }
@@ -15,6 +17,8 @@
         {
           "type": "TextFormatting",
           "id": "text-color",
+          "name": "Gen2",
+          "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",
             "style": "underline"
@@ -29,6 +33,8 @@
         {
           "type": "CategoryNumberColorMapping",
           "id": "total",
+          "name": "Gen3",
+          "extends": [],
           "settings": {
             "categoriesWhitelist": []
           }
@@ -36,6 +42,8 @@
         {
           "type": "TextFormatting",
           "id": "text-color",
+          "name": "Gen4",
+          "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",
             "style": "underline"

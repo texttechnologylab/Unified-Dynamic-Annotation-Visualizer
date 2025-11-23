@@ -213,7 +213,7 @@ public class Pipeline {
                         try { generatorExtends = generatorEntry.get("extends");
                         } catch (Exception ignored) {}
                         ArrayList<Generator> extendsGenerators = null;
-                        if (generatorExtends != null && generatorExtends.isList()) {
+                        if (generatorExtends != null && generatorExtends.isList() && !generatorExtends.asList().isEmpty()) {
                             extendsGenerators = new ArrayList<>();
                             for (JSONView jv : generatorExtends) {
                                 Object o = jv.getNode();
