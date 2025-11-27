@@ -1,7 +1,4 @@
-import {
-  createElement,
-  getElementDimensions,
-} from "../../../../../shared/modules/utils.js";
+import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import PieChart from "../../../../view/widgets/charts/PieChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
@@ -36,10 +33,7 @@ export default class PieChartHandler extends FormHandler {
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new PieChart(this.element, "", {
-      ...getElementDimensions(this.element),
-      ...this.item.options,
-    });
+    this.element._chart = new PieChart(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }

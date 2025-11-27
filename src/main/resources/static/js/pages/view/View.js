@@ -58,9 +58,8 @@ export default class View {
         const WidgetClass = getter._dynamic[config.type];
 
         const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
-        const options = { ...config.options, ...getElementDimensions(node) };
 
-        const chart = new WidgetClass(node, endpoint, options);
+        const chart = new WidgetClass(node, endpoint, config.options);
         chart.init();
 
         this.charts.push(chart);

@@ -4,18 +4,8 @@ import ExportHandler from "../../toolbar/ExportHandler.js";
 import { flatData } from "../../../../shared/modules/utils.js";
 
 export default class LineChart extends D3Visualization {
-  constructor(
-    root,
-    endpoint,
-    { width = 800, height = 600, line = true, dots = true }
-  ) {
-    super(
-      root,
-      endpoint,
-      { top: 10, right: 30, bottom: 30, left: 60 },
-      width,
-      height
-    );
+  constructor(root, endpoint, { line = true, dots = true }) {
+    super(root, endpoint, { top: 10, right: 30, bottom: 30, left: 60 });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -110,5 +100,7 @@ export default class LineChart extends D3Visualization {
 
     // Pass data to export handler
     this.exports.update(this.filter, coordinates, this.svg.node());
+
+    this.cachedData = data;
   }
 }

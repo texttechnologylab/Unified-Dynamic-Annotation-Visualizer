@@ -2,14 +2,8 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class Network2D extends D3Visualization {
-  constructor(root, endpoint, { width = 800, height = 600 }) {
-    super(
-      root,
-      endpoint,
-      { top: 20, right: 20, bottom: 20, left: 20 },
-      width,
-      height
-    );
+  constructor(root, endpoint, {}) {
+    super(root, endpoint, { top: 20, right: 20, bottom: 20, left: 20 });
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
       "png",
@@ -87,6 +81,8 @@ export default class Network2D extends D3Visualization {
 
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());
+
+    this.cachedData = data;
   }
 
   fitExtent(bbox) {

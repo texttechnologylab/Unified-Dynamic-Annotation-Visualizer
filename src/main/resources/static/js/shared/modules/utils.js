@@ -16,6 +16,16 @@ export function randomId(str) {
   return str + "-" + Math.random().toString(36).slice(2, 9);
 }
 
+export function debounce(fn, timeout = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, timeout);
+  };
+}
+
 export function getElementDimensions(element) {
   const area = element.querySelector(".dv-chart-area");
   const rect = area.getBoundingClientRect();

@@ -3,14 +3,8 @@ import ControlsHandler from "../../toolbar/ControlsHandler.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class HighlightText extends D3Visualization {
-  constructor(root, endpoint, { width = 800, height = 600 }) {
-    super(
-      root,
-      endpoint,
-      { top: 16, right: 16, bottom: 16, left: 16 },
-      width,
-      height
-    );
+  constructor(root, endpoint, {}) {
+    super(root, endpoint, { top: 16, right: 16, bottom: 16, left: 16 });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -75,5 +69,7 @@ export default class HighlightText extends D3Visualization {
     }
 
     this.exports.update(this.filter, data.spans, null);
+
+    this.cachedData = data;
   }
 }

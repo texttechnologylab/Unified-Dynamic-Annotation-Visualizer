@@ -4,18 +4,8 @@ import ExportHandler from "../../toolbar/ExportHandler.js";
 import { maxOf, minOf } from "../../../../shared/modules/utils.js";
 
 export default class BarChart extends D3Visualization {
-  constructor(
-    root,
-    endpoint,
-    { width = 800, height = 600, horizontal = false }
-  ) {
-    super(
-      root,
-      endpoint,
-      { top: 30, right: 30, bottom: 70, left: 60 },
-      width,
-      height
-    );
+  constructor(root, endpoint, { horizontal = false }) {
+    super(root, endpoint, { top: 30, right: 30, bottom: 70, left: 60 });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -121,6 +111,8 @@ export default class BarChart extends D3Visualization {
 
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());
+
+    this.cachedData = data;
   }
 
   band(data) {

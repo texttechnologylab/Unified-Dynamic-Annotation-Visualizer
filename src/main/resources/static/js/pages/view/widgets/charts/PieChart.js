@@ -1,22 +1,22 @@
 import D3Visualization from "../D3Visualization.js";
 import ControlsHandler from "../../toolbar/ControlsHandler.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
-import { maxOf, minOf } from "../../../../shared/modules/utils.js";
+import {
+  getElementDimensions,
+  maxOf,
+  minOf,
+} from "../../../../shared/modules/utils.js";
 
 export default class PieChart extends D3Visualization {
-  constructor(root, endpoint, { width = 600, height = 600, hole = 0 }) {
-    super(
-      root,
-      endpoint,
-      {
-        top: height / 2,
-        right: width / 2,
-        bottom: height / 2,
-        left: width / 2,
-      },
-      width,
-      height
-    );
+  constructor(root, endpoint, { hole = 0 }) {
+    const { width, height } = getElementDimensions(root);
+
+    super(root, endpoint, {
+      top: height / 2,
+      right: width / 2,
+      bottom: height / 2,
+      left: width / 2,
+    });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -30,7 +30,7 @@ export default class PieChart extends D3Visualization {
     this.hole = hole;
   }
 
-  setDimensions(width, height) {
+  resize(width, height) {
     this.margin = {
       top: height / 2,
       right: width / 2,
@@ -38,6 +38,8 @@ export default class PieChart extends D3Visualization {
       left: width / 2,
     };
     this.radius = minOf([width, height]) / 2;
+
+    this.render(this.cachedData);
   }
 
   async init() {
@@ -118,5 +120,7 @@ export default class PieChart extends D3Visualization {
 
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());
+
+    this.cachedData = data;
   }
 }

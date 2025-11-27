@@ -2,14 +2,8 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class ScrollableTable extends D3Visualization {
-  constructor(root, endpoint, { width = 800, height = 600, numbers = true }) {
-    super(
-      root,
-      endpoint,
-      { top: 2, right: 2, bottom: 2, left: 2 },
-      width,
-      height
-    );
+  constructor(root, endpoint, { numbers = true }) {
+    super(root, endpoint, { top: 2, right: 2, bottom: 2, left: 2 });
 
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "csv",
@@ -45,9 +39,10 @@ export default class ScrollableTable extends D3Visualization {
   render(data) {
     this.clear();
 
+    let rows = data;
     if (this.numbers) {
-      data = data.map((row, i) => [i, ...row]);
-      data[0][0] = "#";
+      rows = data.map((row, i) => [i, ...row]);
+      rows[0][0] = "#";
     }
 
     const table = this.div.append("table").attr("class", "dv-scrollable-table");
@@ -57,7 +52,7 @@ export default class ScrollableTable extends D3Visualization {
       .append("thead")
       .append("tr")
       .selectAll("th")
-      .data(data[0])
+      .data(rows[0])
       .join("th")
       .text((d) => d);
 
@@ -65,7 +60,7 @@ export default class ScrollableTable extends D3Visualization {
     table
       .append("tbody")
       .selectAll("tr")
-      .data(data.slice(1)) // skip header
+      .data(rows.slice(1)) // skip header
       .join("tr")
       .selectAll("td")
       .data((d) => d)
@@ -73,5 +68,7 @@ export default class ScrollableTable extends D3Visualization {
       .text((d) => d);
 
     this.exports.update(this.filter, data, null);
+
+    this.cachedData = data;
   }
 }

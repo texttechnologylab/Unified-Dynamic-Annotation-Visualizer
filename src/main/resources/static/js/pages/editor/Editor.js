@@ -93,17 +93,6 @@ export default class Editor {
         handler.init();
       });
     });
-
-    // Re-render chart with new dimensions after resize
-    state.grid.on("resizestop", (_, el) => {
-      const content = el.querySelector(".grid-stack-item-content");
-
-      if (content._chart) {
-        const dimensions = getElementDimensions(content);
-        content._chart.setDimensions(dimensions.width, dimensions.height);
-        content._chart.render(content._data);
-      }
-    });
   }
 
   initAvailableWidgets() {

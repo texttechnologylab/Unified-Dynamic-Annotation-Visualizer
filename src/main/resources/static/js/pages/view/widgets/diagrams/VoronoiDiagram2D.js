@@ -2,20 +2,15 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class BarChart extends D3Visualization {
-  constructor(
-    root,
-    endpoint,
-    { width = 800, height = 600, axes = false, dots = true }
-  ) {
+  constructor(root, endpoint, { axes = false, dots = true }) {
     const margin = axes ? 30 : 0;
 
-    super(
-      root,
-      endpoint,
-      { top: margin, right: margin, bottom: margin, left: margin },
-      width,
-      height
-    );
+    super(root, endpoint, {
+      top: margin,
+      right: margin,
+      bottom: margin,
+      left: margin,
+    });
 
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
@@ -106,6 +101,8 @@ export default class BarChart extends D3Visualization {
 
     // Pass data to export handler
     this.exports.update(this.filter, data, this.svg.node());
+
+    this.cachedData = data;
   }
 
   domain(data, fn, padding = 0.05) {

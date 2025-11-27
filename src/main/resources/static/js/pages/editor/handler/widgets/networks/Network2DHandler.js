@@ -1,7 +1,4 @@
-import {
-  createElement,
-  getElementDimensions,
-} from "../../../../../shared/modules/utils.js";
+import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import Network2D from "../../../../view/widgets/networks/Network2D.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
@@ -34,10 +31,7 @@ export default class Network2DHandler extends FormHandler {
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new Network2D(this.element, "", {
-      ...getElementDimensions(this.element),
-      ...this.item.options,
-    });
+    this.element._chart = new Network2D(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
