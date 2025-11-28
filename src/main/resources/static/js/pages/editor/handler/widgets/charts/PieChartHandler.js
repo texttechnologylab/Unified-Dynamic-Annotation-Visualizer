@@ -39,12 +39,7 @@ export default class PieChartHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators([
-      "CategoryNumberMapping",
-      "CategoryNumberColorMapping",
-      "CombinedGenerator",
-      "DerivedGenerator",
-    ]);
+    const generatorOptions = prepareGenerators(["CategoryNumber"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(

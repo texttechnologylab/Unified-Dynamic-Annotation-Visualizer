@@ -11,8 +11,7 @@ import StaticVideoHandler from "./handler/widgets/static/StaticVideoHandler.js";
 import ScrollableTableHandler from "./handler/widgets/tables/ScrollableTableHandler.js";
 import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js";
 
-import CategoryNumberColorMappingHandler from "./handler/generators/CategoryNumberColorMappingHandler.js";
-import CategoryNumberMappingHandler from "./handler/generators/CategoryNumberMappingHandler.js";
+import CategoryNumberHandler from "./handler/generators/CategoryNumberHandler.js";
 import TextFormattingHandler from "./handler/generators/TextFormattingHandler.js";
 
 const widgets = {
@@ -32,8 +31,7 @@ const widgets = {
 
 const generators = {
   TextFormatting: TextFormattingHandler,
-  CategoryNumberMapping: CategoryNumberMappingHandler,
-  CategoryNumberColorMapping: CategoryNumberColorMappingHandler,
+  CategoryNumber: CategoryNumberHandler,
 };
 
 export default { widgets, generators };

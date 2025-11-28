@@ -3,12 +3,12 @@ import { removeGenerator } from "../../utils/actions.js";
 import state from "../../utils/state.js";
 import FormHandler from "../FormHandler.js";
 
-export default class CategoryNumberColorMappingHandler extends FormHandler {
+export default class CategoryNumberHandler extends FormHandler {
   static defaults = {
-    name: "New CategoryNumberColorMapping",
-    type: "CategoryNumberColorMapping",
+    name: "New CategoryNumber",
+    type: "CategoryNumber",
     settings: {},
-    token: "CO",
+    token: "CN",
     extends: [],
   };
 

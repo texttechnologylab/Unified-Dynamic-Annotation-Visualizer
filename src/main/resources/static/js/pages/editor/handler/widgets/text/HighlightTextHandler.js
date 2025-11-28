@@ -41,11 +41,7 @@ export default class HighlightTextHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators([
-      "TextFormatting",
-      "CombinedGenerator",
-      "DerivedGenerator",
-    ]);
+    const generatorOptions = prepareGenerators(["TextFormatting"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(

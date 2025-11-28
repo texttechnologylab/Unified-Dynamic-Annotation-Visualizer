@@ -10,7 +10,7 @@ export default class TextFormattingHandler extends FormHandler {
     settings: {
       style: "underline",
     },
-    token: "TX",
+    token: "TF",
     extends: [],
   };
 
