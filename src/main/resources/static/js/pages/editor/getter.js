@@ -1,6 +1,7 @@
 import BarChartHandler from "./handler/widgets/charts/BarChartHandler.js";
 import LineChartHandler from "./handler/widgets/charts/LineChartHandler.js";
 import PieChartHandler from "./handler/widgets/charts/PieChartHandler.js";
+import VoronoiDiagram2DHandler from "./handler/widgets/diagrams/VoronoiDiagram2DHandler.js";
 import Map2DHandler from "./handler/widgets/maps/Map2DHandler.js";
 import Network2DHandler from "./handler/widgets/networks/Network2DHandler.js";
 import StaticIFrameHandler from "./handler/widgets/static/StaticIFrameHandler.js";
@@ -23,6 +24,7 @@ const widgets = {
   BarChart: BarChartHandler,
   PieChart: PieChartHandler,
   LineChart: LineChartHandler,
+  VoronoiDiagram2D: VoronoiDiagram2DHandler,
   HighlightText: HighlightTextHandler,
   Network2D: Network2DHandler,
   Map2D: Map2DHandler,

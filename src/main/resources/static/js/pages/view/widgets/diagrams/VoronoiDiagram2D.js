@@ -1,7 +1,7 @@
 import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
-export default class BarChart extends D3Visualization {
+export default class VoronoiDiagram2D extends D3Visualization {
   constructor(root, endpoint, { axes = false, dots = true }) {
     const margin = axes ? 30 : 0;
 

@@ -23,7 +23,7 @@ export default class D3Visualization {
     const observer = new ResizeObserver(
       debounce(() => {
         if (this.cachedData) {
-          console.log("handle");
+          console.log("resizing...");
 
           const { width, height } = getElementDimensions(root);
           this.resize(width, height);
