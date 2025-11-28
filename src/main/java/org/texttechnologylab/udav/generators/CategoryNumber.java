@@ -21,7 +21,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.List;
 
-public class CategoryNumberColorMapping extends GeneratorUIMA {
+public class CategoryNumber extends GeneratorUIMA {
 
     private Set<String> sourceFiles;
     private String[] features;
@@ -29,7 +29,7 @@ public class CategoryNumberColorMapping extends GeneratorUIMA {
 
     private CommonFeatureCategoryColors commonFeatureCategoryColors;
 
-    public CategoryNumberColorMapping(String id, JSONView configGenerator, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) {
+    public CategoryNumber(String id, JSONView configGenerator, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) {
         super(id, configGenerator, configBundle, settingsBundle, dbAccess);
     }
 

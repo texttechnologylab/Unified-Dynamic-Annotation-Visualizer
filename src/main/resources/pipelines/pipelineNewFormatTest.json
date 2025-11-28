@@ -6,7 +6,7 @@
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
       "createsGenerators": [
         {
-          "type": "CategoryNumberColorMapping",
+          "type": "CategoryNumber",
           "id": "total",
           "name": "Gen1",
           "extends": [],
@@ -31,7 +31,7 @@
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
       "createsGenerators": [
         {
-          "type": "CategoryNumberColorMapping",
+          "type": "CategoryNumber",
           "id": "total",
           "name": "Gen3",
           "extends": [],
@@ -74,7 +74,7 @@
       "w": 4,
       "h": 4,
       "type": "PieChart",
-      "title": "CategoryNumberMapping",
+      "title": "CategoryNumber diagram",
       "generator": {
         "id": "total"
       },

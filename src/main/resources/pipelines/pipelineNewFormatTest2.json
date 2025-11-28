@@ -18,7 +18,7 @@
       },
       "createsGenerators": [
         {
-          "type": "CategoryNumberColorMapping",
+          "type": "CategoryNumber",
           "name": "Gen1",
           "id": "POS_Numbers",
           "extends": []
@@ -45,7 +45,7 @@
       },
       "createsGenerators": [
         {
-          "type": "CategoryNumberColorMapping",
+          "type": "CategoryNumber",
           "name": "Gen3",
           "id": "NE_Numbers",
           "extends": []
