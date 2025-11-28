@@ -11,11 +11,10 @@ import org.jooq.impl.DSL;
 import org.texttechnologylab.udav.generators.*;
 import org.texttechnologylab.udav.generators.common_properties.CommonProperties;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
-import org.texttechnologylab.udav.generators.sources.SourceDerived;
-import org.texttechnologylab.udav.generators.sources.Source;
-import org.texttechnologylab.udav.generators.sources.SourceUIMA;
+import org.texttechnologylab.udav.generators.sources.*;
 import org.texttechnologylab.udav.sources.DBAccess;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -195,6 +194,7 @@ public class Pipeline {
                 for (JSONView sourcesEntry : sourcesView) {
                     String sourceID = getJSONViewString(sourcesEntry, "id");
                     String sourceDefinition = getJSONViewOptionalString(sourcesEntry, "uri"); // TODO: Use better key name as this could also be a non uri source
+                    if (sourceDefinition != null && sourceDefinition.contains("@")) continue; // TODO: Remove
                     Source sourceObj = (sourceDefinition == null)? null : decideSourceFromJSONDefinition(sourceDefinition, dbAccess);
 
                     GeneratorSettings settingsBundle = GeneratorSettings.fromConfig(sourcesEntry);
@@ -235,14 +235,10 @@ public class Pipeline {
                             }
                             baseGenerators.put(generatorID, generator);
                         } else {
-                            if (generator.preSetup_getAllSourceClasses().contains(SourceDerived.class)) {
-                                if (extendsGenerators.isEmpty()) {
-                                    throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": derivable generator doesn't have any valid generator sources.");
-                                }
-                                generator.setSource(new SourceDerived(extendsGenerators));
-                            } else {
-                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": the type \"" + generatorType + "\" is not a derivable type.");
+                            if (extendsGenerators.isEmpty()) {
+                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": derivable generator doesn't have any valid generator sources.");
                             }
+                            generator.setSource(new SourceDerived(extendsGenerators));
                         }
 
                         if (generator.getSource() == null) {
@@ -352,7 +348,12 @@ public class Pipeline {
         return visualizedGenerators;
     }
 
-    private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException {
+    private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException, IOException {
+        if (definition.trim().toUpperCase().endsWith(".JSON")) {
+            return new SourceJson(definition);
+        } else if (definition.trim().toUpperCase().endsWith(".JSON@N")) {
+            return new SourceJsonN(definition);
+        }
         return new SourceUIMA(definition, dbAccess);
     }
 

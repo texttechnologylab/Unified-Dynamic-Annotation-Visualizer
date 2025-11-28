@@ -86,7 +86,6 @@ public abstract class Generator {
 
     // --- Pre-Setup methods ---
 
-    public Set<Class<? extends Source>> preSetup_getAllSourceClasses() { return Set.of(); }
     public Set<String> preSetup_defineAllFilterListKeys() { return Set.of("files", "categories"); }
     public Map<String, NonNumericScalarCombinationMode> preSetup_defineAdditionalNonNumericScalarSettingsCombinationMode() { return Map.of(); }
     public Map<String, NumericScalarCombinationMode> preSetup_defineAdditionalNumericScalarSettingsCombinationMode() { return Map.of(); }
@@ -119,10 +118,6 @@ public abstract class Generator {
     public final void setSource(Source source) {
         if (this.source != null) {
             throw new IllegalArgumentException("setSource called on generator with source already set before.");
-        }
-        Set<Class<? extends Source>> allowedSourceClasses = preSetup_getAllSourceClasses();
-        if (source == null || !allowedSourceClasses.contains(source.getClass())) {
-            throw new IllegalArgumentException("Invalid source for this generator type.");
         }
         this.source = source;
     }

@@ -74,6 +74,10 @@ public class GeneratorSettings {
         Boolean b = getBooleanSetting(settingKey);
         return (b == null) ? defaultValue : b;
     }
+    public Map<?, ?> getMapSettingOrDefault(String settingKey, Map<?, ?> defaultValue) {
+        Map<?, ?> m = getMapSetting(settingKey);
+        return (m == null) ? defaultValue : m;
+    }
     public String getStringSetting(String settingKey) {
         if (!CASE_SENSITIVE_KEYS) settingKey = unicaseKey(settingKey);
         Object o = settingsMap.get(settingKey);
@@ -87,6 +91,13 @@ public class GeneratorSettings {
         if (o == null) return null;
         if (o.getClass() != Boolean.class) return null;
         return (Boolean) o;
+    }
+    public Map<?, ?> getMapSetting(String settingKey) {
+        if (!CASE_SENSITIVE_KEYS) settingKey = unicaseKey(settingKey);
+        Object o = settingsMap.get(settingKey);
+        if (o == null) return null;
+        if (!(o instanceof Map<?,?>)) return null;
+        return (Map<?, ?>) o;
     }
 
     public FilterList<String> generateStringFilterList(String key) {

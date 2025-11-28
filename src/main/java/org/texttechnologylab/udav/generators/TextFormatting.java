@@ -11,7 +11,6 @@ import org.texttechnologylab.udav.generators.common_properties.CommonProperties;
 import org.texttechnologylab.udav.generators.settings.FilterList;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
 import org.texttechnologylab.udav.generators.sources.SourceDerived;
-import org.texttechnologylab.udav.generators.sources.Source;
 import org.texttechnologylab.udav.generators.sources.SourceUIMA;
 import org.texttechnologylab.udav.pipeline.JSONView;
 import org.texttechnologylab.udav.sources.DBAccess;
@@ -39,11 +38,6 @@ public class TextFormatting extends GeneratorUIMA {
         super(id, configGenerator, configBundle, settingsBundle, dbAccess);
     }
 
-
-    @Override
-    public Set<Class<? extends Source>> preSetup_getAllSourceClasses() {
-        return Set.of(SourceDerived.class, SourceUIMA.class);
-    }
 
     @Override
     public Set<Class<? extends CommonProperties>> preSetup_getAllCommonPropertyClasses() {
@@ -108,6 +102,8 @@ public class TextFormatting extends GeneratorUIMA {
             Dataset newDataset = new Dataset(tempFeatureName, style, singleColor, segments);
             datasets.add(newDataset);
             commonFeatureCategoryColors.addFeatureToCategoryCountMap(tempFeatureName, newDataset.categoryCountMap);
+        } else {
+            throw new IllegalArgumentException("Unsupported source for generator \"" + id + "\".");
         }
     }
 
