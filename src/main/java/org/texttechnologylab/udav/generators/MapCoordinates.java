@@ -132,7 +132,6 @@ public class MapCoordinates extends Generator {
                                 .values(id, e.filename, e.label, coordinatesListToString(e.coordinates), e.scale.doubleValue(), fillColorStr, strokeColorStr, outsideColorStr)
                 );
             }
-
             if (!batch.isEmpty()) dsl.batch(batch).execute();
         }
 
