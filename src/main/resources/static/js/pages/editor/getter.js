@@ -12,6 +12,7 @@ import ScrollableTableHandler from "./handler/widgets/tables/ScrollableTableHand
 import HighlightTextHandler from "./handler/widgets/text/HighlightTextHandler.js";
 
 import CategoryNumberHandler from "./handler/generators/CategoryNumberHandler.js";
+import MapCoordinatesHandler from "./handler/generators/MapCoordinatesHandler.js";
 import TextFormattingHandler from "./handler/generators/TextFormattingHandler.js";
 
 const widgets = {
@@ -32,6 +33,7 @@ const widgets = {
 const generators = {
   TextFormatting: TextFormattingHandler,
   CategoryNumber: CategoryNumberHandler,
+  MapCoordinates: MapCoordinatesHandler,
 };
 
 export default { widgets, generators };
