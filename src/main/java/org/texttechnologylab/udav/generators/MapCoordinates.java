@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.generators;
 
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Query;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.texttechnologylab.udav.database.DBConstants;
@@ -66,7 +67,6 @@ public class MapCoordinates extends Generator {
                 entries.add(new Entry(sourceJson.getSingleFileName(), label, coordinatesNumbers, scale, fillColor, strokeColor, outsideColor));
                 // TODO: Allow multiple file sources for JSON
             }
-            System.out.println("test!");
         }
     }
 
@@ -121,11 +121,62 @@ public class MapCoordinates extends Generator {
             Field<String> COLOR_STROKE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_STROKE), String.class);
             Field<String> COLOR_OUTSIDE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_OUTSIDE), String.class);
 
+            List<Query> batch = new ArrayList<>();
             for (Entry e : entries) {
+                String fillColorStr = String.format("#%02x%02x%02x", e.fillColor.getRed(), e.fillColor.getGreen(), e.fillColor.getBlue());
+                String strokeColorStr = String.format("#%02x%02x%02x", e.strokeColor.getRed(), e.strokeColor.getGreen(), e.strokeColor.getBlue());
+                String outsideColorStr = String.format("#%02x%02x%02x", e.outsideColor.getRed(), e.outsideColor.getGreen(), e.outsideColor.getBlue());
+                batch.add(
+                        dsl.insertInto(TABLE)
+                                .columns(GENERATORID, FILENAME, LABEL, COORDINATES, SCALE, COLOR_FILL, COLOR_STROKE, COLOR_OUTSIDE)
+                                .values(id, e.filename, e.label, coordinatesListToString(e.coordinates), e.scale.doubleValue(), fillColorStr, strokeColorStr, outsideColorStr)
+                );
+            }
 
+            if (!batch.isEmpty()) dsl.batch(batch).execute();
+        }
+
+    }
+
+    public static String coordinatesListToString(List<Number> coordinates) {
+        if (coordinates == null) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < coordinates.size(); i++) {
+            sb.append(coordinates.get(i));
+            if (i < coordinates.size() - 1) {
+                sb.append(", ");
             }
         }
 
+        return sb.toString();
+    }
+
+    public static List<Number> coordinatesStringToList(String str) {
+        List<Number> result = new ArrayList<>();
+
+        if (str == null || str.trim().isEmpty()) {
+            return result;
+        }
+
+        String content = str.trim();
+        String[] parts = content.split(",");
+
+        for (String part : parts) {
+            String value = part.trim();
+
+            // Parse as integer if no decimal point, else as double
+            if (value.matches("-?\\d+")) {
+                result.add(Integer.parseInt(value));
+            } else {
+                result.add(Double.parseDouble(value));
+            }
+        }
+
+        return result;
     }
 
     private static class Entry {

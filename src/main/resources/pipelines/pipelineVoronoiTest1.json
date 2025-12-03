@@ -185,7 +185,7 @@
       "type": "BarChart",
       "title": "Named Entities (NE)",
       "generator": {
-        "id": "NE_Numbers"
+        "id": "VoronoiMap"
       },
       "options": {
         "horizontal": true
