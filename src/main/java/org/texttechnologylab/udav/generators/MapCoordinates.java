@@ -1,5 +1,10 @@
 package org.texttechnologylab.udav.generators;
 
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+import org.texttechnologylab.udav.database.DBConstants;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
 import org.texttechnologylab.udav.generators.sources.SourceJson;
 import org.texttechnologylab.udav.pipeline.JSONView;
@@ -7,6 +12,7 @@ import org.texttechnologylab.udav.sources.DBAccess;
 
 
 import java.awt.*;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +53,6 @@ public class MapCoordinates extends Generator {
 
                 // Scale
                 Number scale = (Number) map.get("scale");
-                if (scale == null) scale = 1.0;
 
                 // FillColor
                 Color fillColor = mapRGBAorStringToColor(map.get("fillColor"), Color.BLUE);
@@ -85,6 +90,41 @@ public class MapCoordinates extends Generator {
 
     @Override
     public void writeToDB() throws SQLException {
+
+        final String schema = dbAccess.getSchema();
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+
+            dsl.createTableIfNotExists(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES))
+                    .column(DBConstants.TABLEATTR_GENERATORID, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_FILENAME, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_LABEL, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(true))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_COORDINATES, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_SCALE, org.jooq.impl.SQLDataType.DOUBLE.nullable(true))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_COLOR_STROKE, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_COLOR_OUTSIDE, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(true))
+                    .execute();
+
+
+            // ---------- Table ----------
+            Table<?> TABLE = DSL.table(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES));
+
+
+            // ---------- Columns (schema-qualified & quoted) ----------
+            Field<String> GENERATORID = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORID), String.class);
+            Field<String> FILENAME = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_FILENAME), String.class);
+            Field<String> LABEL = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_LABEL), String.class);
+            Field<String> COORDINATES = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COORDINATES), String.class);
+            Field<Double> SCALE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_SCALE), Double.class);
+            Field<String> COLOR_FILL = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL), String.class);
+            Field<String> COLOR_STROKE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_STROKE), String.class);
+            Field<String> COLOR_OUTSIDE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_OUTSIDE), String.class);
+
+            for (Entry e : entries) {
+
+            }
+        }
 
     }
 
