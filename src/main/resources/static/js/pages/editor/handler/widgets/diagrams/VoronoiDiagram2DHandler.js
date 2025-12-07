@@ -44,7 +44,7 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators([]);
+    const generatorOptions = prepareGenerators(["MapCoordinates"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(
