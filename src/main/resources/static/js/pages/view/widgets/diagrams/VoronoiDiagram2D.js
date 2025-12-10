@@ -33,6 +33,7 @@ export default class VoronoiDiagram2D extends D3Visualization {
     const root = this.svg.select("g");
     const id = randomId("clip");
 
+    // Create clip path for zoom area
     root
       .append("clipPath")
       .attr("id", id)
@@ -73,8 +74,25 @@ export default class VoronoiDiagram2D extends D3Visualization {
       .append("g")
       .attr("class", "zoom-area");
 
-    // Add the dots
+    // Calculate voronoi
+    const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
+    const delaunay = d3.Delaunay.from(points);
+    const voronoi = delaunay.voronoi([0, 0, this.width, this.height]);
+
+    function renderPolygon(index, scale) {
+      const cellPolygon = voronoi.cellPolygon(index);
+      const [cx, cy] = points[index];
+
+      const scaledPolygon = cellPolygon.map(([x, y]) => [
+        cx + scale * (x - cx),
+        cy + scale * (y - cy),
+      ]);
+
+      return "M" + scaledPolygon.join("L") + "Z";
+    }
+
     if (this.dots) {
+      // Add the dots
       area
         .selectAll("circle")
         .data(data)
@@ -82,21 +100,29 @@ export default class VoronoiDiagram2D extends D3Visualization {
         .attr("cx", (d) => xScale(d.x))
         .attr("cy", (d) => yScale(d.y))
         .attr("r", 4)
-        .style("fill", (d) => d.color);
+        .style("fill", (d) => d.cell);
+    } else {
+      // Add the scaled polygons
+      area
+        .selectAll("path.scaled")
+        .data(data)
+        .join("path")
+        .attr("class", "scaled")
+        .attr("d", (d, i) => renderPolygon(i, d.abs))
+        .attr("fill", (_, i) => data[i].fill)
+        .attr("opacity", 0.7)
+        .attr("stroke", (_, i) => data[i].stroke)
+        .attr("stroke-width", 2);
     }
 
-    // Calculate voronoi
-    const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
-    const delaunay = d3.Delaunay.from(points);
-    const voronoi = delaunay.voronoi([0, 0, this.width, this.height]);
-
-    // Add the vertices
+    // Add the cells
     area
-      .selectAll("path")
+      .selectAll("path.cell")
       .data(data)
       .join("path")
+      .attr("class", "cell")
       .attr("d", (_, i) => voronoi.renderCell(i))
-      .attr("fill", (d) => d.color)
+      .attr("fill", (d) => (this.dots ? d.cell : "transparent"))
       .attr("opacity", 0.5)
       .attr("stroke", "#555555");
 

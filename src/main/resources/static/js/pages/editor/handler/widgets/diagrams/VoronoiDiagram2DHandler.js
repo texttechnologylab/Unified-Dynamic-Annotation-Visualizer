@@ -77,7 +77,31 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
 }
 
 const data = [
-  { x: 10, y: 10, color: "#00618f", label: "Cell 1" },
-  { x: 12, y: 32, color: "#3a4856", label: "Cell 7" },
-  { x: 23, y: 23, color: "#9eadbd", label: "Cell 10" },
+  {
+    x: 10,
+    y: 10,
+    cell: "#00618f",
+    fill: "#00618f",
+    stroke: "#555555",
+    label: "Cell 1",
+    abs: 0.5,
+  },
+  {
+    x: 12,
+    y: 32,
+    cell: "#3a4856",
+    fill: "#3a4856",
+    stroke: "#555555",
+    label: "Cell 7",
+    abs: 0.2,
+  },
+  {
+    x: 23,
+    y: 23,
+    cell: "#9eadbd",
+    fill: "#9eadbd",
+    stroke: "#555555",
+    label: "Cell 10",
+    abs: 0.1,
+  },
 ];
