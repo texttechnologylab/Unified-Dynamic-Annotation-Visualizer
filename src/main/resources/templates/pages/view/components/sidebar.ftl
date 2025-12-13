@@ -15,6 +15,13 @@
         <i class="bi bi-list"></i>
         <span>Menu</span>
       </a>
+      <a 
+        class="dv-btn dv-menu-link"
+        href="/editor/${id}"
+      >
+        <i class="bi bi-pencil"></i>
+        <span>Edit</span>
+      </a>
       
       <div class="dv-menu-title">Pipeline</div>
       <@pipelineSwitcher pipelines=pipelines selected=id />

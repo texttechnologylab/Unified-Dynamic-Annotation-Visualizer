@@ -1,5 +1,4 @@
 import { modal } from "../../shared/classes/Modal.js";
-import { getElementDimensions } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
 import getter from "./getter.js";
 import { identifierValid, widgetsValid } from "./utils/validate.js";
@@ -54,9 +53,7 @@ export default class Editor {
     document
       .querySelector("#discard-button")
       .addEventListener("click", () =>
-        modal.confirm("Discard Changes", "Are you sure?", () =>
-          window.open("/", "_self")
-        )
+        modal.confirm("Discard Changes", "Are you sure?", () => history.back())
       );
 
     document
@@ -143,6 +140,8 @@ export default class Editor {
       body: JSON.stringify(config),
     };
 
-    fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
+    fetch("/api/pipelines", options).then(() =>
+      window.open("/view/" + config.id, "_self")
+    );
   }
 }
