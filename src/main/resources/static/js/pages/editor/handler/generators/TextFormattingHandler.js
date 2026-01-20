@@ -10,7 +10,6 @@ export default class TextFormattingHandler extends FormHandler {
     settings: {
       style: "underline",
     },
-    token: "TF",
     extends: [],
   };
 
@@ -23,8 +22,7 @@ export default class TextFormattingHandler extends FormHandler {
   }
 
   init() {
-    this.element.querySelector(".dv-generator-card-token").textContent =
-      this.generator.token;
+    this.element.querySelector(".dv-generator-card-token").textContent = "TF";
     this.element.querySelector(".dv-generator-card-type").textContent =
       this.generator.type;
     this.name.textContent = this.generator.name;
@@ -44,7 +42,7 @@ export default class TextFormattingHandler extends FormHandler {
         (gen) =>
           gen.type === this.generator.type &&
           gen.id !== this.generator.id &&
-          !gen.extends.includes(this.generator.id)
+          !gen.extends.includes(this.generator.id),
       )
       .map((gen) => {
         return { label: gen.name, value: gen.id };
@@ -55,13 +53,13 @@ export default class TextFormattingHandler extends FormHandler {
       "style",
       "Style",
       ["underline", "highlight", "bold"],
-      this.generator.settings.style
+      this.generator.settings.style,
     );
     const extendsInput = this.createMultiselect(
       "extends",
       "Extends (optional)",
       options,
-      this.generator.extends
+      this.generator.extends,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

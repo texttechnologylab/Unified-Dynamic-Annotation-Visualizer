@@ -59,10 +59,10 @@
   "widgets": [
     {
       "id": "text",
-      "x": 2,
-      "y": 1,
-      "w": 4,
-      "h": 4,
+      "x": 4,
+      "y": 2,
+      "w": 8,
+      "h": 8,
       "type": "HighlightText",
       "title": "TextFormatting",
       "generator": {
@@ -73,10 +73,10 @@
     },
     {
       "id": "bar-chart2",
-      "x": 6,
-      "y": 1,
-      "w": 4,
-      "h": 4,
+      "x": 12,
+      "y": 2,
+      "w": 8,
+      "h": 8,
       "type": "PieChart",
       "title": "CategoryNumber diagram",
       "generator": {

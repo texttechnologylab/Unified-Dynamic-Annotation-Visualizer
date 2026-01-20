@@ -11,8 +11,8 @@ export default class Map2DHandler extends FormHandler {
     generator: { id: "" },
     options: {},
     icon: "bi bi-map",
-    w: 4,
-    h: 3,
+    w: 8,
+    h: 6,
   };
 
   constructor(item) {
@@ -44,7 +44,7 @@ export default class Map2DHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
 
     return createElement("form", { className: "dv-form-column" }, [

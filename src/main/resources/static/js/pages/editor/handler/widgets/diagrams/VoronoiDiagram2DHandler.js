@@ -14,8 +14,8 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
       dots: true,
     },
     icon: "bi bi-columns",
-    w: 4,
-    h: 3,
+    w: 8,
+    h: 6,
   };
 
   constructor(item) {
@@ -37,7 +37,7 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
     this.element._chart = new VoronoiDiagram2D(
       this.element,
       "",
-      this.item.options
+      this.item.options,
     );
     this.element._data = data;
     this.element._chart.render(this.element._data);
@@ -51,7 +51,7 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
 
     return createElement("form", { className: "dv-form-column" }, [

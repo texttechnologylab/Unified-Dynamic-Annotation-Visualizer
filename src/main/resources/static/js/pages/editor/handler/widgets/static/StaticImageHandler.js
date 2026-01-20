@@ -9,8 +9,8 @@ export default class StaticImageHandler extends FormHandler {
     src: "https://placehold.co/600x400?text=Image",
     options: {},
     icon: "bi bi-image",
-    w: 1,
-    h: 1,
+    w: 2,
+    h: 2,
   };
 
   constructor(item) {
@@ -37,7 +37,7 @@ export default class StaticImageHandler extends FormHandler {
     const titleInput = this.createTextInput(
       "title",
       "Tooltip",
-      this.item.title
+      this.item.title,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

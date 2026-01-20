@@ -3,7 +3,6 @@ import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
-import { getElementDimensions } from "../../shared/modules/utils.js";
 
 export default class View {
   constructor(pipeline) {
@@ -40,6 +39,7 @@ export default class View {
 
   initGrid(widgets) {
     const grid = GridStack.init({
+      column: 24,
       animate: false,
       float: true,
       disableDrag: true,

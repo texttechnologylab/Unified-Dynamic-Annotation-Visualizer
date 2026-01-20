@@ -64,7 +64,7 @@ export default class Editor {
 
   initGrid() {
     state.grid = GridStack.init({
-      // column: 24,
+      column: 24,
       minRow: 12,
       float: true,
       alwaysShowResizeHandle: false,
@@ -77,7 +77,7 @@ export default class Editor {
       debounce(() => {
         main.style.setProperty(
           "--grid-size",
-          state.grid.getCellHeight() / 2 + "px",
+          state.grid.getCellHeight() + "px",
         );
       }, 10),
     );

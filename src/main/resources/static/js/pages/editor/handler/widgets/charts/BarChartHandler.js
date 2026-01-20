@@ -13,8 +13,8 @@ export default class BarChartHandler extends FormHandler {
       horizontal: false,
     },
     icon: "bi bi-bar-chart",
-    w: 4,
-    h: 3,
+    w: 8,
+    h: 6,
   };
 
   constructor(item) {
@@ -46,13 +46,13 @@ export default class BarChartHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
     const orientationInput = this.createSelect(
       "orientation",
       "Orientation",
       ["horizontal", "vertical"],
-      this.item.options.horizontal ? "horizontal" : "vertical"
+      this.item.options.horizontal ? "horizontal" : "vertical",
     );
 
     return createElement("form", { className: "dv-form-column" }, [

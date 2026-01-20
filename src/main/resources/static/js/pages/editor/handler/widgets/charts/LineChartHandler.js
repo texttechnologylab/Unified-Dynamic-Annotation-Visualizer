@@ -14,8 +14,8 @@ export default class LineChartHandler extends FormHandler {
       dots: true,
     },
     icon: "bi bi-graph-up",
-    w: 4,
-    h: 3,
+    w: 8,
+    h: 6,
   };
 
   constructor(item) {
@@ -47,17 +47,17 @@ export default class LineChartHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
     const lineInput = this.createSwitch(
       "line",
       "Draw lines",
-      this.item.options.line
+      this.item.options.line,
     );
     const dotsInput = this.createSwitch(
       "dots",
       "Draw dots",
-      this.item.options.dots
+      this.item.options.dots,
     );
     lineInput.querySelector("input").addEventListener("change", (event) => {
       if (!event.target.checked) {

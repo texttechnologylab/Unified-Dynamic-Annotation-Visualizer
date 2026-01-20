@@ -13,8 +13,8 @@ export default class ScrollableTableHandler extends FormHandler {
       numbers: true,
     },
     icon: "bi bi-table",
-    w: 3,
-    h: 3,
+    w: 6,
+    h: 6,
   };
 
   constructor(item) {
@@ -36,7 +36,7 @@ export default class ScrollableTableHandler extends FormHandler {
     this.element._chart = new ScrollableTable(
       this.element,
       "",
-      this.item.options
+      this.item.options,
     );
     this.element._data = data;
     this.element._chart.render(this.element._data);
@@ -50,12 +50,12 @@ export default class ScrollableTableHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
     const numbersInput = this.createSwitch(
       "numbers",
       "Row numbers",
-      this.item.options.numbers
+      this.item.options.numbers,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

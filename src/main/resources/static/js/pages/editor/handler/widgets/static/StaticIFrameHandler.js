@@ -9,8 +9,8 @@ export default class StaticIFrameHandler extends FormHandler {
     src: "",
     options: {},
     icon: "bi bi-window",
-    w: 4,
-    h: 3,
+    w: 8,
+    h: 6,
   };
 
   constructor(item) {
@@ -41,7 +41,7 @@ export default class StaticIFrameHandler extends FormHandler {
     const titleInput = this.createTextInput(
       "title",
       "Tooltip",
-      this.item.title
+      this.item.title,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

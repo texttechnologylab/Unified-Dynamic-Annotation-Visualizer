@@ -19,10 +19,10 @@
   "widgets": [
     {
       "id": "bar-chart",
-      "x": 4,
-      "y": 1,
-      "w": 4,
-      "h": 3,
+      "x": 8,
+      "y": 2,
+      "w": 8,
+      "h": 6,
       "type": "BarChart",
       "title": "POS",
       "generator": { "id": "POS_Numbers" },
@@ -37,9 +37,10 @@
         "style": "text-center fs-5 fw-normal fst-normal text-decoration-none"
       },
       "icon": "bi bi-type",
-      "w": 4,
-      "x": 4,
-      "y": 4,
+      "w": 8,
+      "h": 2,
+      "x": 8,
+      "y": 8,
       "id": "StaticText-dewo6hq"
     }
   ]

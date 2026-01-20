@@ -13,8 +13,8 @@ export default class PieChartHandler extends FormHandler {
       hole: 0,
     },
     icon: "bi bi-pie-chart",
-    w: 3,
-    h: 3,
+    w: 6,
+    h: 6,
   };
 
   constructor(item) {
@@ -46,14 +46,14 @@ export default class PieChartHandler extends FormHandler {
       "generator",
       "Generator",
       generatorOptions,
-      safeValue(generatorOptions, this.item.generator.id)
+      safeValue(generatorOptions, this.item.generator.id),
     );
     const holeInput = this.createRangeSlider(
       "hole",
       "Hole (Doughnut)",
       this.item.options.hole,
       0,
-      500
+      500,
     );
 
     return createElement("form", { className: "dv-form-column" }, [
