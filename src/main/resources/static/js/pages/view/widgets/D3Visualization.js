@@ -23,12 +23,10 @@ export default class D3Visualization {
     const observer = new ResizeObserver(
       debounce(() => {
         if (this.cachedData) {
-          console.log("resizing...");
-
           const { width, height } = getElementDimensions(root);
           this.resize(width, height);
         }
-      }, 10)
+      }, 10),
     );
     observer.observe(root);
 
@@ -58,7 +56,7 @@ export default class D3Visualization {
     };
 
     return await fetch(this.endpoint, options).then((response) =>
-      response.json()
+      response.json(),
     );
   }
 

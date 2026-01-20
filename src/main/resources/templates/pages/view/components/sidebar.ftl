@@ -20,7 +20,7 @@
         href="/editor/${id}"
       >
         <i class="bi bi-pencil"></i>
-        <span>Edit</span>
+        <span>Edit Pipeline</span>
       </a>
       
       <div class="dv-menu-title">Pipeline</div>

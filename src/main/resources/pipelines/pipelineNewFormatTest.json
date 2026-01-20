@@ -9,6 +9,7 @@
           "type": "CategoryNumber",
           "id": "total",
           "name": "Gen1",
+          "token": "CN",
           "extends": [],
           "settings": {
             "categoriesWhitelist": []
@@ -18,6 +19,7 @@
           "type": "TextFormatting",
           "id": "text-color",
           "name": "Gen2",
+          "token": "TF",
           "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",
@@ -34,6 +36,7 @@
           "type": "CategoryNumber",
           "id": "total",
           "name": "Gen3",
+          "token": "CN",
           "extends": [],
           "settings": {
             "categoriesWhitelist": []
@@ -43,6 +46,7 @@
           "type": "TextFormatting",
           "id": "text-color",
           "name": "Gen4",
+          "token": "TF",
           "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",

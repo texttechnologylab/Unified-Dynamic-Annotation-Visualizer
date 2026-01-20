@@ -10,6 +10,7 @@ import {
   saveSources,
 } from "./utils/actions.js";
 import SourceHandler from "./handler/source/SourceHandler.js";
+import { debounce } from "../../shared/modules/utils.js";
 
 export default class Editor {
   constructor() {
@@ -17,7 +18,7 @@ export default class Editor {
     this.defaults = {
       widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
       generators: Object.values(getter.generators).map(
-        (Handler) => Handler.defaults
+        (Handler) => Handler.defaults,
       ),
     };
   }
@@ -37,7 +38,7 @@ export default class Editor {
     // Replace whitespaces in the id with dashes
     this.input.addEventListener(
       "input",
-      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
+      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-")),
     );
 
     // Initialize buttons
@@ -53,7 +54,7 @@ export default class Editor {
     document
       .querySelector("#discard-button")
       .addEventListener("click", () =>
-        modal.confirm("Discard Changes", "Are you sure?", () => history.back())
+        modal.confirm("Discard Changes", "Are you sure?", () => history.back()),
       );
 
     document
@@ -63,15 +64,29 @@ export default class Editor {
 
   initGrid() {
     state.grid = GridStack.init({
-      minRow: 6,
+      // column: 24,
+      minRow: 12,
       float: true,
+      alwaysShowResizeHandle: false,
       acceptWidgets: ".dv-available-widget-draggable",
     });
+
+    // Update grid lines on resize
+    const main = document.querySelector(".dv-main");
+    const observer = new ResizeObserver(
+      debounce(() => {
+        main.style.setProperty(
+          "--grid-size",
+          state.grid.getCellHeight() / 2 + "px",
+        );
+      }, 10),
+    );
+    observer.observe(main);
 
     GridStack.setupDragIn(
       ".dv-available-widget-draggable",
       { helper: "clone" },
-      this.defaults.widgets
+      this.defaults.widgets,
     );
 
     // Append and initialize added widgets to item content
@@ -110,7 +125,7 @@ export default class Editor {
 
   async validate() {
     const pipelines = await fetch("/api/pipelines").then((response) =>
-      response.json()
+      response.json(),
     );
     const config = {
       id: this.input.value,
@@ -124,7 +139,7 @@ export default class Editor {
       modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        () => this.sendConfig("PUT", config)
+        () => this.sendConfig("PUT", config),
       );
     } else if (ok) {
       this.sendConfig("POST", config);
@@ -141,7 +156,7 @@ export default class Editor {
     };
 
     fetch("/api/pipelines", options).then(() =>
-      window.open("/view/" + config.id, "_self")
+      window.open("/view/" + config.id, "_self"),
     );
   }
 }

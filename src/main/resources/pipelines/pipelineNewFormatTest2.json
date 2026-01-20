@@ -5,28 +5,23 @@
       "id": "0",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
       "settings": {
-        "categoriesWhitelist": [
-          "NOUN",
-          "ADV",
-          "PRON",
-          "ADP",
-          "VERB"
-        ],
-        "sourceFilesWhitelist": [
-          "ID21200100.xmi"
-        ]
+        "categoriesWhitelist": ["NOUN", "ADV", "PRON", "ADP", "VERB"],
+        "sourceFilesWhitelist": ["ID21200100.xmi"]
       },
       "createsGenerators": [
         {
           "type": "CategoryNumber",
           "name": "Gen1",
           "id": "POS_Numbers",
+          "token": "CN",
+          "settings": {},
           "extends": []
         },
         {
           "type": "TextFormatting",
           "name": "Gen2",
           "id": "POS_Formatting",
+          "token": "TF",
           "extends": [],
           "settings": {
             "sofaFile": "ID21200100.xmi",
@@ -39,21 +34,22 @@
       "id": "1",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity",
       "settings": {
-        "sourceFilesWhitelist": [
-          "ID21200100.xmi"
-        ]
+        "sourceFilesWhitelist": ["ID21200100.xmi"]
       },
       "createsGenerators": [
         {
           "type": "CategoryNumber",
           "name": "Gen3",
           "id": "NE_Numbers",
+          "token": "CN",
+          "settings": {},
           "extends": []
         },
         {
           "type": "TextFormatting",
           "name": "Gen4",
           "id": "NE_Formatting",
+          "token": "TF",
           "extends": [],
           "settings": {
             "sofaFile": "ID21200100",
@@ -71,6 +67,8 @@
           "id": "Total_Formatting",
           "name": "My DerivedGenerator",
           "type": "TextFormatting",
+          "token": "TF",
+          "settings": {},
           "extends": ["POS_Formatting", "NE_Formatting"]
         }
       ]
@@ -78,10 +76,10 @@
   ],
   "widgets": [
     {
-      "type": "Text",
+      "type": "StaticText",
       "title": "header",
+      "src": "Parts of Speech and Named Entity",
       "options": {
-        "text": "Parts of Speech and Named Entity",
         "style": "text-center fs-2 fw-bold fst-normal text-decoration-underline"
       },
       "icon": "bi bi-fonts",
@@ -91,11 +89,10 @@
       "id": "Text-3ujztrd"
     },
     {
-      "type": "Image",
+      "type": "StaticImage",
       "title": "My Logo",
-      "options": {
-        "src": "https://placehold.co/600x400?text=My+Logo"
-      },
+      "src": "https://placehold.co/600x400?text=My+Logo",
+      "options": {},
       "icon": "bi bi-image",
       "x": 3,
       "y": 0,
@@ -148,10 +145,10 @@
       "id": "bar-chart2"
     },
     {
-      "type": "Text",
+      "type": "StaticText",
       "title": "Parts of Speech (POS) Caption",
+      "src": "This is a caption to explain something important for the chart above.",
       "options": {
-        "text": "This is a caption to explain something important for the chart above.",
         "style": "text-end fs-6 fw-normal fst-italic text-decoration-none"
       },
       "icon": "bi bi-fonts",
@@ -161,10 +158,10 @@
       "id": "Text-lwq4zbo"
     },
     {
-      "type": "Text",
+      "type": "StaticText",
       "title": "Named Entities (NE) Caption",
+      "src": "This is a caption to explain something important for the chart above.",
       "options": {
-        "text": "This is a caption to explain something important for the chart above.",
         "style": "text-start fs-6 fw-normal fst-italic text-decoration-none"
       },
       "icon": "bi bi-fonts",
