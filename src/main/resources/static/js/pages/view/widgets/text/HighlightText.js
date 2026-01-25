@@ -3,8 +3,8 @@ import ControlsHandler from "../../toolbar/ControlsHandler.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class HighlightText extends D3Visualization {
-  constructor(root, endpoint, {}) {
-    super(root, endpoint, { top: 16, right: 16, bottom: 16, left: 16 });
+  constructor(root, getData, {}) {
+    super(root, getData, { top: 16, right: 16, bottom: 16, left: 16 });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -22,7 +22,7 @@ export default class HighlightText extends D3Visualization {
       .style("width", this.width + this.margin.left + this.margin.right + "px")
       .style(
         "height",
-        this.height + this.margin.top + this.margin.bottom + "px"
+        this.height + this.margin.top + this.margin.bottom + "px",
       )
       .style("padding-top", this.margin.top + "px")
       .style("padding-right", this.margin.right + "px")
@@ -62,8 +62,8 @@ export default class HighlightText extends D3Visualization {
           this.mousemove(
             event.pageY,
             event.pageX + 20,
-            `<strong>${d.label}</strong>`
-          )
+            `<strong>${d.label}</strong>`,
+          ),
         )
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
     }

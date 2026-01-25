@@ -3,8 +3,8 @@ import ExportHandler from "../../toolbar/ExportHandler.js";
 import { randomId } from "../../../../shared/modules/utils.js";
 
 export default class VoronoiDiagram2D extends D3Visualization {
-  constructor(root, endpoint, { dots = true }) {
-    super(root, endpoint, { top: 40, right: 40, bottom: 40, left: 40 });
+  constructor(root, getData, { dots = true }) {
+    super(root, getData, { top: 40, right: 40, bottom: 40, left: 40 });
 
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",

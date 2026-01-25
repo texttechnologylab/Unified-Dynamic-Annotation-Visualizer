@@ -2,8 +2,8 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class Network2D extends D3Visualization {
-  constructor(root, endpoint, {}) {
-    super(root, endpoint, { top: 20, right: 20, bottom: 20, left: 20 });
+  constructor(root, getData, {}) {
+    super(root, getData, { top: 20, right: 20, bottom: 20, left: 20 });
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
       "png",
@@ -41,7 +41,7 @@ export default class Network2D extends D3Visualization {
       // links between nodes
       .force(
         "link",
-        d3.forceLink(data.links).id((item) => item.id)
+        d3.forceLink(data.links).id((item) => item.id),
       )
       // avoid node overlaps
       .force("collide", d3.forceCollide().radius(radius))
@@ -73,8 +73,8 @@ export default class Network2D extends D3Visualization {
           this.mousemove(
             event.pageY,
             event.pageX + 20,
-            `<strong>${data.name}</strong> (${data.id})`
-          )
+            `<strong>${data.name}</strong> (${data.id})`,
+          ),
         )
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
     }
@@ -97,7 +97,7 @@ export default class Network2D extends D3Visualization {
       .select("g")
       .attr(
         "transform",
-        `translate(${translateX},${translateY}) scale(${scale})`
+        `translate(${translateX},${translateY}) scale(${scale})`,
       );
   }
 }

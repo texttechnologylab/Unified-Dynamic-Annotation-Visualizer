@@ -1,3 +1,4 @@
+import { getAnnotations } from "../../../../api/annotations.api.js";
 import { modal } from "../../../../shared/classes/Modal.js";
 import { createElement } from "../../../../shared/modules/utils.js";
 import { createGenerator, removeSource } from "../../utils/actions.js";
@@ -14,6 +15,11 @@ export default class SourceHandler extends FormHandler {
     super(template.content.cloneNode(true).children[0]);
 
     this.source = source;
+    this.tokens = {
+      TextFormatting: "TF",
+      CategoryNumber: "CN",
+      MapCoordinates: "MC",
+    };
   }
 
   init(defaults) {
@@ -41,13 +47,13 @@ export default class SourceHandler extends FormHandler {
         [
           createElement("div", {
             className: "dv-generator-card-token",
-            textContent: item.token,
+            textContent: this.tokens[item.type],
           }),
           createElement("span", {
             className: "dv-text-truncate",
             textContent: item.type,
           }),
-        ]
+        ],
       );
       option.addEventListener("click", () => {
         const handler = createGenerator(item, this.source.id);
@@ -78,7 +84,7 @@ export default class SourceHandler extends FormHandler {
       const form = this.createForm();
 
       modal.render("Source Options", form, () =>
-        this.saveForm(Object.fromEntries(new FormData(form)))
+        this.saveForm(Object.fromEntries(new FormData(form))),
       );
     });
     buttons[2].addEventListener("click", () => {
@@ -94,8 +100,8 @@ export default class SourceHandler extends FormHandler {
     const uriInput = this.createSearchbox(
       "uri",
       "Annotation type",
-      "/api/annotations",
-      this.source.uri || ""
+      getAnnotations,
+      this.source.uri || "",
     );
 
     return createElement("form", { className: "dv-form-column" }, [uriInput]);

@@ -4,8 +4,8 @@ import ExportHandler from "../../toolbar/ExportHandler.js";
 import { flatData } from "../../../../shared/modules/utils.js";
 
 export default class LineChart extends D3Visualization {
-  constructor(root, endpoint, { line = true, dots = true }) {
-    super(root, endpoint, { top: 10, right: 30, bottom: 30, left: 60 });
+  constructor(root, getData, { line = true, dots = true }) {
+    super(root, getData, { top: 10, right: 30, bottom: 30, left: 60 });
 
     this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
@@ -92,8 +92,8 @@ export default class LineChart extends D3Visualization {
           this.mousemove(
             event.pageY,
             event.pageX + 20,
-            `(${data.x}, ${data.y})`
-          )
+            `(${data.x}, ${data.y})`,
+          ),
         )
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
     }

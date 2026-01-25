@@ -2,8 +2,8 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class Map2D extends D3Visualization {
-  constructor(root, endpoint, {}) {
-    super(root, endpoint, { top: 0, right: 0, bottom: 0, left: 0 });
+  constructor(root, getData, {}) {
+    super(root, getData, { top: 0, right: 0, bottom: 0, left: 0 });
 
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
@@ -73,8 +73,8 @@ export default class Map2D extends D3Visualization {
             this.mousemove(
               event.pageY,
               event.pageX + 20,
-              `<strong>${data.label}</strong>`
-            )
+              `<strong>${data.label}</strong>`,
+            ),
           )
           .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
       }

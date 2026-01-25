@@ -2,8 +2,8 @@ import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class ScrollableTable extends D3Visualization {
-  constructor(root, endpoint, { numbers = true }) {
-    super(root, endpoint, { top: 2, right: 2, bottom: 2, left: 2 });
+  constructor(root, getData, { numbers = true }) {
+    super(root, getData, { top: 2, right: 2, bottom: 2, left: 2 });
 
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "csv",
@@ -22,7 +22,7 @@ export default class ScrollableTable extends D3Visualization {
       .style("width", this.width + this.margin.left + this.margin.right + "px")
       .style(
         "height",
-        this.height + this.margin.top + this.margin.bottom + "px"
+        this.height + this.margin.top + this.margin.bottom + "px",
       )
       .style("padding-top", this.margin.top + "px")
       .style("padding-right", this.margin.right + "px")

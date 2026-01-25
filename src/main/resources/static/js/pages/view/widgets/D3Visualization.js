@@ -5,9 +5,9 @@ import {
 import { corpusFilter } from "../filter/CorpusFilter.js";
 
 export default class D3Visualization {
-  constructor(root, endpoint, margin) {
+  constructor(root, getData, margin) {
     this.root = d3.select(root);
-    this.endpoint = endpoint;
+    this.getData = getData;
 
     const { width, height } = getElementDimensions(root);
     this.width = width - margin.left - margin.right;
@@ -44,20 +44,10 @@ export default class D3Visualization {
   }
 
   async fetch() {
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        corpus: corpusFilter.filter,
-        chart: this.filter,
-      }),
-    };
-
-    return await fetch(this.endpoint, options).then((response) =>
-      response.json(),
-    );
+    return await this.getData({
+      corpus: corpusFilter.filter,
+      chart: this.filter,
+    });
   }
 
   clear() {

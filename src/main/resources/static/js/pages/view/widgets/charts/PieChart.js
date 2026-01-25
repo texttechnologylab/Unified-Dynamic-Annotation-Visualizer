@@ -8,10 +8,10 @@ import {
 } from "../../../../shared/modules/utils.js";
 
 export default class PieChart extends D3Visualization {
-  constructor(root, endpoint, { hole = 0 }) {
+  constructor(root, getData, { hole = 0 }) {
     const { width, height } = getElementDimensions(root);
 
-    super(root, endpoint, {
+    super(root, getData, {
       top: height / 2,
       right: width / 2,
       bottom: height / 2,
@@ -58,7 +58,7 @@ export default class PieChart extends D3Visualization {
         this.filter.sort = sort;
         this.filter.desc = order === "desc";
         this.fetch().then((data) => this.render(data));
-      }
+      },
     );
 
     // this.controls.appendInputRadio(
@@ -112,8 +112,8 @@ export default class PieChart extends D3Visualization {
           this.mousemove(
             event.pageY,
             event.pageX + 20,
-            `<strong>${data.label}</strong><br>${data.value}`
-          )
+            `<strong>${data.label}</strong><br>${data.value}`,
+          ),
         )
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
     }

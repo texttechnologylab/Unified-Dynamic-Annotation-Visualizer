@@ -11,6 +11,11 @@ import {
 } from "./utils/actions.js";
 import SourceHandler from "./handler/source/SourceHandler.js";
 import { debounce } from "../../shared/modules/utils.js";
+import {
+  createPipeline,
+  getPipelines,
+  updatePipeline,
+} from "../../api/pipelines.api.js";
 
 export default class Editor {
   constructor() {
@@ -124,9 +129,7 @@ export default class Editor {
   }
 
   async validate() {
-    const pipelines = await fetch("/api/pipelines").then((response) =>
-      response.json(),
-    );
+    const pipelines = await getPipelines();
     const config = {
       id: this.input.value,
       sources: saveSources(),
@@ -139,24 +142,12 @@ export default class Editor {
       modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        () => this.sendConfig("PUT", config),
+        async () => await updatePipeline(config),
       );
     } else if (ok) {
-      this.sendConfig("POST", config);
+      await createPipeline(config);
     }
-  }
 
-  sendConfig(method, config) {
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(config),
-    };
-
-    fetch("/api/pipelines", options).then(() =>
-      window.open("/view/" + config.id, "_self"),
-    );
+    window.open("/view/" + config.id, "_self");
   }
 }
