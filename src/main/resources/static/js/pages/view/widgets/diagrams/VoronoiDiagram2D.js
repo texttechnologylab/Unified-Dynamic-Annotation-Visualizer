@@ -1,11 +1,13 @@
 import D3Visualization from "../D3Visualization.js";
 import ExportHandler from "../../toolbar/ExportHandler.js";
 import { randomId } from "../../../../shared/modules/utils.js";
+import ControlsHandler from "../../toolbar/ControlsHandler.js";
 
 export default class VoronoiDiagram2D extends D3Visualization {
-  constructor(root, getData, { dots = true }) {
+  constructor(root, getData, {}) {
     super(root, getData, { top: 40, right: 40, bottom: 40, left: 40 });
 
+    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
     this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
       "svg",
       "png",
@@ -13,18 +15,30 @@ export default class VoronoiDiagram2D extends D3Visualization {
       "json",
     ]);
 
-    this.dots = dots;
+    this.draw = {
+      points: true,
+      polygons: false,
+    };
   }
 
   async fetch() {
-    return await fetch("/js/pages/view/widgets/diagrams/data.json").then(
-      (response) => response.json()
+    return await fetch("/js/pages/view/widgets/diagrams/points.json").then(
+      (response) => response.json(),
     );
   }
 
   async init() {
     const data = await this.fetch();
     this.render(data);
+
+    this.controls.appendSwitch("Center points", this.draw.points, () => {
+      this.draw.points = !this.draw.points;
+      this.render(this.cachedData);
+    });
+    this.controls.appendSwitch("Center polygons", this.draw.polygons, () => {
+      this.draw.polygons = !this.draw.polygons;
+      this.render(this.cachedData);
+    });
   }
 
   render(data) {
@@ -91,18 +105,8 @@ export default class VoronoiDiagram2D extends D3Visualization {
       return "M" + scaledPolygon.join("L") + "Z";
     }
 
-    if (this.dots) {
-      // Add the dots
-      area
-        .selectAll("circle")
-        .data(data)
-        .join("circle")
-        .attr("cx", (d) => xScale(d.x))
-        .attr("cy", (d) => yScale(d.y))
-        .attr("r", 4)
-        .style("fill", (d) => d.cell);
-    } else {
-      // Add the scaled polygons
+    // Draw the scaled polygons
+    if (this.draw.polygons) {
       area
         .selectAll("path.scaled")
         .data(data)
@@ -115,6 +119,18 @@ export default class VoronoiDiagram2D extends D3Visualization {
         .attr("stroke-width", 2);
     }
 
+    // Draw points
+    if (this.draw.points) {
+      area
+        .selectAll("circle")
+        .data(data)
+        .join("circle")
+        .attr("cx", (d) => xScale(d.x))
+        .attr("cy", (d) => yScale(d.y))
+        .attr("r", 4)
+        .style("fill", (d) => d.cell);
+    }
+
     // Add the cells
     area
       .selectAll("path.cell")
@@ -122,7 +138,7 @@ export default class VoronoiDiagram2D extends D3Visualization {
       .join("path")
       .attr("class", "cell")
       .attr("d", (_, i) => voronoi.renderCell(i))
-      .attr("fill", (d) => (this.dots ? d.cell : "transparent"))
+      .attr("fill", (d) => d.cell || "transparent")
       .attr("opacity", 0.5)
       .attr("stroke", "#555555");
 
@@ -159,7 +175,7 @@ export default class VoronoiDiagram2D extends D3Visualization {
           this.mousemove(
             event.pageY,
             event.pageX + 20,
-            `<strong>${data.label}</strong>`
+            `<strong>${data.label}</strong>`,
           );
         })
         .on("mouseleave", (event) => this.mouseleave(event.currentTarget));

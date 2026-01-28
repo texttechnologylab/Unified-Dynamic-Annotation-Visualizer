@@ -104,19 +104,21 @@ export default class ControlsHandler {
     });
   }
 
-  appendSwitch(name, onchange) {
-    this.node
+  appendSwitch(title, checked, onchange) {
+    const label = this.node
       .append("div")
-      .attr("class", "form-check form-switch")
       .append("label")
-      .attr("class", "form-check-label")
-      .text(name)
+      .attr("class", "dv-switch");
+
+    label
       .append("input")
       .attr("type", "checkbox")
-      .attr("class", "form-check-input")
-      .attr("value", name)
-      .property("checked", true)
+      .property("checked", checked)
       .on("change", (event) => onchange(event.target.value));
+
+    label.append("span").attr("class", "dv-switch-track");
+
+    label.append("span").text(title);
   }
 
   appendDoubleSlider(min, max, onchange) {

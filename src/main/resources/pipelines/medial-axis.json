@@ -1,0 +1,42 @@
+{
+  "id": "medial-axis",
+  "sources": [
+    {
+      "uri": "",
+      "createsGenerators": [
+        {
+          "name": "New MapCoordinates",
+          "type": "MapCoordinates",
+          "settings": {},
+          "extends": [],
+          "id": "MapCoordinates-eopktix"
+        }
+      ],
+      "id": "Source-vayjcsx"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "MedialAxis",
+      "title": "Medial Axis",
+      "generator": { "id": "MapCoordinates-eopktix" },
+      "options": {},
+      "w": 11,
+      "h": 8,
+      "x": 1,
+      "y": 3,
+      "id": "MedialAxis-zj7m165"
+    },
+    {
+      "type": "VoronoiDiagram2D",
+      "title": "Voronoi Diagram",
+      "generator": { "id": "MapCoordinates-eopktix" },
+      "options": {},
+      "w": 11,
+      "h": 8,
+      "x": 12,
+      "y": 3,
+      "id": "VoronoiDiagram2D-zj7m165"
+    }
+  ]
+}

@@ -2,15 +2,15 @@ import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
-import VoronoiDiagram2D from "../../../../view/widgets/diagrams/VoronoiDiagram2D.js";
+import MedialAxis from "../../../../view/widgets/diagrams/MedialAxis.js";
 
-export default class VoronoiDiagram2DHandler extends FormHandler {
+export default class MedialAxisHandler extends FormHandler {
   static defaults = {
-    type: "VoronoiDiagram2D",
-    title: "Voronoi Diagram 2D",
+    type: "MedialAxis",
+    title: "Medial Axis",
     generator: { id: "" },
     options: {},
-    icon: "bi bi-columns",
+    icon: "bi bi-slash-square",
     w: 8,
     h: 6,
   };
@@ -25,17 +25,13 @@ export default class VoronoiDiagram2DHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Voronoi Diagram Options", () => {
+    this.initButtons("Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new VoronoiDiagram2D(
-      this.element,
-      "",
-      this.item.options,
-    );
+    this.element._chart = new MedialAxis(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
@@ -76,28 +72,13 @@ const data = [
   {
     x: 10,
     y: 10,
-    cell: "#00618f",
-    fill: "#00618f",
-    stroke: "#555555",
-    label: "Cell 1",
-    abs: 0.5,
   },
   {
     x: 12,
     y: 32,
-    cell: "#3a4856",
-    fill: "#3a4856",
-    stroke: "#555555",
-    label: "Cell 7",
-    abs: 0.2,
   },
   {
     x: 23,
     y: 23,
-    cell: "#9eadbd",
-    fill: "#9eadbd",
-    stroke: "#555555",
-    label: "Cell 10",
-    abs: 0.1,
   },
 ];

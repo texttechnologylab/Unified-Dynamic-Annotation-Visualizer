@@ -1,6 +1,7 @@
 import BarChart from "./widgets/charts/BarChart.js";
 import LineChart from "./widgets/charts/LineChart.js";
 import PieChart from "./widgets/charts/PieChart.js";
+import MedialAxis from "./widgets/diagrams/MedialAxis.js";
 import VoronoiDiagram2D from "./widgets/diagrams/VoronoiDiagram2D.js";
 import HighlightText from "./widgets/text/HighlightText.js";
 import Map2D from "./widgets/maps/Map2D.js";
@@ -16,6 +17,7 @@ const _dynamic = {
   BarChart,
   LineChart,
   PieChart,
+  MedialAxis,
   VoronoiDiagram2D,
   HighlightText,
   Map2D,
