@@ -1,19 +1,10 @@
 import D3Visualization from "../D3Visualization.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
 import { randomId } from "../../../../shared/modules/utils.js";
-import ControlsHandler from "../../toolbar/ControlsHandler.js";
+import { getChanges } from "../../../../api/llm.api.js";
 
-export default class VoronoiDiagram2D extends D3Visualization {
+export default class VoronoiDiagram extends D3Visualization {
   constructor(root, getData, {}) {
     super(root, getData, { top: 40, right: 40, bottom: 40, left: 40 });
-
-    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
-    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
-      "svg",
-      "png",
-      "csv",
-      "json",
-    ]);
 
     this.draw = {
       points: true,
@@ -22,9 +13,7 @@ export default class VoronoiDiagram2D extends D3Visualization {
   }
 
   async fetch() {
-    return await fetch("/js/pages/view/widgets/diagrams/points.json").then(
-      (response) => response.json(),
-    );
+    return await fetch("/data.json").then((response) => response.json());
   }
 
   async init() {
@@ -33,11 +22,11 @@ export default class VoronoiDiagram2D extends D3Visualization {
 
     this.controls.appendSwitch("Center points", this.draw.points, () => {
       this.draw.points = !this.draw.points;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
     this.controls.appendSwitch("Center polygons", this.draw.polygons, () => {
       this.draw.polygons = !this.draw.polygons;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
   }
 
@@ -108,27 +97,15 @@ export default class VoronoiDiagram2D extends D3Visualization {
     // Draw the scaled polygons
     if (this.draw.polygons) {
       area
-        .selectAll("path.scaled")
+        .selectAll("path.polygon")
         .data(data)
         .join("path")
-        .attr("class", "scaled")
+        .attr("class", "polygon")
         .attr("d", (d, i) => renderPolygon(i, d.abs))
         .attr("fill", (_, i) => data[i].fill)
         .attr("opacity", 0.7)
         .attr("stroke", (_, i) => data[i].stroke)
         .attr("stroke-width", 2);
-    }
-
-    // Draw points
-    if (this.draw.points) {
-      area
-        .selectAll("circle")
-        .data(data)
-        .join("circle")
-        .attr("cx", (d) => xScale(d.x))
-        .attr("cy", (d) => yScale(d.y))
-        .attr("r", 4)
-        .style("fill", (d) => d.cell);
     }
 
     // Add the cells
@@ -139,8 +116,19 @@ export default class VoronoiDiagram2D extends D3Visualization {
       .attr("class", "cell")
       .attr("d", (_, i) => voronoi.renderCell(i))
       .attr("fill", (d) => d.cell || "transparent")
-      .attr("opacity", 0.5)
       .attr("stroke", "#555555");
+
+    // Draw points
+    if (this.draw.points) {
+      area
+        .selectAll("circle")
+        .data(data)
+        .join("circle")
+        .attr("cx", (d) => xScale(d.x))
+        .attr("cy", (d) => yScale(d.y))
+        .attr("r", 4)
+        .style("fill", (d) => d.fill);
+    }
 
     if (!this.tooltip.empty()) {
       // Add zoom
@@ -168,23 +156,14 @@ export default class VoronoiDiagram2D extends D3Visualization {
       this.svg.call(zoom);
 
       // Add tooltips
-      area
-        .selectAll("path")
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, data) => {
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `<strong>${data.label}</strong>`,
-          );
-        })
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      this.enableTooltip(
+        ".zoom-area > path.cell",
+        (d) => `<strong>${d.label}</strong>`,
+      );
     }
 
-    // Pass data to export handler
-    this.exports.update(this.filter, data, this.svg.node());
-
-    this.cachedData = data;
+    // Cache rendered data
+    this.data = data;
   }
 
   domain(data, fn, padding = 0.05) {
@@ -192,15 +171,5 @@ export default class VoronoiDiagram2D extends D3Visualization {
     const range = max - min;
 
     return [min - range * padding, max + range * padding];
-  }
-
-  mouseover(target) {
-    this.tooltip.style("opacity", 0.9);
-    d3.select(target).style("opacity", 0.4);
-  }
-
-  mouseleave(target) {
-    this.tooltip.style("opacity", 0);
-    d3.select(target).style("opacity", 0.5);
   }
 }

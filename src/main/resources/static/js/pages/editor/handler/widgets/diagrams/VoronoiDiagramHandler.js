@@ -1,19 +1,17 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import ScrollableTable from "../../../../view/widgets/tables/ScrollableTable.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
+import VoronoiDiagram from "../../../../view/widgets/diagrams/VoronoiDiagram.js";
 
-export default class ScrollableTableHandler extends FormHandler {
+export default class VoronoiDiagramHandler extends FormHandler {
   static defaults = {
-    type: "ScrollableTable",
-    title: "Table",
+    type: "VoronoiDiagram",
+    title: "Voronoi Diagram",
     generator: { id: "" },
-    options: {
-      numbers: true,
-    },
-    icon: "bi bi-table",
-    w: 6,
+    options: {},
+    icon: "bi bi-columns",
+    w: 8,
     h: 6,
   };
 
@@ -27,13 +25,13 @@ export default class ScrollableTableHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Table Options", () => {
+    this.initButtons("Voronoi Diagram Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new ScrollableTable(
+    this.element._chart = new VoronoiDiagram(
       this.element,
       "",
       this.item.options,
@@ -43,7 +41,7 @@ export default class ScrollableTableHandler extends FormHandler {
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators([]);
+    const generatorOptions = prepareGenerators(["MapCoordinates"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(
@@ -52,16 +50,10 @@ export default class ScrollableTableHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id),
     );
-    const numbersInput = this.createSwitch(
-      "numbers",
-      "Row numbers",
-      this.item.options.numbers,
-    );
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
-      numbersInput,
     ]);
   }
 
@@ -69,7 +61,6 @@ export default class ScrollableTableHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.numbers = form.numbers === "on";
 
     this.showAlert(!form.generator);
 
@@ -77,21 +68,36 @@ export default class ScrollableTableHandler extends FormHandler {
     this.span.textContent = form.title;
 
     // Update chart
-    this.element._chart.numbers = this.item.options.numbers;
     this.element._chart.render(this.element._data);
   }
 }
 
 const data = [
-  ["Heading", "Heading", "Heading"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
-  ["Cell", "Cell", "Cell"],
+  {
+    x: 10,
+    y: 10,
+    cell: "#00618f",
+    fill: "#00618f",
+    stroke: "#555555",
+    label: "Cell 1",
+    abs: 0.5,
+  },
+  {
+    x: 12,
+    y: 32,
+    cell: "#3a4856",
+    fill: "#3a4856",
+    stroke: "#555555",
+    label: "Cell 7",
+    abs: 0.2,
+  },
+  {
+    x: 23,
+    y: 23,
+    cell: "#9eadbd",
+    fill: "#9eadbd",
+    stroke: "#555555",
+    label: "Cell 10",
+    abs: 0.1,
+  },
 ];

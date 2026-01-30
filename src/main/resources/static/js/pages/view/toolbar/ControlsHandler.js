@@ -1,8 +1,8 @@
 import { minOf, maxOf, randomId } from "../../../shared/modules/utils.js";
 
 export default class ControlsHandler {
-  constructor(node, icons) {
-    this.node = node;
+  constructor(widget, icons) {
+    this.node = widget.root.select(".dv-sidepanel-body");
     this.icons = {
       asc: "bi bi-sort-up",
       desc: "bi bi-sort-down",
@@ -10,6 +10,34 @@ export default class ControlsHandler {
       regex: "bi bi-regex",
       ...icons,
     };
+  }
+
+  appendStylingAssistant(onclick) {
+    this.node.append("label").attr("class", "dv-label").text("title");
+
+    const group = this.node.append("div").attr("class", "dv-input-group");
+
+    group
+      .append("button")
+      .attr("class", "dv-btn")
+      .attr("type", "button")
+      .append("i")
+      .attr("class", "bi bi-arrow-counterclockwise");
+
+    // Append text input
+    const input = group
+      .append("input")
+      .attr("class", "dv-text-input")
+      .attr("type", "text")
+      .attr("placeholder", "Reduce the opacity of all circles.");
+
+    group
+      .append("button")
+      .attr("class", "dv-btn")
+      .attr("type", "button")
+      .append("i")
+      .attr("class", "bi bi-send")
+      .on("click", () => onclick(input.value));
   }
 
   appendInputRadio(title, radios, onchange) {

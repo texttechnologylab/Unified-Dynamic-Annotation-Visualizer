@@ -138,13 +138,13 @@
   ],
   "widgets": [
     {
-      "id": "VoronoiDiagram2D-jsdfksj",
+      "id": "VoronoiDiagram-jsdfksj",
       "x": 0,
       "y": 2,
       "w": 12,
       "h": 10,
-      "type": "VoronoiDiagram2D",
-      "title": "Voronoi Diagram 2D",
+      "type": "VoronoiDiagram",
+      "title": "Voronoi Diagram",
       "generator": {
         "id": "VoronoiMap"
       },
@@ -154,13 +154,13 @@
       }
     },
     {
-      "id": "VoronoiDiagram2D-jsdffsdf",
+      "id": "VoronoiDiagram-jsdffsdf",
       "x": 12,
       "y": 2,
       "w": 12,
       "h": 10,
-      "type": "VoronoiDiagram2D",
-      "title": "Voronoi Diagram 2D",
+      "type": "VoronoiDiagram",
+      "title": "Voronoi Diagram",
       "generator": {
         "id": "VoronoiMap"
       },

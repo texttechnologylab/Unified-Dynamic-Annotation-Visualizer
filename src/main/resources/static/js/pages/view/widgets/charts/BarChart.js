@@ -1,19 +1,9 @@
 import D3Visualization from "../D3Visualization.js";
-import ControlsHandler from "../../toolbar/ControlsHandler.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
 import { maxOf, minOf } from "../../../../shared/modules/utils.js";
 
 export default class BarChart extends D3Visualization {
   constructor(root, getData, { horizontal = false }) {
     super(root, getData, { top: 30, right: 30, bottom: 70, left: 60 });
-
-    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
-    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
-      "svg",
-      "png",
-      "csv",
-      "json",
-    ]);
 
     this.horizontal = horizontal;
   }
@@ -25,7 +15,7 @@ export default class BarChart extends D3Visualization {
     const min = minOf(data.map((d) => d.value));
     const max = maxOf(data.map((d) => d.value));
 
-    // Add controls
+    // Add sort controls
     this.controls.appendSelectRadio(
       "Sort by",
       ["value", "label"],
@@ -37,16 +27,7 @@ export default class BarChart extends D3Visualization {
       },
     );
 
-    // this.controls.appendInputRadio(
-    //   "Filter labels by",
-    //   ["includes", "regex"],
-    //   (input, type) => {
-    //     this.filter.filter = input;
-    //     this.filter.regex = type === "regex";
-    //     this.fetch().then((data) => this.render(data));
-    //   }
-    // );
-
+    // Add range slider
     this.controls.appendDoubleSlider(min, max, (min, max) => {
       this.filter.min = min;
       this.filter.max = max;
@@ -96,23 +77,14 @@ export default class BarChart extends D3Visualization {
       .attr("fill", (item) => item.color);
 
     if (!this.tooltip.empty()) {
-      this.svg
-        .selectAll("rect")
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, data) =>
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `<strong>${data.label}</strong><br>${data.value}`,
-          ),
-        )
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      this.enableTooltip(
+        "rect",
+        (d) => `<strong>${d.label}</strong><br>${d.value}`,
+      );
     }
 
-    // Pass data to export handler
-    this.exports.update(this.filter, data, this.svg.node());
-
-    this.cachedData = data;
+    // Cache rendered data
+    this.data = data;
   }
 
   band(data) {

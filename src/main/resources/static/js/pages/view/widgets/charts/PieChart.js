@@ -1,6 +1,4 @@
 import D3Visualization from "../D3Visualization.js";
-import ControlsHandler from "../../toolbar/ControlsHandler.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
 import {
   getElementDimensions,
   maxOf,
@@ -18,14 +16,6 @@ export default class PieChart extends D3Visualization {
       left: width / 2,
     });
 
-    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
-    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
-      "svg",
-      "png",
-      "csv",
-      "json",
-    ]);
-
     this.radius = minOf([width, height]) / 2;
     this.hole = hole;
   }
@@ -39,7 +29,7 @@ export default class PieChart extends D3Visualization {
     };
     this.radius = minOf([width, height]) / 2;
 
-    this.render(this.cachedData);
+    this.render(this.data);
   }
 
   async init() {
@@ -49,7 +39,7 @@ export default class PieChart extends D3Visualization {
     const min = minOf(data.map((d) => d.value));
     const max = maxOf(data.map((d) => d.value));
 
-    // Add controls
+    // Add sort controls
     this.controls.appendSelectRadio(
       "Sort by",
       ["value", "label"],
@@ -61,16 +51,7 @@ export default class PieChart extends D3Visualization {
       },
     );
 
-    // this.controls.appendInputRadio(
-    //   "Filter labels by",
-    //   ["includes", "regex"],
-    //   (input, type) => {
-    //     this.filter.filter = input;
-    //     this.filter.regex = type === "regex";
-    //     this.fetch().then((data) => this.render(data));
-    //   }
-    // );
-
+    // Add range slider
     this.controls.appendDoubleSlider(min, max, (min, max) => {
       this.filter.min = min;
       this.filter.max = max;
@@ -105,22 +86,13 @@ export default class PieChart extends D3Visualization {
       .style("stroke-width", "2px");
 
     if (!this.tooltip.empty()) {
-      this.svg
-        .selectAll("path")
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, { data }) =>
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `<strong>${data.label}</strong><br>${data.value}`,
-          ),
-        )
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      this.enableTooltip(
+        "path",
+        (d) => `<strong>${d.data.label}</strong><br>${d.value}`,
+      );
     }
 
-    // Pass data to export handler
-    this.exports.update(this.filter, data, this.svg.node());
-
-    this.cachedData = data;
+    // Cache rendered data
+    this.data = data;
   }
 }

@@ -1,18 +1,8 @@
 import D3Visualization from "../D3Visualization.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
-import ControlsHandler from "../../toolbar/ControlsHandler.js";
 
 export default class MedialAxis extends D3Visualization {
   constructor(root, getData, {}) {
     super(root, getData, { top: 10, right: 10, bottom: 10, left: 10 });
-
-    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
-    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
-      "svg",
-      "png",
-      "csv",
-      "json",
-    ]);
 
     this.draw = {
       boundary: true,
@@ -24,9 +14,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   async fetch() {
-    return await fetch("/js/pages/view/widgets/diagrams/points.json").then(
-      (response) => response.json(),
-    );
+    return await fetch("/points.json").then((response) => response.json());
   }
 
   async init() {
@@ -35,27 +23,27 @@ export default class MedialAxis extends D3Visualization {
 
     this.controls.appendSwitch("Boundary points", this.draw.boundary, () => {
       this.draw.boundary = !this.draw.boundary;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
     this.controls.appendSwitch(
       "Delaunay triangles",
       this.draw.triangles,
       () => {
         this.draw.triangles = !this.draw.triangles;
-        this.render(this.cachedData);
+        this.render(this.data);
       },
     );
     this.controls.appendSwitch("Circumcircles", this.draw.circles, () => {
       this.draw.circles = !this.draw.circles;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
     this.controls.appendSwitch("Circumcenters", this.draw.centers, () => {
       this.draw.centers = !this.draw.centers;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
     this.controls.appendSwitch("Voronoi Edges", this.draw.voronoi, () => {
       this.draw.voronoi = !this.draw.voronoi;
-      this.render(this.cachedData);
+      this.render(this.data);
     });
   }
 
@@ -119,10 +107,8 @@ export default class MedialAxis extends D3Visualization {
       this.drawCircles("boundary", points);
     }
 
-    // Pass data to export handler
-    this.exports.update(this.filter, data, this.svg.node());
-
-    this.cachedData = data;
+    // Cache rendered data
+    this.data = data;
   }
 
   domain(data, fn, padding = 0.05) {

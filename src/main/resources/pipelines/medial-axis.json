@@ -28,7 +28,7 @@
       "id": "MedialAxis-zj7m165"
     },
     {
-      "type": "VoronoiDiagram2D",
+      "type": "VoronoiDiagram",
       "title": "Voronoi Diagram",
       "generator": { "id": "MapCoordinates-eopktix" },
       "options": {},
@@ -36,7 +36,7 @@
       "h": 8,
       "x": 12,
       "y": 3,
-      "id": "VoronoiDiagram2D-zj7m165"
+      "id": "VoronoiDiagram-zj7m165"
     }
   ]
 }

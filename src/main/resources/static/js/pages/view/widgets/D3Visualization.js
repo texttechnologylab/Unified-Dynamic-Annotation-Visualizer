@@ -3,6 +3,8 @@ import {
   getElementDimensions,
 } from "../../../shared/modules/utils.js";
 import { corpusFilter } from "../filter/CorpusFilter.js";
+import ControlsHandler from "../toolbar/ControlsHandler.js";
+import ExportHandler from "../toolbar/ExportHandler.js";
 
 export default class D3Visualization {
   constructor(root, getData, margin) {
@@ -15,22 +17,23 @@ export default class D3Visualization {
     this.margin = margin;
 
     this.filter = {};
+    this.controls = new ControlsHandler(this);
+    this.exports = new ExportHandler(this, ["svg", "png", "csv", "json"]);
 
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.svg = this.root.select(".dv-chart-area").append("svg");
+    this.data = null;
 
     // Re-render chart on resize of container
     const observer = new ResizeObserver(
       debounce(() => {
-        if (this.cachedData) {
+        if (this.data) {
           const { width, height } = getElementDimensions(root);
           this.resize(width, height);
         }
       }, 10),
     );
     observer.observe(root);
-
-    this.cachedData = null;
 
     // Show chart
     this.root.classed("hide", false);
@@ -40,7 +43,7 @@ export default class D3Visualization {
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
-    this.render(this.cachedData);
+    this.render(this.data);
   }
 
   async fetch() {
@@ -68,20 +71,28 @@ export default class D3Visualization {
     throw new Error("Method render() not implemented.");
   }
 
-  mouseover(target) {
+  mouseover(event) {
     this.tooltip.style("opacity", 0.9);
-    d3.select(target).style("opacity", 0.8);
+    d3.select(event.currentTarget).style("opacity", 0.8);
   }
 
-  mousemove(top, left, html) {
+  mousemove(event, content) {
     this.tooltip
-      .html(html)
-      .style("top", top + "px")
-      .style("left", left + "px");
+      .html(content)
+      .style("top", event.pageY + "px")
+      .style("left", event.pageX + 20 + "px");
   }
 
-  mouseleave(target) {
+  mouseleave(event) {
     this.tooltip.style("opacity", 0);
-    d3.select(target).style("opacity", 1);
+    d3.select(event.currentTarget).style("opacity", 1);
+  }
+
+  enableTooltip(selector, content) {
+    this.svg
+      .selectAll(selector)
+      .on("mouseover", (event) => this.mouseover(event))
+      .on("mousemove", (event, d) => this.mousemove(event, content(d)))
+      .on("mouseleave", (event) => this.mouseleave(event));
   }
 }

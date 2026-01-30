@@ -1,19 +1,9 @@
 import D3Visualization from "../D3Visualization.js";
-import ControlsHandler from "../../toolbar/ControlsHandler.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
 import { flatData } from "../../../../shared/modules/utils.js";
 
 export default class LineChart extends D3Visualization {
   constructor(root, getData, { line = true, dots = true }) {
     super(root, getData, { top: 10, right: 30, bottom: 30, left: 60 });
-
-    this.controls = new ControlsHandler(this.root.select(".dv-sidepanel-body"));
-    this.exports = new ExportHandler(this.root.select(".dv-dropdown-menu"), [
-      "svg",
-      "png",
-      "csv",
-      "json",
-    ]);
 
     this.line = line;
     this.dots = dots;
@@ -85,22 +75,10 @@ export default class LineChart extends D3Visualization {
       .attr("fill", this.dots ? (item) => item.color : "transparent");
 
     if (!this.tooltip.empty()) {
-      this.svg
-        .selectAll("circle")
-        .on("mouseover", (event) => this.mouseover(event.currentTarget))
-        .on("mousemove", (event, data) =>
-          this.mousemove(
-            event.pageY,
-            event.pageX + 20,
-            `(${data.x}, ${data.y})`,
-          ),
-        )
-        .on("mouseleave", (event) => this.mouseleave(event.currentTarget));
+      this.enableTooltip("circle", (d) => `(${d.x}, ${d.y})`);
     }
 
-    // Pass data to export handler
-    this.exports.update(this.filter, coordinates, this.svg.node());
-
-    this.cachedData = data;
+    // Cache rendered data
+    this.data = data;
   }
 }
