@@ -1,6 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import PieChart from "../../../../view/widgets/charts/PieChart.js";
+import PieChart from "../../../../view/widgets/dynamic/PieChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 

@@ -1,6 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import BarChart from "../../../../view/widgets/charts/BarChart.js";
+import BarChart from "../../../../view/widgets/dynamic/BarChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 

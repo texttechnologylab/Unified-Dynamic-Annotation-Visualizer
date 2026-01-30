@@ -1,9 +1,9 @@
-import BarChart from "./widgets/charts/BarChart.js";
-import LineChart from "./widgets/charts/LineChart.js";
-import PieChart from "./widgets/charts/PieChart.js";
-import MedialAxis from "./widgets/diagrams/MedialAxis.js";
-import VoronoiDiagram from "./widgets/diagrams/VoronoiDiagram.js";
-import HighlightText from "./widgets/text/HighlightText.js";
+import BarChart from "./widgets/dynamic/BarChart.js";
+import LineChart from "./widgets/dynamic/LineChart.js";
+import PieChart from "./widgets/dynamic/PieChart.js";
+import MedialAxis from "./widgets/dynamic/MedialAxis.js";
+import VoronoiDiagram from "./widgets/dynamic/VoronoiDiagram.js";
+import HighlightText from "./widgets/dynamic/HighlightText.js";
 
 import StaticImage from "./widgets/static/StaticImage.js";
 import StaticText from "./widgets/static/StaticText.js";

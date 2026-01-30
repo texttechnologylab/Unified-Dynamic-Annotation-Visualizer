@@ -1,6 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import LineChart from "../../../../view/widgets/charts/LineChart.js";
+import LineChart from "../../../../view/widgets/dynamic/LineChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 

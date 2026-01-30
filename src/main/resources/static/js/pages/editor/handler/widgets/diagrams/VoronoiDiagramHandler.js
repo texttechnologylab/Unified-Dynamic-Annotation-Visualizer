@@ -2,7 +2,7 @@ import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
-import VoronoiDiagram from "../../../../view/widgets/diagrams/VoronoiDiagram.js";
+import VoronoiDiagram from "../../../../view/widgets/dynamic/VoronoiDiagram.js";
 
 export default class VoronoiDiagramHandler extends FormHandler {
   static defaults = {

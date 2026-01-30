@@ -2,7 +2,7 @@ import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
-import MedialAxis from "../../../../view/widgets/diagrams/MedialAxis.js";
+import MedialAxis from "../../../../view/widgets/dynamic/MedialAxis.js";
 
 export default class MedialAxisHandler extends FormHandler {
   static defaults = {
