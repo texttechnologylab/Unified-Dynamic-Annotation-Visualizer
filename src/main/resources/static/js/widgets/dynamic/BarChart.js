@@ -1,5 +1,5 @@
 import D3Visualization from "../D3Visualization.js";
-import { maxOf, minOf } from "../../../../shared/modules/utils.js";
+import { maxOf, minOf } from "../../shared/modules/utils.js";
 
 export default class BarChart extends D3Visualization {
   constructor(root, getData, { horizontal = false }) {

@@ -1,5 +1,5 @@
+import ExportHandler from "../../pages/view/toolbar/ExportHandler.js";
 import D3Visualization from "../D3Visualization.js";
-import ExportHandler from "../../toolbar/ExportHandler.js";
 
 export default class HighlightText extends D3Visualization {
   constructor(root, getData, {}) {

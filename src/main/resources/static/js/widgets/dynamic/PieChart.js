@@ -1,9 +1,9 @@
 import D3Visualization from "../D3Visualization.js";
 import {
-  getElementDimensions,
   maxOf,
   minOf,
-} from "../../../../shared/modules/utils.js";
+  getElementDimensions,
+} from "../../shared/modules/utils.js";
 
 export default class PieChart extends D3Visualization {
   constructor(root, getData, { hole = 0 }) {

@@ -1,19 +1,16 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import LineChart from "../../../../view/widgets/dynamic/LineChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
+import MedialAxis from "../../../../../widgets/dynamic/MedialAxis.js";
 
-export default class LineChartHandler extends FormHandler {
+export default class MedialAxisHandler extends FormHandler {
   static defaults = {
-    type: "LineChart",
-    title: "Line Chart",
+    type: "MedialAxis",
+    title: "Medial Axis",
     generator: { id: "" },
-    options: {
-      line: true,
-      dots: true,
-    },
-    icon: "bi bi-graph-up",
+    options: {},
+    icon: "bi bi-slash-square",
     w: 8,
     h: 6,
   };
@@ -28,13 +25,13 @@ export default class LineChartHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Line Chart Options", () => {
+    this.initButtons("Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new LineChart(this.element, "", this.item.options);
+    this.element._chart = new MedialAxis(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
@@ -49,32 +46,10 @@ export default class LineChartHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id),
     );
-    const lineInput = this.createSwitch(
-      "line",
-      "Draw lines",
-      this.item.options.line,
-    );
-    const dotsInput = this.createSwitch(
-      "dots",
-      "Draw dots",
-      this.item.options.dots,
-    );
-    lineInput.querySelector("input").addEventListener("change", (event) => {
-      if (!event.target.checked) {
-        dotsInput.querySelector("input").checked = true;
-      }
-    });
-    dotsInput.querySelector("input").addEventListener("change", (event) => {
-      if (!event.target.checked) {
-        lineInput.querySelector("input").checked = true;
-      }
-    });
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
-      lineInput,
-      dotsInput,
     ]);
   }
 
@@ -82,8 +57,6 @@ export default class LineChartHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.line = form.line === "on";
-    this.item.options.dots = form.dots === "on";
 
     this.showAlert(!form.generator);
 
@@ -91,41 +64,21 @@ export default class LineChartHandler extends FormHandler {
     this.span.textContent = form.title;
 
     // Update chart
-    this.element._chart.line = this.item.options.line;
-    this.element._chart.dots = this.item.options.dots;
     this.element._chart.render(this.element._data);
   }
 }
 
 const data = [
   {
-    name: "Dataset",
-    color: "#00618f",
-    coordinates: [
-      {
-        y: 5,
-        x: 0,
-      },
-      {
-        y: 20,
-        x: 20,
-      },
-      {
-        y: 10,
-        x: 40,
-      },
-      {
-        y: 40,
-        x: 60,
-      },
-      {
-        y: 5,
-        x: 80,
-      },
-      {
-        y: 60,
-        x: 100,
-      },
-    ],
+    x: 10,
+    y: 10,
+  },
+  {
+    x: 12,
+    y: 32,
+  },
+  {
+    x: 23,
+    y: 23,
   },
 ];

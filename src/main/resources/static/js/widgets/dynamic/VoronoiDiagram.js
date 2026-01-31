@@ -1,6 +1,6 @@
 import D3Visualization from "../D3Visualization.js";
-import { randomId } from "../../../../shared/modules/utils.js";
-import { getChanges } from "../../../../api/llm.api.js";
+import { randomId } from "../../shared/modules/utils.js";
+import { getChanges } from "../../api/llm.api.js";
 
 export default class VoronoiDiagram extends D3Visualization {
   constructor(root, getData, {}) {

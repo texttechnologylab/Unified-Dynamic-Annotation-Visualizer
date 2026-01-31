@@ -1,6 +1,6 @@
 import { modal } from "../../shared/classes/Modal.js";
 import accordions from "../../shared/modules/accordions.js";
-import getter from "./getter.js";
+import getter from "./handler/getter.js";
 import { identifierValid, widgetsValid } from "./utils/validate.js";
 import state from "./utils/state.js";
 import {
@@ -9,7 +9,7 @@ import {
   loadSources,
   saveSources,
 } from "./utils/actions.js";
-import SourceHandler from "./handler/source/SourceHandler.js";
+import SourceHandler from "./handler/generators/SourceHandler.js";
 import { debounce } from "../../shared/modules/utils.js";
 import {
   createPipeline,

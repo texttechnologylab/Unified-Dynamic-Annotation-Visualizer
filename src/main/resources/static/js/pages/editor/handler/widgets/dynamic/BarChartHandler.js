@@ -2,15 +2,17 @@ import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
-import VoronoiDiagram from "../../../../view/widgets/dynamic/VoronoiDiagram.js";
+import BarChart from "../../../../../widgets/dynamic/BarChart.js";
 
-export default class VoronoiDiagramHandler extends FormHandler {
+export default class BarChartHandler extends FormHandler {
   static defaults = {
-    type: "VoronoiDiagram",
-    title: "Voronoi Diagram",
+    type: "BarChart",
+    title: "Bar Chart",
     generator: { id: "" },
-    options: {},
-    icon: "bi bi-columns",
+    options: {
+      horizontal: false,
+    },
+    icon: "bi bi-bar-chart",
     w: 8,
     h: 6,
   };
@@ -25,23 +27,19 @@ export default class VoronoiDiagramHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Voronoi Diagram Options", () => {
+    this.initButtons("Bar Chart Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new VoronoiDiagram(
-      this.element,
-      "",
-      this.item.options,
-    );
+    this.element._chart = new BarChart(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators(["MapCoordinates"]);
+    const generatorOptions = prepareGenerators(["CategoryNumber"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(
@@ -50,10 +48,17 @@ export default class VoronoiDiagramHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id),
     );
+    const orientationInput = this.createSelect(
+      "orientation",
+      "Orientation",
+      ["horizontal", "vertical"],
+      this.item.options.horizontal ? "horizontal" : "vertical",
+    );
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
+      orientationInput,
     ]);
   }
 
@@ -61,6 +66,7 @@ export default class VoronoiDiagramHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
+    this.item.options.horizontal = form.orientation === "horizontal";
 
     this.showAlert(!form.generator);
 
@@ -68,36 +74,25 @@ export default class VoronoiDiagramHandler extends FormHandler {
     this.span.textContent = form.title;
 
     // Update chart
+    this.element._chart.horizontal = this.item.options.horizontal;
     this.element._chart.render(this.element._data);
   }
 }
 
 const data = [
   {
-    x: 10,
-    y: 10,
-    cell: "#00618f",
-    fill: "#00618f",
-    stroke: "#555555",
-    label: "Cell 1",
-    abs: 0.5,
+    label: "Label 1",
+    value: 140,
+    color: "#00618f",
   },
   {
-    x: 12,
-    y: 32,
-    cell: "#3a4856",
-    fill: "#3a4856",
-    stroke: "#555555",
-    label: "Cell 7",
-    abs: 0.2,
+    label: "Label 2",
+    value: 73,
+    color: "#3a4856",
   },
   {
-    x: 23,
-    y: 23,
-    cell: "#9eadbd",
-    fill: "#9eadbd",
-    stroke: "#555555",
-    label: "Cell 10",
-    abs: 0.1,
+    label: "Label 3",
+    value: 56,
+    color: "#9eadbd",
   },
 ];

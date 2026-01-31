@@ -1,5 +1,5 @@
 import D3Visualization from "../D3Visualization.js";
-import { flatData } from "../../../../shared/modules/utils.js";
+import { flatData } from "../../shared/modules/utils.js";
 
 export default class LineChart extends D3Visualization {
   constructor(root, getData, { line = true, dots = true }) {

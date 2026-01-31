@@ -1,19 +1,17 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import PieChart from "../../../../view/widgets/dynamic/PieChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
+import VoronoiDiagram from "../../../../../widgets/dynamic/VoronoiDiagram.js";
 
-export default class PieChartHandler extends FormHandler {
+export default class VoronoiDiagramHandler extends FormHandler {
   static defaults = {
-    type: "PieChart",
-    title: "Pie Chart",
+    type: "VoronoiDiagram",
+    title: "Voronoi Diagram",
     generator: { id: "" },
-    options: {
-      hole: 0,
-    },
-    icon: "bi bi-pie-chart",
-    w: 6,
+    options: {},
+    icon: "bi bi-columns",
+    w: 8,
     h: 6,
   };
 
@@ -27,19 +25,23 @@ export default class PieChartHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Pie Chart Options", () => {
+    this.initButtons("Voronoi Diagram Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new PieChart(this.element, "", this.item.options);
+    this.element._chart = new VoronoiDiagram(
+      this.element,
+      "",
+      this.item.options,
+    );
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
 
   createForm() {
-    const generatorOptions = prepareGenerators(["CategoryNumber"]);
+    const generatorOptions = prepareGenerators(["MapCoordinates"]);
 
     const titleInput = this.createTextInput("title", "Title", this.item.title);
     const generatorInput = this.createSelect(
@@ -48,18 +50,10 @@ export default class PieChartHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id),
     );
-    const holeInput = this.createRangeSlider(
-      "hole",
-      "Hole (Doughnut)",
-      this.item.options.hole,
-      0,
-      500,
-    );
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
-      holeInput,
     ]);
   }
 
@@ -67,7 +61,6 @@ export default class PieChartHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.hole = parseFloat(form.hole) || 0;
 
     this.showAlert(!form.generator);
 
@@ -75,25 +68,36 @@ export default class PieChartHandler extends FormHandler {
     this.span.textContent = form.title;
 
     // Update chart
-    this.element._chart.hole = this.item.options.hole;
     this.element._chart.render(this.element._data);
   }
 }
 
 const data = [
   {
-    label: "Label 1",
-    value: 140,
-    color: "#00618f",
+    x: 10,
+    y: 10,
+    cell: "#00618f",
+    fill: "#00618f",
+    stroke: "#555555",
+    label: "Cell 1",
+    abs: 0.5,
   },
   {
-    label: "Label 2",
-    value: 73,
-    color: "#3a4856",
+    x: 12,
+    y: 32,
+    cell: "#3a4856",
+    fill: "#3a4856",
+    stroke: "#555555",
+    label: "Cell 7",
+    abs: 0.2,
   },
   {
-    label: "Label 3",
-    value: 56,
-    color: "#9eadbd",
+    x: 23,
+    y: 23,
+    cell: "#9eadbd",
+    fill: "#9eadbd",
+    stroke: "#555555",
+    label: "Cell 10",
+    abs: 0.1,
   },
 ];

@@ -1,4 +1,4 @@
-import getter from "./getter.js";
+import getter from "../../widgets/getter.js";
 import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";

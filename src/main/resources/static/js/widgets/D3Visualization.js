@@ -1,10 +1,7 @@
-import {
-  debounce,
-  getElementDimensions,
-} from "../../../shared/modules/utils.js";
-import { corpusFilter } from "../filter/CorpusFilter.js";
-import ControlsHandler from "../toolbar/ControlsHandler.js";
-import ExportHandler from "../toolbar/ExportHandler.js";
+import { corpusFilter } from "../pages/view/filter/CorpusFilter.js";
+import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
+import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
+import { debounce, getElementDimensions } from "../shared/modules/utils.js";
 
 export default class D3Visualization {
   constructor(root, getData, margin) {

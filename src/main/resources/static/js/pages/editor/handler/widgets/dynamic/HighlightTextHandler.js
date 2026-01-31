@@ -1,6 +1,6 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import HighlightText from "../../../../view/widgets/dynamic/HighlightText.js";
+import HighlightText from "../../../../../widgets/dynamic/HighlightText.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 

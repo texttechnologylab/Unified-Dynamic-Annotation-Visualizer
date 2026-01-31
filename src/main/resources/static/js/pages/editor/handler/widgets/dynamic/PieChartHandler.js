@@ -1,19 +1,19 @@
 import { createElement } from "../../../../../shared/modules/utils.js";
 import FormHandler from "../../FormHandler.js";
-import BarChart from "../../../../view/widgets/dynamic/BarChart.js";
+import PieChart from "../../../../../widgets/dynamic/PieChart.js";
 import { prepareGenerators, safeValue } from "../../../utils/actions.js";
 import state from "../../../utils/state.js";
 
-export default class BarChartHandler extends FormHandler {
+export default class PieChartHandler extends FormHandler {
   static defaults = {
-    type: "BarChart",
-    title: "Bar Chart",
+    type: "PieChart",
+    title: "Pie Chart",
     generator: { id: "" },
     options: {
-      horizontal: false,
+      hole: 0,
     },
-    icon: "bi bi-bar-chart",
-    w: 8,
+    icon: "bi bi-pie-chart",
+    w: 6,
     h: 6,
   };
 
@@ -27,13 +27,13 @@ export default class BarChartHandler extends FormHandler {
 
   init() {
     this.span.textContent = this.item.title;
-    this.initButtons("Bar Chart Options", () => {
+    this.initButtons("Pie Chart Options", () => {
       state.grid.removeWidget(this.item.el);
     });
 
     this.showAlert(!this.item.generator.id);
 
-    this.element._chart = new BarChart(this.element, "", this.item.options);
+    this.element._chart = new PieChart(this.element, "", this.item.options);
     this.element._data = data;
     this.element._chart.render(this.element._data);
   }
@@ -48,17 +48,18 @@ export default class BarChartHandler extends FormHandler {
       generatorOptions,
       safeValue(generatorOptions, this.item.generator.id),
     );
-    const orientationInput = this.createSelect(
-      "orientation",
-      "Orientation",
-      ["horizontal", "vertical"],
-      this.item.options.horizontal ? "horizontal" : "vertical",
+    const holeInput = this.createRangeSlider(
+      "hole",
+      "Hole (Doughnut)",
+      this.item.options.hole,
+      0,
+      500,
     );
 
     return createElement("form", { className: "dv-form-column" }, [
       titleInput,
       generatorInput,
-      orientationInput,
+      holeInput,
     ]);
   }
 
@@ -66,7 +67,7 @@ export default class BarChartHandler extends FormHandler {
     // Save form input
     this.item.title = form.title;
     this.item.generator.id = form.generator;
-    this.item.options.horizontal = form.orientation === "horizontal";
+    this.item.options.hole = parseFloat(form.hole) || 0;
 
     this.showAlert(!form.generator);
 
@@ -74,7 +75,7 @@ export default class BarChartHandler extends FormHandler {
     this.span.textContent = form.title;
 
     // Update chart
-    this.element._chart.horizontal = this.item.options.horizontal;
+    this.element._chart.hole = this.item.options.hole;
     this.element._chart.render(this.element._data);
   }
 }
