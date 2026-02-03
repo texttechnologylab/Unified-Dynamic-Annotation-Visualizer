@@ -21,7 +21,7 @@
     <#include "/pages/view/components/grid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=id pipelines=pipelines?eval_json />
+      <@sidebar id=id pipelines=pipelines?eval_json widgets=widgets?eval_json />
 
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>

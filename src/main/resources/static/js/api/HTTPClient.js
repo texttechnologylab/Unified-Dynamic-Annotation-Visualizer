@@ -45,4 +45,4 @@ export default class HTTPClient {
   }
 }
 
-export const http = new HTTPClient("/api");
+export const api = new HTTPClient("/api");

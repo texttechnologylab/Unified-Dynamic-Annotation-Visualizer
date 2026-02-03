@@ -1,7 +1,7 @@
 <#include "/shared/accordion.ftl">
 <#include "/pages/view/components/pipelineSwitcher.ftl">
 
-<#macro sidebar id pipelines>
+<#macro sidebar id pipelines widgets>
   <aside class="dv-sidebar">
     <div class="dv-sidebar-header">
       <h1 class="dv-bold">Dynamic Visualizations</h1>
@@ -22,6 +22,30 @@
         <i class="bi bi-pencil"></i>
         <span>Edit Pipeline</span>
       </a>
+
+      <@accordion icon="bi bi-robot" title="ChartGPT">
+        <div class="dv-chat-bot">
+          <div class="dv-chat"></div>
+
+          <div class="dv-chat-controls">
+            <input class="dv-text-input" type="text" placeholder="Ask a question">
+            <button class="dv-btn dv-chat-send" title="Send message" disabled>
+              <i class="bi bi-send"></i>
+              <span class="spinner-grow spinner-grow-sm dv-hidden"></span>
+            </button>
+          </div>
+          <div class="dv-chat-controls">
+            <select id="model-select" class="dv-select" title="Select a model"></select>
+            <select class="dv-select" title="Select a context">
+              <#list widgets as widget>
+                <#if !widget.type?contains("Static")>
+                  <option value="${widget.id}">${widget.title}</option>
+                </#if>
+              </#list>
+            </select>
+          </div>
+        </div>
+      </@accordion>
       
       <div class="dv-menu-title">Pipeline</div>
       <@pipelineSwitcher pipelines=pipelines selected=id />

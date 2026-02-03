@@ -4,9 +4,11 @@ import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
 import { getData } from "../../api/data.api.js";
+import { chartgpt } from "../../shared/classes/ChartGPT.js";
 
 export default class View {
   constructor(pipeline) {
+    chartgpt.init();
     corpusFilter.init();
     corpusFilter.apply();
     sidepanels.init();
