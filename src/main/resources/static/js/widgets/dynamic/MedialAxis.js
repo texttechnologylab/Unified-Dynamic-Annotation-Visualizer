@@ -7,7 +7,6 @@ export default class MedialAxis extends D3Visualization {
     this.draw = {
       boundary: true,
       triangles: false,
-      circles: false,
       centers: false,
       voronoi: false,
     };
@@ -33,10 +32,6 @@ export default class MedialAxis extends D3Visualization {
         this.render(this.data);
       },
     );
-    this.controls.appendSwitch("Circumcircles", this.draw.circles, () => {
-      this.draw.circles = !this.draw.circles;
-      this.render(this.data);
-    });
     this.controls.appendSwitch("Circumcenters", this.draw.centers, () => {
       this.draw.centers = !this.draw.centers;
       this.render(this.data);
@@ -64,7 +59,7 @@ export default class MedialAxis extends D3Visualization {
     const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
     const delaunay = d3.Delaunay.from(points);
 
-    const { triangleCenters, radii } = this.calculateCircumcenters(
+    const triangleCenters = this.calculateCircumcenters(
       points,
       delaunay.triangles,
     );
@@ -87,16 +82,6 @@ export default class MedialAxis extends D3Visualization {
     // Draw medial edges (axis)
     this.drawLines("medial", medialEdges, "black", 2);
 
-    // Draw circumcircles
-    if (this.draw.circles) {
-      this.drawCircles(
-        "circle",
-        triangleCenters,
-        "none",
-        (_, i) => radii[i],
-      ).attr("stroke", "steelblue");
-    }
-
     // Draw circumcenters
     if (this.draw.centers) {
       this.drawCircles("center", triangleCenters, "blue");
@@ -106,6 +91,29 @@ export default class MedialAxis extends D3Visualization {
     if (this.draw.boundary) {
       this.drawCircles("boundary", points);
     }
+
+    // Draw invisible hover targets
+    const container = this.svg.select("g").append("g");
+
+    this.drawLines("hover", medialEdges, "transparent", 20)
+      .style("cursor", "help")
+      .on("mouseenter", (_, endpoints) => {
+        const circles = this.buildHoverCircles(endpoints);
+
+        container
+          .selectAll("circle")
+          .data(circles)
+          .join("circle")
+          .attr("cx", (d) => d.x)
+          .attr("cy", (d) => d.y)
+          .attr("r", (d) => d.r || 3)
+          .attr("fill", (d) => (d.r ? "none" : d.color))
+          .attr("stroke", (d) => (d.r ? d.color : "none"))
+          .attr("stroke-width", 1.5);
+      })
+      .on("mouseleave", () => {
+        container.selectAll("*").remove();
+      });
 
     // Cache rendered data
     this.data = data;
@@ -148,7 +156,6 @@ export default class MedialAxis extends D3Visualization {
 
   calculateCircumcenters(points, triangles) {
     const triangleCenters = [];
-    const radii = [];
 
     for (let i = 0; i < triangles.length; i += 3) {
       const a = points[triangles[i]];
@@ -158,11 +165,10 @@ export default class MedialAxis extends D3Visualization {
       const center = this.circumcenter(a, b, c);
       const radius = Math.hypot(center[0] - a[0], center[1] - a[1]);
 
-      triangleCenters.push(center);
-      radii.push(radius);
+      triangleCenters.push({ center, radius, vertices: [a, b, c] });
     }
 
-    return { triangleCenters, radii };
+    return triangleCenters;
   }
 
   calculateVoronoi(points, halfedges, triangleCenters) {
@@ -186,7 +192,10 @@ export default class MedialAxis extends D3Visualization {
       voronoiEdges.push([c1, c2]);
 
       // Add to medial axis if inside boundary
-      if (d3.polygonContains(points, c1) && d3.polygonContains(points, c2)) {
+      if (
+        d3.polygonContains(points, c1.center) &&
+        d3.polygonContains(points, c2.center)
+      ) {
         medialEdges.push([c1, c2]);
       }
     }
@@ -194,8 +203,40 @@ export default class MedialAxis extends D3Visualization {
     return { voronoiEdges, medialEdges };
   }
 
+  buildHoverCircles(points) {
+    const circles = [];
+
+    for (const point of points) {
+      // circumcenter
+      circles.push({
+        x: point.center[0],
+        y: point.center[1],
+        color: "magenta",
+      });
+
+      // circumcircle
+      circles.push({
+        x: point.center[0],
+        y: point.center[1],
+        r: point.radius,
+        color: "teal",
+      });
+
+      // triangle vertices
+      for (const vertice of point.vertices) {
+        circles.push({
+          x: vertice[0],
+          y: vertice[1],
+          color: "lime",
+        });
+      }
+    }
+
+    return circles;
+  }
+
   drawPath(path, color = "gray", width = 1) {
-    this.svg
+    return this.svg
       .select("g")
       .append("path")
       .attr("fill", "none")
@@ -205,15 +246,16 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawLines(key, edges, color = "gray", width = 1) {
-    this.svg
+    return this.svg
       .select("g")
       .selectAll("line." + key)
       .data(edges)
       .join("line")
-      .attr("x1", (d) => d[0][0])
-      .attr("y1", (d) => d[0][1])
-      .attr("x2", (d) => d[1][0])
-      .attr("y2", (d) => d[1][1])
+      .attr("class", key)
+      .attr("x1", (d) => d[0].center?.[0] || d[0][0])
+      .attr("y1", (d) => d[0].center?.[1] || d[0][1])
+      .attr("x2", (d) => d[1].center?.[0] || d[1][0])
+      .attr("y2", (d) => d[1].center?.[1] || d[1][1])
       .attr("stroke", color)
       .attr("stroke-width", width);
   }
@@ -224,8 +266,9 @@ export default class MedialAxis extends D3Visualization {
       .selectAll("circle." + key)
       .data(points)
       .join("circle")
-      .attr("cx", (d) => d[0])
-      .attr("cy", (d) => d[1])
+      .attr("class", key)
+      .attr("cx", (d) => d.center?.[0] || d[0])
+      .attr("cy", (d) => d.center?.[1] || d[1])
       .attr("r", radius)
       .attr("fill", color);
   }
