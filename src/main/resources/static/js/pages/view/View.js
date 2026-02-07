@@ -1,12 +1,14 @@
-import getter from "./getter.js";
+import getter from "../../widgets/getter.js";
 import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
-import { getElementDimensions } from "../../shared/modules/utils.js";
+import { getData } from "../../api/data.api.js";
+import { chartgpt } from "../../shared/classes/ChartGPT.js";
 
 export default class View {
   constructor(pipeline) {
+    chartgpt.init();
     corpusFilter.init();
     corpusFilter.apply();
     sidepanels.init();
@@ -40,6 +42,7 @@ export default class View {
 
   initGrid(widgets) {
     const grid = GridStack.init({
+      column: 24,
       animate: false,
       float: true,
       disableDrag: true,
@@ -57,9 +60,11 @@ export default class View {
       if (getter._dynamic[config.type]) {
         const WidgetClass = getter._dynamic[config.type];
 
-        const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
-
-        const chart = new WidgetClass(node, endpoint, config.options);
+        const chart = new WidgetClass(
+          node,
+          (filters) => getData(this.pipeline, id, filters),
+          config.options,
+        );
         chart.init();
 
         this.charts.push(chart);

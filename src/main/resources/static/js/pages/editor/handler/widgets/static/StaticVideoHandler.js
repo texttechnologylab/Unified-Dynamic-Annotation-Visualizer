@@ -12,8 +12,8 @@ export default class StaticVideoHandler extends FormHandler {
       autoplay: false,
     },
     icon: "bi bi-film",
-    w: 3,
-    h: 2,
+    w: 6,
+    h: 4,
   };
 
   constructor(item) {
@@ -47,17 +47,17 @@ export default class StaticVideoHandler extends FormHandler {
     const titleInput = this.createTextInput(
       "title",
       "Tooltip",
-      this.item.title
+      this.item.title,
     );
     const controlsInput = this.createSwitch(
       "controls",
       "Controls",
-      this.item.options.controls
+      this.item.options.controls,
     );
     const autoplayInput = this.createSwitch(
       "autoplay",
       "Autoplay",
-      this.item.options.autoplay
+      this.item.options.autoplay,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

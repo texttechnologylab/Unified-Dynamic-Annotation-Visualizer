@@ -1,11 +1,8 @@
 export default class ExportHandler {
-  constructor(node, formats, icons) {
+  constructor(widget, formats, icons) {
     this.serializer = new XMLSerializer();
-    this.storage = {
-      metadata: null,
-      json: null,
-      svg: null,
-    };
+    this.widget = widget;
+    this.container = widget.root.select(".dv-dropdown-menu");
 
     this.filename = "chart";
     icons = {
@@ -16,8 +13,9 @@ export default class ExportHandler {
       ...icons,
     };
 
+    this.container.selectAll("*").remove();
     formats.forEach((format) => {
-      const btn = node
+      const btn = this.container
         .append("button")
         .attr("class", "dv-btn")
         .attr("type", "button")
@@ -26,12 +24,6 @@ export default class ExportHandler {
       btn.append("i").attr("class", icons[format]);
       btn.append("span").text("Export as " + format);
     });
-  }
-
-  update(metadata, json, svg) {
-    this.storage.metadata = metadata;
-    this.storage.json = json;
-    this.storage.svg = svg;
   }
 
   prepareExport(format) {
@@ -54,14 +46,14 @@ export default class ExportHandler {
   exportSVG() {
     const namespace = "http://www.w3.org/2000/svg";
     const metadata = document.createElementNS(namespace, "metadata");
-    const entries = Object.entries(this.storage.metadata);
+    const entries = Object.entries(this.widget.filter);
 
     for (const [key, value] of entries) {
       const node = document.createElementNS(namespace, key);
       node.textContent = value;
       metadata.appendChild(node);
     }
-    const svg = this.storage.svg.cloneNode(true);
+    const svg = this.widget.svg.node().cloneNode(true);
     svg.prepend(metadata);
 
     const header = '<?xml version="1.0" standalone="no"?>\r\n';
@@ -72,12 +64,12 @@ export default class ExportHandler {
   }
 
   exportPNG() {
-    const str = this.serializer.serializeToString(this.storage.svg);
+    const str = this.serializer.serializeToString(this.widget.svg.node());
     const url = this.createURL(str, "image/svg+xml");
     const img = new Image();
 
     img.onload = () => {
-      const bbox = this.storage.svg.getBBox();
+      const bbox = this.widget.svg.node().getBBox();
 
       const canvas = document.createElement("canvas");
       canvas.width = bbox.width;
@@ -92,9 +84,9 @@ export default class ExportHandler {
   }
 
   exportCSV() {
-    const json = this.storage.json;
+    const json = this.widget.data;
     const keys = Object.keys(json[0]);
-    const entries = Object.entries(this.storage.metadata);
+    const entries = Object.entries(this.widget.filter);
 
     const escape = (value) => {
       const str = String(value);
@@ -113,8 +105,8 @@ export default class ExportHandler {
 
   exportJSON() {
     const json = {
-      metadata: this.storage.metadata,
-      data: this.storage.json,
+      metadata: this.widget.filter,
+      data: this.widget.data,
     };
     const str = JSON.stringify(json, null, 2);
     const url = this.createURL(str, "application/json");

@@ -11,8 +11,8 @@ export default class StaticTextHandler extends FormHandler {
       style: "text-start fs-5 fw-normal fst-normal text-decoration-none",
     },
     icon: "bi bi-type",
-    w: 2,
-    h: 1,
+    w: 4,
+    h: 2,
   };
 
   constructor(item) {
@@ -41,36 +41,36 @@ export default class StaticTextHandler extends FormHandler {
       "align",
       "Text alignment",
       ["start", "center", "end"],
-      styles[0].replace("text-", "")
+      styles[0].replace("text-", ""),
     );
     const sizeInput = this.createSelect(
       "size",
       "Font size",
       ["1", "2", "3", "4", "5", "6"],
-      styles[1].replace("fs-", "")
+      styles[1].replace("fs-", ""),
     );
     const weightInput = this.createSelect(
       "weight",
       "Font weight",
       ["normal", "bold"],
-      styles[2].replace("fw-", "")
+      styles[2].replace("fw-", ""),
     );
     const styleInput = this.createSelect(
       "style",
       "Font style",
       ["normal", "italic"],
-      styles[3].replace("fst-", "")
+      styles[3].replace("fst-", ""),
     );
     const decorationInput = this.createSelect(
       "decoration",
       "Text decoration",
       ["none", "underline", "line-through"],
-      styles[4].replace("text-decoration-", "")
+      styles[4].replace("text-decoration-", ""),
     );
     const titleInput = this.createTextInput(
       "title",
       "Tooltip",
-      this.item.title
+      this.item.title,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

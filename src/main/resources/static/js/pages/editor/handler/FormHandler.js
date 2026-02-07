@@ -35,7 +35,7 @@ export default class FormHandler {
       const form = this.createForm();
 
       modal.render(modalTitle, form, () =>
-        this.saveForm(Object.fromEntries(new FormData(form)))
+        this.saveForm(Object.fromEntries(new FormData(form))),
       );
     });
     buttons[1].addEventListener("click", () => remove());
@@ -109,7 +109,7 @@ export default class FormHandler {
           selected: value === selected,
           disabled: opt.disabled,
         });
-      })
+      }),
     );
 
     const label = createElement("label", { className: "d-flex flex-column" }, [
@@ -132,8 +132,8 @@ export default class FormHandler {
     return label;
   }
 
-  createSearchbox(key, title, endpoint, selected) {
-    const searchbox = new Searchbox(endpoint);
+  createSearchbox(key, title, getData, selected) {
+    const searchbox = new Searchbox(getData);
     const input = searchbox.create(key, selected);
 
     const label = createElement("label", { className: "dv-label" }, [
@@ -156,7 +156,7 @@ export default class FormHandler {
     const output = createElement("output", { textContent: value });
     input.addEventListener(
       "input",
-      (event) => (output.textContent = event.target.value)
+      (event) => (output.textContent = event.target.value),
     );
     const label = createElement("label", { className: "d-flex flex-column" }, [
       createElement("span", { textContent: title }),

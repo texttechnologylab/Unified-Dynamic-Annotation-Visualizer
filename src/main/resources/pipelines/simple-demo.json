@@ -1,0 +1,47 @@
+{
+  "id": "simple-demo",
+  "sources": [
+    {
+      "id": "Source_POS1",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "createsGenerators": [
+        {
+          "type": "CategoryNumber",
+          "id": "POS_Numbers",
+          "name": "POS_Numbers",
+          "token": "CN",
+          "extends": [],
+          "settings": {}
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "id": "bar-chart",
+      "x": 8,
+      "y": 2,
+      "w": 8,
+      "h": 6,
+      "type": "BarChart",
+      "title": "POS",
+      "generator": { "id": "POS_Numbers" },
+      "options": { "horizontal": false },
+      "icon": "bi bi-bar-chart"
+    },
+    {
+      "type": "StaticText",
+      "title": "Bar Chart Caption",
+      "src": "This bar chart shows the top 10 part of speech tags with their number of occurences.",
+      "options": {
+        "style": "text-center fs-5 fw-normal fst-normal text-decoration-none"
+      },
+      "icon": "bi bi-type",
+      "w": 8,
+      "h": 2,
+      "x": 8,
+      "y": 8,
+      "id": "StaticText-dewo6hq"
+    }
+  ]
+}

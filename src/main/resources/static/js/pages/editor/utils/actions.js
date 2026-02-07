@@ -1,6 +1,6 @@
 import { deepClone, randomId } from "../../../shared/modules/utils.js";
-import getter from "../getter.js";
-import SourceHandler from "../handler/source/SourceHandler.js";
+import getter from "../handler/getter.js";
+import SourceHandler from "../handler/generators/SourceHandler.js";
 import state from "./state.js";
 
 export function loadSources(sources, defaults, container) {
@@ -56,7 +56,7 @@ export function removeGenerator(generator) {
 
 export function prepareGenerators(allowed) {
   const filtered = state.generators.filter((generator) =>
-    allowed.includes(generator.type)
+    allowed.includes(generator.type),
   );
 
   const mapped = filtered.map((generator) => {

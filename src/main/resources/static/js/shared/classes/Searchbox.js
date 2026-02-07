@@ -1,8 +1,8 @@
 import { createElement } from "../modules/utils.js";
 
 export default class Searchbox {
-  constructor(endpoint, keys = ["annotation", "rowCount"]) {
-    this.endpoint = endpoint;
+  constructor(getData, keys = ["annotation", "rowCount"]) {
+    this.getData = getData;
     this.keys = keys;
     this.value = "";
     this.dom = {};
@@ -39,7 +39,7 @@ export default class Searchbox {
       clearTimeout(timeout);
       timeout = setTimeout(
         () => this.autocomplete(this.dom.input.value, 20),
-        300
+        300,
       );
     });
 
@@ -51,8 +51,7 @@ export default class Searchbox {
   }
 
   autocomplete(query, size) {
-    fetch(`${this.endpoint}?q=${query}&size=${size}`)
-      .then((response) => response.json())
+    this.getData(query, size)
       .then((items) => {
         this.clear();
 
@@ -89,7 +88,7 @@ export default class Searchbox {
         className: "dv-btn dv-searchbox-result",
         title: item[this.keys[0]],
       },
-      [label, info]
+      [label, info],
     );
 
     return result;

@@ -1,7 +1,6 @@
 import { modal } from "../../shared/classes/Modal.js";
-import { getElementDimensions } from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
-import getter from "./getter.js";
+import getter from "./handler/getter.js";
 import { identifierValid, widgetsValid } from "./utils/validate.js";
 import state from "./utils/state.js";
 import {
@@ -10,7 +9,13 @@ import {
   loadSources,
   saveSources,
 } from "./utils/actions.js";
-import SourceHandler from "./handler/source/SourceHandler.js";
+import SourceHandler from "./handler/generators/SourceHandler.js";
+import { debounce } from "../../shared/modules/utils.js";
+import {
+  createPipeline,
+  getPipelines,
+  updatePipeline,
+} from "../../api/pipelines.api.js";
 
 export default class Editor {
   constructor() {
@@ -18,7 +23,7 @@ export default class Editor {
     this.defaults = {
       widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
       generators: Object.values(getter.generators).map(
-        (Handler) => Handler.defaults
+        (Handler) => Handler.defaults,
       ),
     };
   }
@@ -38,7 +43,7 @@ export default class Editor {
     // Replace whitespaces in the id with dashes
     this.input.addEventListener(
       "input",
-      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
+      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-")),
     );
 
     // Initialize buttons
@@ -54,9 +59,7 @@ export default class Editor {
     document
       .querySelector("#discard-button")
       .addEventListener("click", () =>
-        modal.confirm("Discard Changes", "Are you sure?", () =>
-          window.open("/", "_self")
-        )
+        modal.confirm("Discard Changes", "Are you sure?", () => history.back()),
       );
 
     document
@@ -66,15 +69,29 @@ export default class Editor {
 
   initGrid() {
     state.grid = GridStack.init({
-      minRow: 6,
+      column: 24,
+      minRow: 12,
       float: true,
+      alwaysShowResizeHandle: false,
       acceptWidgets: ".dv-available-widget-draggable",
     });
+
+    // Update grid lines on resize
+    const main = document.querySelector(".dv-main");
+    const observer = new ResizeObserver(
+      debounce(() => {
+        main.style.setProperty(
+          "--grid-size",
+          state.grid.getCellHeight() + "px",
+        );
+      }, 10),
+    );
+    observer.observe(main);
 
     GridStack.setupDragIn(
       ".dv-available-widget-draggable",
       { helper: "clone" },
-      this.defaults.widgets
+      this.defaults.widgets,
     );
 
     // Append and initialize added widgets to item content
@@ -112,9 +129,7 @@ export default class Editor {
   }
 
   async validate() {
-    const pipelines = await fetch("/api/pipelines").then((response) =>
-      response.json()
-    );
+    const pipelines = await getPipelines();
     const config = {
       id: this.input.value,
       sources: saveSources(),
@@ -127,22 +142,12 @@ export default class Editor {
       modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        () => this.sendConfig("PUT", config)
+        async () => await updatePipeline(config),
       );
     } else if (ok) {
-      this.sendConfig("POST", config);
+      await createPipeline(config);
     }
-  }
 
-  sendConfig(method, config) {
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(config),
-    };
-
-    fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
+    window.open("/view/" + config.id, "_self");
   }
 }

@@ -8,7 +8,6 @@ export default class CategoryNumberHandler extends FormHandler {
     name: "New CategoryNumber",
     type: "CategoryNumber",
     settings: {},
-    token: "CN",
     extends: [],
   };
 
@@ -21,8 +20,7 @@ export default class CategoryNumberHandler extends FormHandler {
   }
 
   init() {
-    this.element.querySelector(".dv-generator-card-token").textContent =
-      this.generator.token;
+    this.element.querySelector(".dv-generator-card-token").textContent = "CN";
     this.element.querySelector(".dv-generator-card-type").textContent =
       this.generator.type;
     this.name.textContent = this.generator.name;
@@ -42,7 +40,7 @@ export default class CategoryNumberHandler extends FormHandler {
         (gen) =>
           gen.type === this.generator.type &&
           gen.id !== this.generator.id &&
-          !gen.extends.includes(this.generator.id)
+          !gen.extends.includes(this.generator.id),
       )
       .map((gen) => {
         return { label: gen.name, value: gen.id };
@@ -53,7 +51,7 @@ export default class CategoryNumberHandler extends FormHandler {
       "extends",
       "Extends (optional)",
       options,
-      this.generator.extends
+      this.generator.extends,
     );
 
     return createElement("form", { className: "dv-form-column" }, [

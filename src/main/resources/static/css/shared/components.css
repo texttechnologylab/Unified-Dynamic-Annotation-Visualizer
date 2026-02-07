@@ -155,3 +155,71 @@ body.modal-open {
 .dv-dropdown.show {
   display: block;
 }
+
+.dv-chat-bot {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.dv-chat {
+  height: 30vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.dv-chat-message-assistant {
+  display: flex;
+  justify-content: start;
+
+  .dv-chat-message {
+    background-color: var(--bg-color);
+  }
+}
+
+.dv-chat-message-user {
+  display: flex;
+  justify-content: end;
+
+  .dv-chat-message {
+    background-color: var(--hover-color);
+  }
+}
+
+.dv-chat-message {
+  max-width: 75%;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--border-radius);
+}
+
+.dv-chat-controls {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.dv-chat-send {
+  border-radius: var(--border-radius);
+  background-color: var(--primary);
+  color: #ffffff;
+  font-size: var(--font-size);
+  padding: 0.125rem 0.625rem;
+  transition: all 300ms ease;
+  cursor: pointer;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--primary), #000000 40%);
+  }
+
+  &:active {
+    background-color: color-mix(in srgb, var(--primary), #000000 60%);
+  }
+
+  &:disabled {
+    background-color: color-mix(in srgb, var(--primary), #ffffff 50%);
+    cursor: default;
+  }
+}
