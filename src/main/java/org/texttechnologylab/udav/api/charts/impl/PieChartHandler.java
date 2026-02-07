@@ -20,32 +20,6 @@ public class PieChartHandler implements ChartHandler {
     private final GeneratorDataRepository repo;
     private final ObjectMapper mapper;
 
-    // ---- small local utils ----
-    private static Set<String> parseCsvSet(String csv) {
-        if (csv == null || csv.isBlank()) return Collections.emptySet();
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    private static Double parseDoubleOrNull(String s) {
-        if (s == null) return null;
-        try {
-            return Double.parseDouble(s.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static Integer parseIntOrNull(String s) {
-        if (s == null) return null;
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
 
     @Override
     public JsonNode render(String generatorId,
@@ -55,21 +29,21 @@ public class PieChartHandler implements ChartHandler {
                            String schema) {
 
         // Which fields to emit (default: label,value,color)
-        LinkedHashSet<String> attrs = parseCsvSet(filters.getOrDefault("attrs", "label,value,color"))
+        LinkedHashSet<String> attrs = ChartHandler.parseCsvSet(filters.getOrDefault("attrs", "label,value,color"))
                 .stream().collect(Collectors.toCollection(LinkedHashSet::new));
         if (attrs.isEmpty()) attrs = new LinkedHashSet<>(List.of("label", "value", "color"));
 
         // Optional: restrict labels via filter "label" or "labels"
-        Set<String> keepLabels = parseCsvSet(
+        Set<String> keepLabels = ChartHandler.parseCsvSet(
                 filters.getOrDefault("label", filters.getOrDefault("labels", ""))
         );
 
         // Sorting / filtering controls
         String sort = filters.getOrDefault("sort", "value");
         boolean desc = Boolean.parseBoolean(filters.getOrDefault("desc", "true"));
-        Double min = parseDoubleOrNull(filters.get("min"));
-        Double max = parseDoubleOrNull(filters.get("max"));
-        Integer limit = parseIntOrNull(filters.get("limit"));
+        Double min = ChartHandler.parseDoubleOrNull(filters.get("min"));
+        Double max = ChartHandler.parseDoubleOrNull(filters.get("max"));
+        Integer limit = ChartHandler.parseIntOrNull(filters.get("limit"));
 
         // Optional: chart-specific type (for type-specific colors)
         String typeForColors = filters.getOrDefault("type", null);

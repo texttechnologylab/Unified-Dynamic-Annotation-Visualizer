@@ -3,6 +3,7 @@ package org.texttechnologylab.udav.api.Repositories;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Table;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 import org.texttechnologylab.udav.database.DBConstants;
 
@@ -283,10 +284,53 @@ public class GeneratorDataRepository {
         return result; // filename -> (category -> value)
     }
 
-    // ---------- DTOs ----------
-    public record ResultCategoryNumber(Map<String, Double> values, Map<String, String> colors) {
+    public Map<String, List<MapCoordinatesRow>> loadMapCoordinatesByFile(String schema, String generatorId) {
+
+        // ---------- Table ----------
+        Table<?> TABLE = DSL.table(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES));
+
+
+        // ---------- Columns (schema-qualified & quoted) ----------
+        Field<String> GENERATORID = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORID), String.class);
+        Field<String> FILENAME = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_FILENAME), String.class);
+        Field<String> LABEL = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_LABEL), String.class);
+        Field<String> COORDINATES = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COORDINATES), String.class);
+        Field<Double> SCALE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_SCALE), Double.class);
+        Field<String> COLOR_FILL = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL), String.class);
+        Field<String> COLOR_STROKE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_STROKE), String.class);
+        Field<String> COLOR_OUTSIDE = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_OUTSIDE), String.class);
+
+
+        return dsl.select(FILENAME, LABEL, COORDINATES, SCALE, COLOR_FILL, COLOR_STROKE, COLOR_OUTSIDE)
+                .from(TABLE)
+                .where(GENERATORID.eq(generatorId))
+                .fetchGroups(
+                        record -> record.get(FILENAME), // key: filename
+                        record -> new MapCoordinatesRow(
+                                record.get(LABEL),
+                                coordinatesStringToList(record.get(COORDINATES)),
+                                record.get(SCALE) != null ? record.get(SCALE) : 0.0,
+                                record.get(COLOR_FILL),
+                                record.get(COLOR_STROKE),
+                                record.get(COLOR_OUTSIDE)
+                        )
+                );
     }
 
-    public record SegmentRow(int begin, int end, String category, String type) {
+    // Helper method to convert your stored string back to a List<Double>
+    private static List<Double> coordinatesStringToList(String coordinatesStr) {
+        if (coordinatesStr == null || coordinatesStr.isEmpty()) return Collections.emptyList();
+        return Arrays.stream(coordinatesStr.split(","))
+                .map(String::trim)
+                .map(Double::parseDouble)
+                .toList();
     }
+
+
+    // ---------- DTOs ----------
+    public record ResultCategoryNumber(Map<String, Double> values, Map<String, String> colors) {}
+
+    public record SegmentRow(int begin, int end, String category, String type) {}
+
+    public record MapCoordinatesRow(String label, List<Double> coordinates, double scale, String fillColor, String strokeColor, String outsideColor) {}
 }

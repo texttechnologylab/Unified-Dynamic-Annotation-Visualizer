@@ -154,29 +154,6 @@ public class MapCoordinates extends Generator {
         return sb.toString();
     }
 
-    public static List<Number> coordinatesStringToList(String str) {
-        List<Number> result = new ArrayList<>();
-
-        if (str == null || str.trim().isEmpty()) {
-            return result;
-        }
-
-        String content = str.trim();
-        String[] parts = content.split(",");
-
-        for (String part : parts) {
-            String value = part.trim();
-
-            // Parse as integer if no decimal point, else as double
-            if (value.matches("-?\\d+")) {
-                result.add(Integer.parseInt(value));
-            } else {
-                result.add(Double.parseDouble(value));
-            }
-        }
-
-        return result;
-    }
 
     private static class Entry {
         private final String filename;
