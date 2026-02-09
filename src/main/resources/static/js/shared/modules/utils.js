@@ -1,6 +1,6 @@
 export function flatData(datasets, key) {
   return datasets.flatMap(({ [key]: value, ...rest }) =>
-    value.map((item) => ({ ...rest, ...item }))
+    value.map((item) => ({ ...rest, ...item })),
   );
 }
 
@@ -14,6 +14,10 @@ export function maxOf(array) {
 
 export function randomId(str) {
   return str + "-" + Math.random().toString(36).slice(2, 9);
+}
+
+export function isObject(item) {
+  return typeof item === "object" && !Array.isArray(item) && item !== null;
 }
 
 export function debounce(fn, timeout = 300) {
@@ -35,6 +39,19 @@ export function getElementDimensions(element) {
 
 export function createElement(tag, attributes = {}, children = []) {
   const element = document.createElement(tag);
+  Object.assign(element, attributes);
+  element.append(...children);
+
+  return element;
+}
+
+export function createTemplateElement(
+  selector,
+  attributes = {},
+  children = [],
+) {
+  const template = document.querySelector(selector);
+  const element = template.content.cloneNode(true).children[0];
   Object.assign(element, attributes);
   element.append(...children);
 

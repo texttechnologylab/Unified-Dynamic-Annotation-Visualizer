@@ -2,6 +2,49 @@ import D3Visualization from "../D3Visualization.js";
 import { maxOf, minOf } from "../../shared/modules/utils.js";
 
 export default class BarChart extends D3Visualization {
+  static defaultConfig = {
+    type: "BarChart",
+    title: "Bar Chart",
+    generator: { id: "" },
+    options: {
+      horizontal: false,
+    },
+    icon: "bi bi-bar-chart",
+    w: 8,
+    h: 6,
+  };
+  static formConfig = {
+    title: {
+      type: "text",
+      label: "Title",
+    },
+    "generator.id": {
+      type: "text",
+      label: "Generator",
+    },
+    "options.horizontal": {
+      type: "switch",
+      label: "Horizontal",
+    },
+  };
+  static previewData = [
+    {
+      label: "Label 1",
+      value: 140,
+      color: "#00618f",
+    },
+    {
+      label: "Label 2",
+      value: 73,
+      color: "#3a4856",
+    },
+    {
+      label: "Label 3",
+      value: 56,
+      color: "#9eadbd",
+    },
+  ];
+
   constructor(root, getData, { horizontal = false }) {
     super(root, getData, { top: 30, right: 30, bottom: 70, left: 60 });
 

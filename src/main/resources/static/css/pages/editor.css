@@ -111,41 +111,15 @@
   padding: 0.25rem;
   border-top-left-radius: inherit;
   border-top-right-radius: inherit;
+
+  button {
+    padding: 0.125rem 0.375rem;
+  }
 }
 
 .dv-source-card-body {
   border-bottom-left-radius: inherit;
   border-bottom-right-radius: inherit;
-}
-
-.dv-sliding-dropdown {
-  position: absolute;
-  left: 0.25rem;
-  right: 0.25rem;
-  max-height: 0;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  z-index: 99;
-  transition: max-height 300ms ease;
-
-  > div {
-    background-color: var(--bg-color);
-    padding: 0.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: inherit;
-  }
-
-  button {
-    display: flex;
-    width: 100%;
-    gap: 0.375rem;
-    padding: 0.375rem;
-  }
-}
-
-.dv-sliding-dropdown.show {
-  max-height: 10rem;
 }
 
 .dv-add-source-button {
@@ -167,6 +141,11 @@
   &:active {
     background-color: var(--active-color);
   }
+}
+
+.dv-generator-option {
+  display: flex;
+  gap: 0.375rem;
 }
 
 .dv-generator-card {

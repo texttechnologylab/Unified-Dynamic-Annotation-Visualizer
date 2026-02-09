@@ -19,7 +19,6 @@
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
-      <span></span>
     </div>
   </template>
 
@@ -45,12 +44,7 @@
         </button>
       </div>
 
-      <div class="dv-chart-area">
-        <div class="dv-chart-alert">
-          <i class="bi bi-exclamation-triangle"></i>
-          <span class="dv-text-truncate">No generator assigned</span>
-        </div>
-      </div>
+      <div class="dv-chart-area"></div>
     </div>
   </template>
 </#macro>

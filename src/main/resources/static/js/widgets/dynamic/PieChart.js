@@ -6,6 +6,53 @@ import {
 } from "../../shared/modules/utils.js";
 
 export default class PieChart extends D3Visualization {
+  static defaultConfig = {
+    type: "PieChart",
+    title: "Pie Chart",
+    generator: { id: "" },
+    options: {
+      hole: 0,
+    },
+    icon: "bi bi-pie-chart",
+    w: 6,
+    h: 6,
+  };
+  static formConfig = {
+    title: {
+      type: "text",
+      label: "Title",
+    },
+    "generator.id": {
+      type: "text",
+      label: "Generator",
+    },
+    "options.hole": {
+      type: "range",
+      label: "Hole (Doughnut)",
+      options: {
+        min: 0,
+        max: 500,
+      },
+    },
+  };
+  static previewData = [
+    {
+      label: "Label 1",
+      value: 140,
+      color: "#00618f",
+    },
+    {
+      label: "Label 2",
+      value: 73,
+      color: "#3a4856",
+    },
+    {
+      label: "Label 3",
+      value: 56,
+      color: "#9eadbd",
+    },
+  ];
+
   constructor(root, getData, { hole = 0 }) {
     const { width, height } = getElementDimensions(root);
 

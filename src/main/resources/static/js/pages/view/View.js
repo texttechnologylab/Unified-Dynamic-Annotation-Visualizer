@@ -1,4 +1,4 @@
-import getter from "../../widgets/getter.js";
+import widgets from "../../widgets/widgets.js";
 import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
@@ -15,7 +15,14 @@ export default class View {
     accordions.init();
     dropdowns.init();
 
-    // Initialize pipeline switcher
+    this.initSwitcher();
+    this.initButton();
+
+    this.pipeline = pipeline;
+    this.charts = [];
+  }
+
+  initSwitcher() {
     const dropdown = document.querySelector(".dv-dropdown");
     const trigger = document.querySelector(".dv-pipeline-switcher-trigger");
     trigger.addEventListener("click", () => {
@@ -26,8 +33,9 @@ export default class View {
         dropdown.classList.remove("show");
       }
     });
+  }
 
-    // Initialize corpus filter apply button
+  initButton() {
     document.querySelector("#apply-button").addEventListener("click", () => {
       corpusFilter.apply();
 
@@ -35,9 +43,6 @@ export default class View {
         chart.fetch().then((data) => chart.render(data));
       }
     });
-
-    this.pipeline = pipeline;
-    this.charts = [];
   }
 
   initGrid(widgets) {
@@ -52,26 +57,22 @@ export default class View {
     grid.load(widgets);
   }
 
-  initWidgets(widgets) {
+  initWidgets(configs) {
     document.querySelectorAll("[data-dv-widget]").forEach((node) => {
       const id = node.dataset.dvWidget;
-      const config = widgets.find((conf) => conf.id === id);
+      const config = configs.find((conf) => conf.id === id);
 
-      if (getter._dynamic[config.type]) {
-        const WidgetClass = getter._dynamic[config.type];
+      const Widget = widgets[config.type];
 
-        const chart = new WidgetClass(
-          node,
-          (filters) => getData(this.pipeline, id, filters),
-          config.options,
-        );
-        chart.init();
+      const widget = new Widget(
+        node,
+        config.src || ((filters) => getData(this.pipeline, id, filters)),
+        config.options,
+      );
+      widget.init();
 
-        this.charts.push(chart);
-      } else if (getter._static[config.type]) {
-        const WidgetClass = getter._static[config.type];
-
-        new WidgetClass(node, config.src, config.options).init();
+      if (!config.src) {
+        this.charts.push(widget);
       }
     });
   }

@@ -80,11 +80,11 @@
         <div class="dv-source-card">
           <div class="dv-source-card-header">
             <div>
-              <button class="dv-btn" type="button" title="New generator">
+              <button class="dv-btn" type="button" title="New generator" data-bs-toggle="dropdown">
                 <i class="bi bi-plus-lg"></i>
               </button>
-              <div class="dv-sliding-dropdown">
-                <div></div>
+              <div class="dropdown-menu">
+                <div class="dv-dropdown-menu"></div>
               </div>
               <span class="dv-bold">Source</span>
             </div>

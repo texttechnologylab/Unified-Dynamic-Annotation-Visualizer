@@ -1,6 +1,5 @@
 import { modal } from "../../shared/classes/Modal.js";
 import accordions from "../../shared/modules/accordions.js";
-import getter from "./handler/getter.js";
 import { identifierValid, widgetsValid } from "./utils/validate.js";
 import state from "./utils/state.js";
 import {
@@ -9,51 +8,48 @@ import {
   loadSources,
   saveSources,
 } from "./utils/actions.js";
-import SourceHandler from "./handler/generators/SourceHandler.js";
 import { debounce } from "../../shared/modules/utils.js";
 import {
   createPipeline,
   getPipelines,
   updatePipeline,
 } from "../../api/pipelines.api.js";
+import widgets from "../../widgets/widgets.js";
+import Source from "./configs/Source.js";
 
 export default class Editor {
   constructor() {
-    this.input = document.querySelector("#identifier-input");
-    this.defaults = {
-      widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
-      generators: Object.values(getter.generators).map(
-        (Handler) => Handler.defaults,
-      ),
-    };
+    this.widgetDefaults = Object.values(widgets).map(
+      (Widget) => Widget.defaultConfig,
+    );
   }
 
   init(config) {
-    const container = document.querySelector(".dv-sources-container");
-
     accordions.init();
 
     this.initAvailableWidgets();
     this.initGrid();
 
     // Load existing data
-    loadSources(config.sources || [], this.defaults.generators, container);
+    loadSources(config.sources || []);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
-    this.input.addEventListener(
+    const input = document.querySelector("#identifier-input");
+    input.addEventListener(
       "input",
-      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-")),
+      ({ target }) => (input.value = target.value.replaceAll(" ", "-")),
     );
 
     // Initialize buttons
+    const container = document.querySelector(".dv-sources-container");
     document
       .querySelector(".dv-add-source-button")
       .addEventListener("click", () => {
-        const handler = createSource(SourceHandler.defaults);
+        const source = createSource(Source.defaultConfig);
 
-        container.prepend(handler.element);
-        handler.init(this.defaults.generators);
+        container.prepend(source.root);
+        source.init();
       });
 
     document
@@ -64,7 +60,7 @@ export default class Editor {
 
     document
       .querySelector("#save-button")
-      .addEventListener("click", () => this.validate());
+      .addEventListener("click", () => this.validate(input.value));
   }
 
   initGrid() {
@@ -72,7 +68,6 @@ export default class Editor {
       column: 24,
       minRow: 12,
       float: true,
-      alwaysShowResizeHandle: false,
       acceptWidgets: ".dv-available-widget-draggable",
     });
 
@@ -91,23 +86,23 @@ export default class Editor {
     GridStack.setupDragIn(
       ".dv-available-widget-draggable",
       { helper: "clone" },
-      this.defaults.widgets,
+      this.widgetDefaults,
     );
 
     // Append and initialize added widgets to item content
     state.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        const handler = createWidget(item);
+        const widget = createWidget(item);
 
         const content = item.el.querySelector(".grid-stack-item-content");
         if (content) {
-          content.replaceChildren(...handler.element.childNodes);
-          content.className = handler.element.className;
-          handler.element = content;
+          content.replaceChildren(...widget.root.childNodes);
+          content.className = widget.root.className;
+          widget.root = content;
         } else {
-          item.el.prepend(handler.element);
+          item.el.prepend(widget.root);
         }
-        handler.init();
+        widget.init();
       });
     });
   }
@@ -116,7 +111,7 @@ export default class Editor {
     const container = document.querySelector(".dv-available-widgets-container");
     const template = document.querySelector("#available-widget-template");
 
-    this.defaults.widgets.forEach((widget) => {
+    this.widgetDefaults.forEach((widget) => {
       const element = template.content.cloneNode(true);
 
       element.querySelector("i").className = widget.icon;
@@ -128,10 +123,10 @@ export default class Editor {
     });
   }
 
-  async validate() {
+  async validate(id) {
     const pipelines = await getPipelines();
     const config = {
-      id: this.input.value,
+      id: id,
       sources: saveSources(),
       widgets: state.grid.save(false),
     };
@@ -142,12 +137,14 @@ export default class Editor {
       modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        async () => await updatePipeline(config),
+        async () => {
+          await updatePipeline(config);
+          window.open("/view/" + config.id, "_self");
+        },
       );
     } else if (ok) {
       await createPipeline(config);
+      window.open("/view/" + config.id, "_self");
     }
-
-    window.open("/view/" + config.id, "_self");
   }
 }

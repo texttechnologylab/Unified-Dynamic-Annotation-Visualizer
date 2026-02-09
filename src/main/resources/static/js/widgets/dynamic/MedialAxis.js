@@ -1,12 +1,47 @@
 import D3Visualization from "../D3Visualization.js";
 
 export default class MedialAxis extends D3Visualization {
+  static defaultConfig = {
+    type: "MedialAxis",
+    title: "Medial Axis",
+    generator: { id: "" },
+    options: {},
+    icon: "bi bi-slash-square",
+    w: 8,
+    h: 6,
+  };
+  static formConfig = {
+    title: {
+      type: "text",
+      label: "Title",
+    },
+    "generator.id": {
+      type: "text",
+      label: "Generator",
+    },
+  };
+  static previewData = [
+    {
+      x: 10,
+      y: 10,
+    },
+    {
+      x: 12,
+      y: 32,
+    },
+    {
+      x: 23,
+      y: 23,
+    },
+  ];
+
   constructor(root, getData, {}) {
     super(root, getData, { top: 10, right: 10, bottom: 10, left: 10 });
 
     this.draw = {
       boundary: true,
       triangles: false,
+      circles: false,
       centers: false,
       voronoi: false,
     };
@@ -32,6 +67,10 @@ export default class MedialAxis extends D3Visualization {
         this.render(this.data);
       },
     );
+    this.controls.appendSwitch("Circumcircles", this.draw.circles, () => {
+      this.draw.circles = !this.draw.circles;
+      this.render(this.data);
+    });
     this.controls.appendSwitch("Circumcenters", this.draw.centers, () => {
       this.draw.centers = !this.draw.centers;
       this.render(this.data);
@@ -81,6 +120,17 @@ export default class MedialAxis extends D3Visualization {
 
     // Draw medial edges (axis)
     this.drawLines("medial", medialEdges, "black", 2);
+
+    // Draw circumcircles
+    if (this.draw.circles) {
+      this.drawCircles(
+        "circle",
+        triangleCenters,
+        "transparent",
+        (d) => d.radius,
+        "steelblue",
+      );
+    }
 
     // Draw circumcenters
     if (this.draw.centers) {
@@ -260,7 +310,7 @@ export default class MedialAxis extends D3Visualization {
       .attr("stroke-width", width);
   }
 
-  drawCircles(key, points, color = "red", radius = 2) {
+  drawCircles(key, points, fill = "red", radius = 2, stroke = "none") {
     return this.svg
       .select("g")
       .selectAll("circle." + key)
@@ -270,6 +320,7 @@ export default class MedialAxis extends D3Visualization {
       .attr("cx", (d) => d.center?.[0] || d[0])
       .attr("cy", (d) => d.center?.[1] || d[1])
       .attr("r", radius)
-      .attr("fill", color);
+      .attr("fill", fill)
+      .attr("stroke", stroke);
   }
 }

@@ -1,16 +1,46 @@
 export default class StaticImage {
+  static defaultConfig = {
+    type: "StaticImage",
+    title: "Image",
+    src: "https://placehold.co/600x400?text=Image",
+    options: {},
+    icon: "bi bi-image",
+    w: 2,
+    h: 2,
+  };
+  static formConfig = {
+    title: {
+      type: "text",
+      label: "Tooltip",
+    },
+    src: {
+      type: "text",
+      label: "Image URL",
+    },
+  };
+
   constructor(root, src, {}) {
     this.root = d3.select(root);
     this.src = src;
+
+    this.root.classed("hide", false);
+  }
+
+  clear() {
+    this.root.select("img").remove();
   }
 
   init() {
+    this.render(this.src);
+  }
+
+  render(data) {
+    this.clear();
+
     this.root
       .append("img")
-      .attr("src", this.src)
+      .attr("src", data)
       .attr("width", "100%")
       .attr("height", "100%");
-
-    this.root.classed("hide", false);
   }
 }

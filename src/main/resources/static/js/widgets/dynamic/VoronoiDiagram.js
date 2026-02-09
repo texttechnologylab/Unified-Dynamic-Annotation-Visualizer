@@ -2,6 +2,55 @@ import D3Visualization from "../D3Visualization.js";
 import { randomId } from "../../shared/modules/utils.js";
 
 export default class VoronoiDiagram extends D3Visualization {
+  static defaultConfig = {
+    type: "VoronoiDiagram",
+    title: "Voronoi Diagram",
+    generator: { id: "" },
+    options: {},
+    icon: "bi bi-columns",
+    w: 8,
+    h: 6,
+  };
+  static formConfig = {
+    title: {
+      type: "text",
+      label: "Title",
+    },
+    "generator.id": {
+      type: "text",
+      label: "Generator",
+    },
+  };
+  static previewData = [
+    {
+      x: 10,
+      y: 10,
+      cell: "#00618f",
+      fill: "#00618f",
+      stroke: "#555555",
+      label: "Cell 1",
+      abs: 0.5,
+    },
+    {
+      x: 12,
+      y: 32,
+      cell: "#3a4856",
+      fill: "#3a4856",
+      stroke: "#555555",
+      label: "Cell 7",
+      abs: 0.2,
+    },
+    {
+      x: 23,
+      y: 23,
+      cell: "#9eadbd",
+      fill: "#9eadbd",
+      stroke: "#555555",
+      label: "Cell 10",
+      abs: 0.1,
+    },
+  ];
+
   constructor(root, getData, {}) {
     super(root, getData, { top: 40, right: 40, bottom: 40, left: 40 });
 

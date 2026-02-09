@@ -15,13 +15,13 @@ export async function getPipeline(id) {
 export async function createPipeline(config) {
   const response = await api.post("/pipelines", config);
 
-  return response.json();
+  return response.text();
 }
 
 export async function updatePipeline(config) {
   const response = await api.put("/pipelines", config);
 
-  return response.json();
+  return response.text();
 }
 
 export async function deletePipeline(id) {
