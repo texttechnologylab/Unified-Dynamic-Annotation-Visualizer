@@ -2,12 +2,12 @@ import StaticImage from "./static/StaticImage.js";
 import StaticText from "./static/StaticText.js";
 import StaticVideo from "./static/StaticVideo.js";
 
-import BarChart from "./dynamic/BarChart.js";
-import LineChart from "./dynamic/LineChart.js";
-import PieChart from "./dynamic/PieChart.js";
-import MedialAxis from "./dynamic/MedialAxis.js";
-import VoronoiDiagram from "./dynamic/VoronoiDiagram.js";
-import HighlightText from "./dynamic/HighlightText.js";
+import BarChart from "./charts/BarChart.js";
+import LineChart from "./charts/LineChart.js";
+import PieChart from "./charts/PieChart.js";
+import MedialAxis from "./charts/MedialAxis.js";
+import VoronoiDiagram from "./charts/VoronoiDiagram.js";
+import HighlightText from "./charts/HighlightText.js";
 
 export default {
   StaticText,
