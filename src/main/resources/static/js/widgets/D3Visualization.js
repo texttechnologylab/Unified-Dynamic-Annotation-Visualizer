@@ -26,7 +26,7 @@ export default class D3Visualization {
       debounce(() => {
         if (this.data) {
           const { width, height } = getElementDimensions(root);
-          this.resize(width, height);
+          if (width && height) this.resize(width, height);
         }
       }, 10),
     );
