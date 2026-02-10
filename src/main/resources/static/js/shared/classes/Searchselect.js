@@ -1,6 +1,6 @@
 import { createElement } from "../modules/utils.js";
 
-export default class Searchbox {
+export default class Searchselect {
   constructor(getData, keys = ["annotation", "rowCount"]) {
     this.getData = getData;
     this.keys = keys;
@@ -9,13 +9,13 @@ export default class Searchbox {
   }
 
   create(key, selected, header = ["Annotation", "#"]) {
-    const template = document.querySelector("#searchbox-template");
+    const template = document.querySelector("#searchselect-template");
     const root = template.content.cloneNode(true);
 
     this.dom.input = root.querySelector("input");
     this.dom.dropdown = root.querySelector(".dv-dropdown");
-    this.dom.header = root.querySelectorAll(".dv-searchbox-header>span");
-    this.dom.container = root.querySelector(".dv-searchbox-container");
+    this.dom.header = root.querySelectorAll(".dv-searchselect-header>span");
+    this.dom.container = root.querySelector(".dv-searchselect-container");
 
     this.dom.header[0].textContent = header[0];
     this.dom.header[1].textContent = header[1];
@@ -85,7 +85,7 @@ export default class Searchbox {
     const result = createElement(
       "div",
       {
-        className: "dv-btn dv-searchbox-result",
+        className: "dv-btn dv-searchselect-result",
         title: item[this.keys[0]],
       },
       [label, info],

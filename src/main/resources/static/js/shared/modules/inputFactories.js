@@ -1,5 +1,5 @@
 import Multiselect from "../classes/Multiselect.js";
-import Searchbox from "../classes/Searchbox.js";
+import Searchselect from "../classes/Searchselect.js";
 import { createElement } from "./utils.js";
 
 export default {
@@ -73,10 +73,10 @@ export default {
     return multiselect.create(key, selected);
   },
 
-  searchbox(key, selected, getData) {
-    const searchbox = new Searchbox(getData);
+  searchselect(key, selected, { getData }) {
+    const searchselect = new Searchselect(getData);
 
-    return searchbox.create(key, selected);
+    return searchselect.create(key, selected);
   },
 
   switch(key, on) {

@@ -1,3 +1,5 @@
+import { getAnnotations } from "../../../api/annotations.api.js";
+
 export default class Source {
   static defaultConfig = {
     uri: "",
@@ -5,8 +7,9 @@ export default class Source {
   };
   static formConfig = {
     uri: {
-      type: "text",
+      type: "searchselect",
       label: "Annotation type",
+      options: { getData: getAnnotations },
     },
   };
 }

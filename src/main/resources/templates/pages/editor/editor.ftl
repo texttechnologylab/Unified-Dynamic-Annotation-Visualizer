@@ -19,7 +19,7 @@
   <body>
     <#include "/shared/modal.ftl"> 
     <#include "/shared/multiselect.ftl"> 
-    <#include "/shared/searchbox.ftl"> 
+    <#include "/shared/searchselect.ftl"> 
     <#include "/pages/editor/components/sidebar.ftl">
     <#include "/pages/editor/components/grid.ftl">
 
@@ -32,7 +32,7 @@
 
       <@modal />
       <@multiselect />
-      <@searchbox />
+      <@searchselect />
     </div>
 
     <script type="module">

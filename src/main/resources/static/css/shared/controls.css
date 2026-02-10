@@ -290,7 +290,7 @@
   color: var(--secondary);
 }
 
-.dv-searchbox-input {
+.dv-searchselect-input {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -312,23 +312,23 @@
   }
 }
 
-.dv-searchbox-input:focus-within {
+.dv-searchselect-input:focus-within {
   outline: 1px solid var(--primary);
 }
 
-.dv-searchbox-container {
+.dv-searchselect-container {
   max-height: 9rem;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
-.dv-searchbox-header {
+.dv-searchselect-header {
   font-weight: bold;
   border-bottom: 1px solid var(--border-color);
 }
 
-.dv-searchbox-header,
-.dv-searchbox-result {
+.dv-searchselect-header,
+.dv-searchselect-result {
   display: flex;
   padding: 0.25rem;
   overflow: hidden;
