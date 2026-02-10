@@ -1,4 +1,5 @@
 import D3Visualization from "../D3Visualization.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
 
 export default class MedialAxis extends D3Visualization {
   static defaultConfig = {
@@ -16,8 +17,9 @@ export default class MedialAxis extends D3Visualization {
       label: "Title",
     },
     "generator.id": {
-      type: "text",
+      type: "select",
       label: "Generator",
+      options: () => getGeneratorOptions("MapCoordinates"),
     },
   };
   static previewData = [

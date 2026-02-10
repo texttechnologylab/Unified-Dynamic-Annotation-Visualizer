@@ -48,13 +48,15 @@ export default class FormBuilder {
 
     if (field) {
       const createInput = inputs[field.type];
+      const options =
+        typeof field.options === "function" ? field.options() : field.options;
 
       const label = createElement(
         "label",
         { className: "d-flex flex-column" },
         [
           createElement("span", { textContent: field.label }),
-          createInput(key, value, field.options),
+          createInput(key, value, options),
         ],
       );
 

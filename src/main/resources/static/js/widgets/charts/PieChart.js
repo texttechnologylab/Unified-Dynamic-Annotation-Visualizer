@@ -4,6 +4,7 @@ import {
   minOf,
   getElementDimensions,
 } from "../../shared/modules/utils.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
 
 export default class PieChart extends D3Visualization {
   static defaultConfig = {
@@ -23,8 +24,9 @@ export default class PieChart extends D3Visualization {
       label: "Title",
     },
     "generator.id": {
-      type: "text",
+      type: "select",
       label: "Generator",
+      options: () => getGeneratorOptions("CategoryNumber"),
     },
     "options.hole": {
       type: "range",

@@ -1,5 +1,6 @@
 import D3Visualization from "../D3Visualization.js";
 import { randomId } from "../../shared/modules/utils.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
 
 export default class VoronoiDiagram extends D3Visualization {
   static defaultConfig = {
@@ -17,8 +18,9 @@ export default class VoronoiDiagram extends D3Visualization {
       label: "Title",
     },
     "generator.id": {
-      type: "text",
+      type: "select",
       label: "Generator",
+      options: () => getGeneratorOptions("MapCoordinates"),
     },
   };
   static previewData = [

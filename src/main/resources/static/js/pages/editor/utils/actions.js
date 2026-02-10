@@ -66,14 +66,10 @@ export function createWidget(item) {
   return new WidgetController(item);
 }
 
-export function getGeneratorOptions(allowed) {
-  const filtered = state.generators.filter((generator) =>
-    allowed.includes(generator.type),
-  );
+export function getGeneratorOptions(type) {
+  const configs = state.generators.filter((config) => config.type === type);
 
-  const mapped = filtered.map((generator) => {
+  return configs.map((generator) => {
     return { label: generator.name, value: generator.id };
   });
-
-  return mapped;
 }
