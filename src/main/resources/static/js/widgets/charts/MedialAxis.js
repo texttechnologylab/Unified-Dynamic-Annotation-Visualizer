@@ -23,18 +23,66 @@ export default class MedialAxis extends D3Visualization {
     },
   };
   static previewData = [
-    {
-      x: 10,
-      y: 10,
-    },
-    {
-      x: 12,
-      y: 32,
-    },
-    {
-      x: 23,
-      y: 23,
-    },
+    { x: 10, y: 10 },
+    { x: 12, y: 10 },
+    { x: 14, y: 10 },
+    { x: 16, y: 10 },
+    { x: 18, y: 10 },
+    { x: 20, y: 10 },
+    { x: 22, y: 10 },
+    { x: 24, y: 10 },
+    { x: 26, y: 10 },
+    { x: 28, y: 10 },
+    { x: 30, y: 10 },
+    { x: 32, y: 10 },
+    { x: 34, y: 10 },
+    { x: 36, y: 10 },
+    { x: 38, y: 10 },
+    { x: 40, y: 10 },
+    { x: 40, y: 12 },
+    { x: 40, y: 14 },
+    { x: 40, y: 16 },
+    { x: 40, y: 18 },
+    { x: 40, y: 20 },
+    { x: 38, y: 20 },
+    { x: 36, y: 20 },
+    { x: 34, y: 20 },
+    { x: 32, y: 20 },
+    { x: 30, y: 20 },
+    { x: 28, y: 20 },
+    { x: 26, y: 20 },
+    { x: 24, y: 20 },
+    { x: 22, y: 20 },
+    { x: 20, y: 20 },
+    { x: 20, y: 22 },
+    { x: 20, y: 24 },
+    { x: 20, y: 26 },
+    { x: 20, y: 28 },
+    { x: 20, y: 30 },
+    { x: 20, y: 32 },
+    { x: 20, y: 34 },
+    { x: 20, y: 36 },
+    { x: 20, y: 38 },
+    { x: 20, y: 40 },
+    { x: 18, y: 40 },
+    { x: 16, y: 40 },
+    { x: 14, y: 40 },
+    { x: 12, y: 40 },
+    { x: 10, y: 40 },
+    { x: 10, y: 12 },
+    { x: 10, y: 14 },
+    { x: 10, y: 16 },
+    { x: 10, y: 18 },
+    { x: 10, y: 38 },
+    { x: 10, y: 36 },
+    { x: 10, y: 34 },
+    { x: 10, y: 32 },
+    { x: 10, y: 30 },
+    { x: 10, y: 28 },
+    { x: 10, y: 26 },
+    { x: 10, y: 24 },
+    { x: 10, y: 22 },
+    { x: 10, y: 20 },
   ];
 
   constructor(root, getData, {}) {
@@ -144,28 +192,30 @@ export default class MedialAxis extends D3Visualization {
       this.drawCircles("boundary", points);
     }
 
-    // Draw invisible hover targets
-    const container = this.svg.select("g").append("g");
+    if (!this.tooltip.empty()) {
+      // Draw invisible hover targets
+      const container = this.svg.select("g").append("g");
 
-    this.drawLines("hover", medialEdges, "transparent", 20)
-      .style("cursor", "help")
-      .on("mouseenter", (_, endpoints) => {
-        const circles = this.buildHoverCircles(endpoints);
+      this.drawLines("hover", medialEdges, "transparent", 20)
+        .style("cursor", "help")
+        .on("mouseenter", (_, endpoints) => {
+          const circles = this.buildHoverCircles(endpoints);
 
-        container
-          .selectAll("circle")
-          .data(circles)
-          .join("circle")
-          .attr("cx", (d) => d.x)
-          .attr("cy", (d) => d.y)
-          .attr("r", (d) => d.r || 3)
-          .attr("fill", (d) => (d.r ? "none" : d.color))
-          .attr("stroke", (d) => (d.r ? d.color : "none"))
-          .attr("stroke-width", 1.5);
-      })
-      .on("mouseleave", () => {
-        container.selectAll("*").remove();
-      });
+          container
+            .selectAll("circle")
+            .data(circles)
+            .join("circle")
+            .attr("cx", (d) => d.x)
+            .attr("cy", (d) => d.y)
+            .attr("r", (d) => d.r || 3)
+            .attr("fill", (d) => (d.r ? "none" : d.color))
+            .attr("stroke", (d) => (d.r ? d.color : "none"))
+            .attr("stroke-width", 1.5);
+        })
+        .on("mouseleave", () => {
+          container.selectAll("*").remove();
+        });
+    }
 
     // Cache rendered data
     this.data = data;

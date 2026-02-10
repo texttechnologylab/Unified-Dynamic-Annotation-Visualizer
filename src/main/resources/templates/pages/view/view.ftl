@@ -17,6 +17,7 @@
   </head>
 
   <body>
+    <#include "/shared/modal.ftl"> 
     <#include "/pages/view/components/sidebar.ftl"> 
     <#include "/pages/view/components/grid.ftl">
 
@@ -28,6 +29,8 @@
 
         <@grid widgets=widgets?eval_json />
       </main>
+
+      <@modal />
     </div>
 
     <script type="module">
