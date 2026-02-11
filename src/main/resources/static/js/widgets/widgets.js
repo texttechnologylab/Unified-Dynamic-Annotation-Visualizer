@@ -5,9 +5,10 @@ import StaticVideo from "./static/StaticVideo.js";
 import BarChart from "./charts/BarChart.js";
 import LineChart from "./charts/LineChart.js";
 import PieChart from "./charts/PieChart.js";
-import MedialAxis from "./charts/MedialAxis.js";
-import VoronoiDiagram from "./charts/VoronoiDiagram.js";
 import HighlightText from "./charts/HighlightText.js";
+import VoronoiDiagram from "./charts/VoronoiDiagram.js";
+import MedialAxis from "./charts/MedialAxis.js";
+import BoundaryApproximation from "./charts/BoundaryApproximation.js";
 
 export default {
   StaticText,
@@ -17,7 +18,8 @@ export default {
   BarChart,
   PieChart,
   LineChart,
-  MedialAxis,
-  VoronoiDiagram,
   HighlightText,
+  VoronoiDiagram,
+  MedialAxis,
+  BoundaryApproximation,
 };

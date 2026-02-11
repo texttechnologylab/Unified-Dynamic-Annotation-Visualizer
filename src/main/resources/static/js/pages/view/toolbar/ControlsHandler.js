@@ -121,6 +121,31 @@ export default class ControlsHandler {
     label.append("span").text(title);
   }
 
+  appendSingleSlider(title, value, min, max, onchange) {
+    const label = this.node
+      .append("label")
+      .attr("class", "dv-range-slider")
+      .text(title);
+
+    const input = label
+      .append("input")
+      .attr("type", "range")
+      .attr("class", "dv-slider")
+      .attr("min", min)
+      .attr("max", max)
+      .attr("value", value)
+      .on("change", () => {
+        onchange(value);
+      });
+
+    const output = label.append("output").text(value);
+
+    input.on("input", (event) => {
+      value = parseInt(event.target.value);
+      output.text(value);
+    });
+  }
+
   appendDoubleSlider(min, max, onchange) {
     const values = [min, max];
 
