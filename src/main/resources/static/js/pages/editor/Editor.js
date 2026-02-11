@@ -1,4 +1,3 @@
-import { modal } from "../../shared/classes/Modal.js";
 import accordions from "../../shared/modules/accordions.js";
 import { identifierValid, widgetsValid } from "./utils/validate.js";
 import state from "./utils/state.js";
@@ -55,7 +54,9 @@ export default class Editor {
     document
       .querySelector("#discard-button")
       .addEventListener("click", () =>
-        modal.confirm("Discard Changes", "Are you sure?", () => history.back()),
+        state.modal.confirm("Discard Changes", "Are you sure?", () =>
+          history.back(),
+        ),
       );
 
     document
@@ -134,7 +135,7 @@ export default class Editor {
     const ok = identifierValid(config) && widgetsValid(config);
 
     if (ok && pipelines.includes(config.id)) {
-      modal.confirm(
+      state.modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         async () => {

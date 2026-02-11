@@ -6,6 +6,7 @@ import {
 import { createGenerator, removeSource } from "../utils/actions.js";
 import Source from "../configs/Source.js";
 import configs from "../utils/configs.js";
+import state from "../utils/state.js";
 
 export default class SourceController {
   constructor(item) {
@@ -18,7 +19,11 @@ export default class SourceController {
     const options = this.root.querySelector(".dv-dropdown-menu");
     const body = this.root.querySelector(".dv-source-card-body");
 
-    const builder = new FormBuilder("Source Options", Source.formConfig);
+    const builder = new FormBuilder(
+      state.modal,
+      "Source Options",
+      Source.formConfig,
+    );
 
     // Load existing generators
     for (const config of this.item.createsGenerators) {

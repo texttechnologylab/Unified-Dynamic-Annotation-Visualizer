@@ -1,9 +1,9 @@
 import inputs from "../modules/inputFactories.js";
 import { createElement, isObject } from "../modules/utils.js";
-import { modal } from "./Modal.js";
 
 export default class FormBuilder {
-  constructor(title, formConfig) {
+  constructor(modal, title, formConfig) {
+    this.modal = modal;
     this.title = title;
     this.formConfig = formConfig;
   }
@@ -12,7 +12,7 @@ export default class FormBuilder {
     const fields = this.parseConfig(config);
     const form = createElement("form", { className: "dv-form-column" }, fields);
 
-    modal.render(this.title, form, () => {
+    this.modal.render(this.title, form, () => {
       onSave(this.writeToConfig(config, new FormData(form)));
     });
   }

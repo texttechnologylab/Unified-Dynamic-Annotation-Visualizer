@@ -66,5 +66,3 @@ export default class Modal {
     document.body.classList.remove("modal-open");
   }
 }
-
-export const modal = new Modal();

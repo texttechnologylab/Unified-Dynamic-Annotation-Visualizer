@@ -1,4 +1,3 @@
-import { modal } from "../../../shared/classes/Modal.js";
 import state from "./state.js";
 
 export function identifierValid(config) {
@@ -6,9 +5,9 @@ export function identifierValid(config) {
   const valid = config.id.trim() !== "";
 
   if (!valid) {
-    modal.alert(
+    state.modal.alert(
       "Missing Identifier",
-      "Please provide an identifier for the pipeline."
+      "Please provide an identifier for the pipeline.",
     );
   }
 
@@ -26,18 +25,18 @@ export function widgetsValid(config) {
     const valid = missing.length === 0;
 
     if (!valid) {
-      modal.alert(
+      state.modal.alert(
         "Missing Generators",
         "The following widgets have no generator assigned: " +
-          missing.map((w) => w.title).join(", ")
+          missing.map((w) => w.title).join(", "),
       );
     }
 
     return valid;
   } else {
-    modal.alert(
+    state.modal.alert(
       "No Widgets Found",
-      "Place at least one widget at the grid area."
+      "Place at least one widget at the grid area.",
     );
 
     return false;

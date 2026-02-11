@@ -35,7 +35,11 @@ export default class WidgetController {
     this.setTitle(this.item.title);
 
     const Widget = getter[this.item.type];
-    const builder = new FormBuilder("Widget Options", Widget.formConfig);
+    const builder = new FormBuilder(
+      state.modal,
+      "Widget Options",
+      Widget.formConfig,
+    );
     const buttons = this.root.querySelectorAll("button");
 
     this.widget = new Widget(this.root, this.item.src, this.item.options);

@@ -2,6 +2,7 @@ import FormBuilder from "../../../shared/classes/FormBuilder.js";
 import { createTemplateElement } from "../../../shared/modules/utils.js";
 import { removeGenerator } from "../utils/actions.js";
 import configs from "../utils/configs.js";
+import state from "../utils/state.js";
 
 export default class GeneratorController {
   constructor(item) {
@@ -25,7 +26,11 @@ export default class GeneratorController {
     this.root.querySelector(".dv-generator-card-type").textContent =
       this.item.type;
 
-    const builder = new FormBuilder("Generator Options", Generator.formConfig);
+    const builder = new FormBuilder(
+      state.modal,
+      "Generator Options",
+      Generator.formConfig,
+    );
     const buttons = this.root.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {

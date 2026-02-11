@@ -93,5 +93,3 @@ export default class ChartGPT {
     });
   }
 }
-
-export const chartgpt = new ChartGPT("You are an assistant called ChartGPT.");
