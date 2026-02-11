@@ -139,11 +139,13 @@ export default class Editor {
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         async () => {
+          state.modal.loading("Updating pipeline, please wait...");
           await updatePipeline(config);
           window.open("/view/" + config.id, "_self");
         },
       );
     } else if (ok) {
+      state.modal.loading("Creating pipeline, please wait...");
       await createPipeline(config);
       window.open("/view/" + config.id, "_self");
     }

@@ -129,6 +129,16 @@ body.modal-open {
   margin-bottom: 1rem;
 }
 
+.dv-modal-body-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
 .dv-modal-footer {
   display: flex;
   justify-content: flex-end;

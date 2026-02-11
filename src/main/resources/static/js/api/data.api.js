@@ -1,4 +1,4 @@
-import { api } from "./HTTPClient.js";
+import { api } from "./clients.js";
 
 export async function getData(pipeline, chart, payload) {
   const response = await api.post(

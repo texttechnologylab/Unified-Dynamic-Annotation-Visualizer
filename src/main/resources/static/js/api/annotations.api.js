@@ -1,4 +1,4 @@
-import { api } from "./HTTPClient.js";
+import { api } from "./clients.js";
 
 export async function getAnnotations(query, size) {
   const response = await api.get(`/annotations?q=${query}&size=${size}`);

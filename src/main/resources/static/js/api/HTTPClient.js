@@ -44,5 +44,3 @@ export default class HTTPClient {
     });
   }
 }
-
-export const api = new HTTPClient("/api");

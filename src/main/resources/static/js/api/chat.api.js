@@ -1,4 +1,4 @@
-import { api } from "./HTTPClient.js";
+import { api } from "./clients.js";
 
 export async function getModels() {
   const response = await api.get("/chat/models");
