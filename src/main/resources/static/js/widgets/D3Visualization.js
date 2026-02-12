@@ -15,7 +15,12 @@ export default class D3Visualization {
 
     this.filter = {};
     this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this, ["svg", "png", "csv", "json"]);
+    this.exports = new ExportHandler(this, {
+      svg: "bi bi-file-earmark-code",
+      png: "bi bi-image",
+      csv: "bi bi-table",
+      json: "bi bi-braces",
+    });
 
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.svg = this.root.select(".dv-chart-area").append("svg");

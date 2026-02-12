@@ -1,4 +1,3 @@
-import ExportHandler from "../../pages/view/toolbar/ExportHandler.js";
 import D3Visualization from "../D3Visualization.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
 
@@ -23,34 +22,29 @@ export default class HighlightText extends D3Visualization {
       options: () => getGeneratorOptions("TextFormatting"),
     },
   };
-  static previewData = {
-    spans: [
-      {
-        text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr",
-        style: "text-decoration: underline 2px #00618f;",
-      },
-      {
-        text: ", sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
-      },
-      {
-        text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
-        style: "text-decoration: underline 2px #3a4856;",
-      },
-      {
-        text: " Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
-      },
-      {
-        text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
-        style: "text-decoration: underline 2px #9eadbd;",
-      },
-    ],
-    datasets: [],
-  };
+  static previewData = [
+    {
+      text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr",
+      style: "text-decoration: underline 2px #00618f;",
+    },
+    {
+      text: ", sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
+    },
+    {
+      text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
+      style: "text-decoration: underline 2px #3a4856;",
+    },
+    {
+      text: " Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
+    },
+    {
+      text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
+      style: "text-decoration: underline 2px #9eadbd;",
+    },
+  ];
 
   constructor(root, getData, {}) {
     super(root, getData, { top: 16, right: 16, bottom: 16, left: 16 });
-
-    this.exports = new ExportHandler(this, ["csv", "json"]);
 
     this.svg.remove();
     this.svg = this.root.select(".dv-chart-area").append("div");
@@ -73,7 +67,7 @@ export default class HighlightText extends D3Visualization {
 
   async init() {
     const data = await this.fetch();
-    this.render(data);
+    this.render(data.spans);
   }
 
   render(data) {
@@ -81,7 +75,7 @@ export default class HighlightText extends D3Visualization {
 
     this.svg
       .selectAll("span")
-      .data(data.spans)
+      .data(data)
       .join("span")
       .text((d) => d.TEXT ?? d.text ?? "")
       .attr("class", (d) => d.label && "labeled")
