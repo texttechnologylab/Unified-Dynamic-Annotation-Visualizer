@@ -75,6 +75,9 @@ export default class FormBuilder {
       case "range":
         return Number(formData.get(key));
 
+      case "multiselect":
+        return JSON.parse(formData.get(key));
+
       case "switch":
         return formData.has(key);
 

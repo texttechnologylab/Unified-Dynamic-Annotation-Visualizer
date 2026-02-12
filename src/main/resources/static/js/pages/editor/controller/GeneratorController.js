@@ -34,12 +34,16 @@ export default class GeneratorController {
     const buttons = this.root.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {
-      const { name, settings } = this.item;
+      const { name, settings, extends: ext } = this.item;
 
-      builder.buildForm({ name, settings }, ({ name, settings }) => {
-        this.setName(name);
-        this.item.settings = settings;
-      });
+      builder.buildForm(
+        { name, settings, extends: ext },
+        ({ name, settings, extends: ext }) => {
+          this.setName(name);
+          this.item.settings = settings;
+          this.item.extends = ext;
+        },
+      );
     });
     buttons[1].addEventListener("click", () => {
       // Remove generator from the dom
