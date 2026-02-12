@@ -78,12 +78,18 @@ export default class LineChart extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    // Add controls
     for (const item of data) {
-      this.controls.appendSwitch(item.name, true, (value) => {
-        console.log(value);
-        this.fetch().then((data) => this.render(data));
-      });
+      this.controls.append([
+        {
+          type: "switch",
+          label: item.name,
+          value: true,
+          onchange: (event) => {
+            console.log(event.target.value);
+            this.fetch().then((data) => this.render(data));
+          },
+        },
+      ]);
     }
   }
 

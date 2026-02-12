@@ -4,7 +4,17 @@ import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
 import { debounce, getElementDimensions } from "../shared/modules/utils.js";
 
 export default class D3Visualization {
-  constructor(root, getData, margin) {
+  constructor(
+    root,
+    getData,
+    margin,
+    exportFormats = {
+      svg: "bi bi-file-earmark-code",
+      png: "bi bi-image",
+      csv: "bi bi-table",
+      json: "bi bi-braces",
+    },
+  ) {
     this.root = d3.select(root);
     this.getData = getData;
 
@@ -15,12 +25,7 @@ export default class D3Visualization {
 
     this.filter = {};
     this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this, {
-      svg: "bi bi-file-earmark-code",
-      png: "bi bi-image",
-      csv: "bi bi-table",
-      json: "bi bi-braces",
-    });
+    this.exports = new ExportHandler(this, exportFormats);
 
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.svg = this.root.select(".dv-chart-area").append("svg");

@@ -60,24 +60,38 @@ export default class BarChart extends D3Visualization {
     const min = minOf(data.map((d) => d.value));
     const max = maxOf(data.map((d) => d.value));
 
-    // Add sort controls
-    this.controls.appendSelectRadio(
-      "Sort by",
-      ["value", "label"],
-      ["desc", "asc"],
-      (sort, order) => {
-        this.filter.sort = sort;
-        this.filter.desc = order === "desc";
-        this.fetch().then((data) => this.render(data));
+    this.controls.append([
+      {
+        type: "select",
+        label: "Sort by",
+        value: "value",
+        options: ["value", "label"],
+        onchange: (event) => {
+          this.filter.sort = event.target.value;
+          this.fetch().then((data) => this.render(data));
+        },
       },
-    );
-
-    // Add range slider
-    this.controls.appendDoubleSlider(min, max, (min, max) => {
-      this.filter.min = min;
-      this.filter.max = max;
-      this.fetch().then((data) => this.render(data));
-    });
+      {
+        type: "switch",
+        label: "Desc",
+        value: true,
+        onchange: (event) => {
+          this.filter.desc = event.target.checked;
+          this.fetch().then((data) => this.render(data));
+        },
+      },
+      {
+        type: "rangedouble",
+        label: "Range",
+        value: [min, max],
+        options: { min, max },
+        onchange: (min, max) => {
+          this.filter.min = min;
+          this.filter.max = max;
+          this.fetch().then((data) => this.render(data));
+        },
+      },
+    ]);
   }
 
   render(data) {

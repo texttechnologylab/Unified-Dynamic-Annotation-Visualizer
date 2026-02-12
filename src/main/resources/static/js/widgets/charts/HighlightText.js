@@ -44,7 +44,15 @@ export default class HighlightText extends D3Visualization {
   ];
 
   constructor(root, getData, {}) {
-    super(root, getData, { top: 16, right: 16, bottom: 16, left: 16 });
+    super(
+      root,
+      getData,
+      { top: 16, right: 16, bottom: 16, left: 16 },
+      {
+        csv: "bi bi-table",
+        json: "bi bi-braces",
+      },
+    );
 
     this.svg.remove();
     this.svg = this.root.select(".dv-chart-area").append("div");

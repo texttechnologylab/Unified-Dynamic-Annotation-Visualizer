@@ -35,6 +35,12 @@
   margin: 0.2rem;
 }
 
+.dv-chart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .dv-chart-area {
   position: relative;
   overflow: hidden;

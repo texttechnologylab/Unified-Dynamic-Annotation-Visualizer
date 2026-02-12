@@ -100,34 +100,46 @@ export default class BoundaryApproximation extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    this.controls.appendSwitch("Grid", this.draw.grid, () => {
-      this.draw.grid = !this.draw.grid;
-      this.render(this.data);
-    });
-    this.controls.appendSwitch("Clusters", this.draw.clusters, () => {
-      this.draw.clusters = !this.draw.clusters;
-      this.render(this.data);
-    });
-    this.controls.appendSingleSlider(
-      "Grid rows",
-      this.gridRows,
-      1,
-      100,
-      (value) => {
-        this.gridRows = value;
-        this.render(this.data);
+    this.controls.append([
+      {
+        type: "switch",
+        label: "Grid",
+        value: this.draw.grid,
+        onchange: () => {
+          this.draw.grid = !this.draw.grid;
+          this.render(this.data);
+        },
       },
-    );
-    this.controls.appendSingleSlider(
-      "Cluster radius",
-      this.maxRadius,
-      1,
-      100,
-      (value) => {
-        this.maxRadius = value;
-        this.render(this.data);
+      {
+        type: "switch",
+        label: "Clusters",
+        value: this.draw.clusters,
+        onchange: () => {
+          this.draw.clusters = !this.draw.clusters;
+          this.render(this.data);
+        },
       },
-    );
+      {
+        type: "range",
+        label: "Grid rows",
+        value: this.gridRows,
+        options: { min: 1, max: 100 },
+        onchange: (event) => {
+          this.gridRows = event.target.value;
+          this.render(this.data);
+        },
+      },
+      {
+        type: "range",
+        label: "Cluster Radius",
+        value: this.maxRadius,
+        options: { min: 1, max: 100 },
+        onchange: (event) => {
+          this.maxRadius = event.target.value;
+          this.render(this.data);
+        },
+      },
+    ]);
   }
 
   render(data) {

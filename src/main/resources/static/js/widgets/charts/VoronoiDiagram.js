@@ -70,14 +70,26 @@ export default class VoronoiDiagram extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    this.controls.appendSwitch("Center points", this.draw.points, () => {
-      this.draw.points = !this.draw.points;
-      this.render(this.data);
-    });
-    this.controls.appendSwitch("Center polygons", this.draw.polygons, () => {
-      this.draw.polygons = !this.draw.polygons;
-      this.render(this.data);
-    });
+    this.controls.append([
+      {
+        type: "switch",
+        label: "Center points",
+        value: this.draw.points,
+        onchange: () => {
+          this.draw.points = !this.draw.points;
+          this.render(this.data);
+        },
+      },
+      {
+        type: "switch",
+        label: "Center polygons",
+        value: this.draw.polygons,
+        onchange: () => {
+          this.draw.polygons = !this.draw.polygons;
+          this.render(this.data);
+        },
+      },
+    ]);
   }
 
   render(data) {

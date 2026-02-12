@@ -105,30 +105,53 @@ export default class MedialAxis extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    this.controls.appendSwitch("Boundary points", this.draw.boundary, () => {
-      this.draw.boundary = !this.draw.boundary;
-      this.render(this.data);
-    });
-    this.controls.appendSwitch(
-      "Delaunay triangles",
-      this.draw.triangles,
-      () => {
-        this.draw.triangles = !this.draw.triangles;
-        this.render(this.data);
+    this.controls.append([
+      {
+        type: "switch",
+        label: "Boundary points",
+        value: this.draw.boundary,
+        onchange: () => {
+          this.draw.boundary = !this.draw.boundary;
+          this.render(this.data);
+        },
       },
-    );
-    this.controls.appendSwitch("Circumcircles", this.draw.circles, () => {
-      this.draw.circles = !this.draw.circles;
-      this.render(this.data);
-    });
-    this.controls.appendSwitch("Circumcenters", this.draw.centers, () => {
-      this.draw.centers = !this.draw.centers;
-      this.render(this.data);
-    });
-    this.controls.appendSwitch("Voronoi Edges", this.draw.voronoi, () => {
-      this.draw.voronoi = !this.draw.voronoi;
-      this.render(this.data);
-    });
+      {
+        type: "switch",
+        label: "Delaunay triangles",
+        value: this.draw.triangles,
+        onchange: () => {
+          this.draw.triangles = !this.draw.triangles;
+          this.render(this.data);
+        },
+      },
+      {
+        type: "switch",
+        label: "Circumcircles",
+        value: this.draw.circles,
+        onchange: () => {
+          this.draw.circles = !this.draw.circles;
+          this.render(this.data);
+        },
+      },
+      {
+        type: "switch",
+        label: "Circumcenters",
+        value: this.draw.centers,
+        onchange: () => {
+          this.draw.centers = !this.draw.centers;
+          this.render(this.data);
+        },
+      },
+      {
+        type: "switch",
+        label: "Voronoi Edges",
+        value: this.draw.voronoi,
+        onchange: () => {
+          this.draw.voronoi = !this.draw.voronoi;
+          this.render(this.data);
+        },
+      },
+    ]);
   }
 
   render(data) {

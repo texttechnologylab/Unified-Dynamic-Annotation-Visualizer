@@ -1,3 +1,7 @@
+output {
+  font-size: var(--font-size-sm);
+}
+
 .dv-label {
   margin-bottom: 0.5rem;
 }
