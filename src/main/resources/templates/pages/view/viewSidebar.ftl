@@ -1,11 +1,12 @@
 <#include "/shared/accordion.ftl">
-<#include "/pages/view/components/pipelineSwitcher.ftl">
+<#include "/shared/pipelineSwitcher.ftl">
 
 <#macro sidebar id pipelines widgets>
   <aside class="dv-sidebar">
-    <div class="dv-sidebar-header">
-      <h1 class="dv-bold">Dynamic Visualizations</h1>
-    </div>
+    <a class="dv-sidebar-header" href="/">
+      <img src="/img/logo.png" alt="Logo">
+      <span class="dv-bold">UDAV</span>
+    </a>
 
     <div class="dv-sidebar-body">
       <a 
@@ -23,7 +24,7 @@
         <span>Edit Pipeline</span>
       </a>
 
-      <@accordion icon="bi bi-robot" title="ChartGPT">
+      <@accordion icon="bi bi-robot" title="ChaRtGPT">
         <div class="dv-chat-bot">
           <div class="dv-chat"></div>
 

@@ -12,7 +12,17 @@
 }
 
 .dv-sidebar-header {
-  margin: 1rem 1rem 0;
+  margin: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  color: unset;
+  text-decoration: none;
+
+  img {
+    height: 2.5rem;
+  }
 }
 
 .dv-sidebar-body {

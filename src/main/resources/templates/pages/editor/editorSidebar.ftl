@@ -1,8 +1,9 @@
 <#macro sidebar id>
   <aside class="dv-sidebar">
-    <div class="dv-sidebar-header">
-      <h1 class="dv-bold">Dynamic Visualizations</h1>
-    </div>
+    <a class="dv-sidebar-header" href="/">
+      <img src="/img/logo.png" alt="Logo">
+      <span class="dv-bold">UDAV</span>
+    </a>
 
     <div class="dv-sidebar-body">
       <div class="dv-editor-badge">Pipeline Editor</div>

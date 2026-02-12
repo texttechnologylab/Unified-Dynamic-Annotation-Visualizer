@@ -18,8 +18,8 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
-    <#include "/pages/view/components/sidebar.ftl"> 
-    <#include "/pages/view/components/grid.ftl">
+    <#include "/pages/view/viewSidebar.ftl"> 
+    <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
       <@sidebar id=id pipelines=pipelines?eval_json widgets=widgets?eval_json />
