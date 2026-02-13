@@ -75,3 +75,13 @@ export function deepClone(object, skip = []) {
 
   return clone;
 }
+
+export function applyStylesToSVG(svg, changes) {
+  changes.forEach((change) => {
+    const selection = svg.selectAll(change.selector);
+
+    Object.entries(change.styles).forEach(([key, value]) => {
+      selection.style(key, value);
+    });
+  });
+}

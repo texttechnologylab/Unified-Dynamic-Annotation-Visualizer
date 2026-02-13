@@ -1,14 +1,15 @@
 import { createElement } from "../modules/utils.js";
 
 export default class Searchselect {
-  constructor(getData, keys = ["annotation", "rowCount"]) {
+  constructor({ getData, keys = ["", ""], header = ["Results", ""] }) {
     this.getData = getData;
     this.keys = keys;
+    this.header = header;
     this.value = "";
     this.dom = {};
   }
 
-  create(key, selected, header = ["Annotation", "#"]) {
+  create(key, selected) {
     const template = document.querySelector("#searchselect-template");
     const root = template.content.cloneNode(true);
 
@@ -17,8 +18,8 @@ export default class Searchselect {
     this.dom.header = root.querySelectorAll(".dv-searchselect-header>span");
     this.dom.container = root.querySelector(".dv-searchselect-container");
 
-    this.dom.header[0].textContent = header[0];
-    this.dom.header[1].textContent = header[1];
+    this.dom.header[0].textContent = this.header[0];
+    this.dom.header[1].textContent = this.header[1];
     this.dom.input.name = key;
     this.dom.input.value = selected;
     this.value = selected;
@@ -70,23 +71,23 @@ export default class Searchselect {
   createResult(item) {
     const label = createElement("span", {
       className: "dv-text-truncate",
-      textContent: item[this.keys[0]],
+      textContent: item[this.keys[0]] || item,
     });
     label.addEventListener("click", (event) => {
       event.preventDefault();
-      this.value = item[this.keys[0]];
+      this.value = item[this.keys[0]] || item;
       this.dom.input.blur();
     });
 
     const info = createElement("span", {
-      textContent: item[this.keys[1]],
+      textContent: item[this.keys[1]] || "",
     });
 
     const result = createElement(
       "div",
       {
         className: "dv-btn dv-searchselect-result",
-        title: item[this.keys[0]],
+        title: item[this.keys[0]] || "",
       },
       [label, info],
     );

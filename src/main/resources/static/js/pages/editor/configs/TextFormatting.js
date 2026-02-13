@@ -1,3 +1,4 @@
+import { getFiles } from "../../../api/files.api.js";
 import { getGeneratorOptions } from "../utils/actions.js";
 
 export default class TextFormatting {
@@ -7,6 +8,7 @@ export default class TextFormatting {
     type: "TextFormatting",
     settings: {
       style: "underline",
+      sofaFile: "",
     },
     extends: [],
   };
@@ -19,6 +21,14 @@ export default class TextFormatting {
       type: "select",
       label: "Accent style",
       options: ["underline", "highlight", "bold"],
+    },
+    "settings.sofaFile": {
+      type: "searchselect",
+      label: "XML File",
+      options: {
+        header: ["File", ""],
+        getData: getFiles,
+      },
     },
     extends: {
       type: "multiselect",

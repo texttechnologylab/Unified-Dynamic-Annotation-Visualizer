@@ -118,8 +118,8 @@ export default {
     return multiselect.create(key, selected);
   },
 
-  searchselect(key, selected, { getData }, _) {
-    const searchselect = new Searchselect(getData);
+  searchselect(key, selected, options, _) {
+    const searchselect = new Searchselect(options);
 
     return searchselect.create(key, selected);
   },

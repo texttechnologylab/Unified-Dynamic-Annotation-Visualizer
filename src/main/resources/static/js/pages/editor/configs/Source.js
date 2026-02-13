@@ -9,7 +9,11 @@ export default class Source {
     uri: {
       type: "searchselect",
       label: "Annotation type",
-      options: { getData: getAnnotations },
+      options: {
+        header: ["Annotation", "#"],
+        keys: ["annotation", "rowCount"],
+        getData: getAnnotations,
+      },
     },
   };
 }
