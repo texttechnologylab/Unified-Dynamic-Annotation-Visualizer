@@ -17,7 +17,7 @@ export default class HTTPClient {
       throw new Error(`${response.status}: ${error}`);
     }
 
-    return response;
+    return response.json();
   }
 
   get(path) {

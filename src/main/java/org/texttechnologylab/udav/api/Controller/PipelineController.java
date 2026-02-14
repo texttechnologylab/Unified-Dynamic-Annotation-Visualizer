@@ -37,25 +37,23 @@ public class PipelineController {
 
     // Create new pipeline
     @PostMapping
-    public ResponseEntity<Void> create(@Valid @RequestBody JsonNode json) throws Exception {
-        String id = service.create(json);
-        return ResponseEntity.created(
-                // location header: /api/pipelines/{name}
-                java.net.URI.create("/api/pipelines/" + id)
-        ).build();
+    public ResponseEntity<JsonNode> create(@Valid @RequestBody JsonNode json) throws Exception {
+        service.create(json);
+        return ResponseEntity.ok(json);
     }
 
     // Update/replace JSON of an existing pipeline
     @PutMapping()
-    public ResponseEntity<Void> update(@Valid @RequestBody JsonNode json) throws Exception {
+    public ResponseEntity<JsonNode> update(@Valid @RequestBody JsonNode json) throws Exception {
         service.update(json);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(json);
     }
 
     // Delete by name
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    public ResponseEntity<JsonNode> delete(@PathVariable String id) throws Exception {
+        JsonNode json = service.get(id);
         service.delete(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(json);
     }
 }

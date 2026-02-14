@@ -1,13 +1,9 @@
 import { api } from "./clients.js";
 
 export async function getModels() {
-  const response = await api.get("/chat/models");
-
-  return response.json();
+  return await api.get("/chat/models");
 }
 
 export async function getCompletion(model, messages) {
-  const response = await api.post("/chat/completions", { model, messages });
-
-  return response.json();
+  return await api.post("/chat/completions", { model, messages });
 }
