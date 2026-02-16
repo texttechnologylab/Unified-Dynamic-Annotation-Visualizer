@@ -205,7 +205,8 @@ export default class BoundaryApproximation extends D3Visualization {
         d3.max(clusters, (d) => d[2].length),
       ]);
 
-    // Get a value for each grid cell. Cells with clusters get positive values, cells without clusters get negative values.
+    // Get a value for each grid cell. The values are the distance
+    // from the cell center to the nearest cluster boundary.
     const values = this.getCellValues(
       clusters,
       rows,
