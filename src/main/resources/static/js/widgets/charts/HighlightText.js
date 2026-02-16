@@ -75,7 +75,7 @@ export default class HighlightText extends D3Visualization {
 
   async init() {
     const data = await this.fetch();
-    this.render(data.spans);
+    this.render(data);
 
     this.filter.hide = [];
 
@@ -91,7 +91,7 @@ export default class HighlightText extends D3Visualization {
             } else {
               this.filter.hide.push(name);
             }
-            this.fetch().then((data) => this.render(data.spans));
+            this.fetch().then((data) => this.render(data));
           },
         };
       }),
@@ -103,7 +103,7 @@ export default class HighlightText extends D3Visualization {
 
     this.svg
       .selectAll("span")
-      .data(data)
+      .data(data.spans)
       .join("span")
       .text((d) => d.TEXT ?? d.text ?? "")
       .attr("class", (d) => d.label && "labeled")
@@ -114,6 +114,6 @@ export default class HighlightText extends D3Visualization {
     }
 
     // Cache rendered data
-    this.data = data;
+    this.data = data.spans;
   }
 }

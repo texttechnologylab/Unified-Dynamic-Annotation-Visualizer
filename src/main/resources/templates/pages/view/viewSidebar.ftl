@@ -107,14 +107,22 @@
           </div>
         </@accordion>
 
-        <div class="dv-centered mt-2">
+        <div class="dv-filter-buttons mt-2">
           <button
             id="apply-button"
-            class="dv-btn-outline"
+            class="dv-btn-primary"
             type="button"
           >
             <i class="bi bi-funnel"></i>
-            <span>Apply filter</span>
+            <span>Apply</span>
+          </button>
+          <button
+            id="reset-button"
+            class="dv-btn-outline dv-hidden"
+            type="button"
+          >
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Reset</span>
           </button>
         </div>
       </div>

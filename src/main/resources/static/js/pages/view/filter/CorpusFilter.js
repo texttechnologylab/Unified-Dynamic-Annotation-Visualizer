@@ -21,6 +21,10 @@ export default class CorpusFilter {
       this.filter[key] = component.getValues();
     }
   }
+
+  reset() {
+    this.filter = {};
+  }
 }
 
 export const corpusFilter = new CorpusFilter(".dv-corpus-filter");

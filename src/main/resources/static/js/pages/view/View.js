@@ -10,9 +10,10 @@ export default class View {
   constructor(pipeline) {
     this.pipeline = pipeline;
     this.charts = [];
+  }
 
+  init(widgets) {
     corpusFilter.init();
-    corpusFilter.apply();
     sidepanels.init();
     accordions.init();
     dropdowns.init();
@@ -21,7 +22,9 @@ export default class View {
     chatBot.init();
 
     this.initSwitcher();
-    this.initButton();
+    this.initButtons();
+    this.initGrid(widgets);
+    this.initWidgets(widgets);
   }
 
   initSwitcher() {
@@ -37,9 +40,22 @@ export default class View {
     });
   }
 
-  initButton() {
-    document.querySelector("#apply-button").addEventListener("click", () => {
+  initButtons() {
+    const resetButton = document.querySelector("#reset-button");
+    const applyButton = document.querySelector("#apply-button");
+
+    resetButton.addEventListener("click", () => {
+      corpusFilter.reset();
+      resetButton.classList.add("dv-hidden");
+
+      for (const chart of this.charts) {
+        chart.fetch().then((data) => chart.render(data));
+      }
+    });
+
+    applyButton.addEventListener("click", () => {
       corpusFilter.apply();
+      resetButton.classList.remove("dv-hidden");
 
       for (const chart of this.charts) {
         chart.fetch().then((data) => chart.render(data));
