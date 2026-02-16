@@ -76,6 +76,26 @@ export default class HighlightText extends D3Visualization {
   async init() {
     const data = await this.fetch();
     this.render(data.spans);
+
+    this.filter.hide = [];
+
+    this.controls.append(
+      data.datasets.map(({ name }) => {
+        return {
+          type: "switch",
+          label: name,
+          value: true,
+          onchange: (event) => {
+            if (event.target.checked) {
+              this.filter.hide = this.filter.hide.filter((n) => n !== name);
+            } else {
+              this.filter.hide.push(name);
+            }
+            this.fetch().then((data) => this.render(data.spans));
+          },
+        };
+      }),
+    );
   }
 
   render(data) {
