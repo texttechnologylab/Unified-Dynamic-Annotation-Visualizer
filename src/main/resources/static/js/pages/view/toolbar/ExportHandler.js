@@ -1,3 +1,4 @@
+import { getTikz } from "../../../api/convertions.api.js";
 import { createElement } from "../../../shared/modules/utils.js";
 
 export default class ExportHandler {
@@ -49,6 +50,9 @@ export default class ExportHandler {
       case "png":
         this.exportPNG();
         break;
+      case "tex":
+        this.exportTEX();
+        break;
       case "csv":
         this.exportCSV();
         break;
@@ -96,6 +100,23 @@ export default class ExportHandler {
       this.downloadURL(canvas.toDataURL(), `${this.filename}.png`);
     };
     img.src = url;
+  }
+
+  async exportTEX() {
+    const svg = this.getSVG().cloneNode(true);
+    const str = this.serializer.serializeToString(svg);
+
+    const data = await getTikz(str);
+    const metadata = this.getMetadata();
+
+    const tex = data.content.replace(
+      "begin{document}",
+      `begin{document}\n\n% Metadata: ${JSON.stringify(metadata)}`,
+    );
+
+    const url = this.createURL(tex, "application/x-tex");
+
+    this.downloadURL(url, `${this.filename}.tex`);
   }
 
   exportCSV() {

@@ -11,6 +11,7 @@ export default class D3Visualization {
     exportFormats = {
       svg: "bi bi-file-earmark-code",
       png: "bi bi-image",
+      tex: "bi bi-file-earmark-font",
       csv: "bi bi-table",
       json: "bi bi-braces",
     },

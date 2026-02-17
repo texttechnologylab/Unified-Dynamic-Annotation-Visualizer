@@ -85,6 +85,7 @@
 
   i {
     margin-right: 0.5rem;
+    color: var(--primary);
   }
 
   .dv-btn {
