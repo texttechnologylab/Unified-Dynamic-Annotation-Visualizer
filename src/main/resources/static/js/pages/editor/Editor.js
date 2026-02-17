@@ -1,12 +1,12 @@
 import accordions from "../../shared/modules/accordions.js";
-import { identifierValid, widgetsValid } from "./utils/validate.js";
-import state from "./utils/state.js";
+import { identifierValid, widgetsValid } from "./utils/editorValidations.js";
+import state from "./utils/editorState.js";
 import {
   createSource,
   createWidget,
   loadSources,
   saveSources,
-} from "./utils/actions.js";
+} from "./utils/editorActions.js";
 import { debounce } from "../../shared/modules/utils.js";
 import {
   createPipeline,

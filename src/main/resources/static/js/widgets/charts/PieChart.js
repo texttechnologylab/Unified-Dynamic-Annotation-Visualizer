@@ -4,7 +4,7 @@ import {
   minOf,
   getElementDimensions,
 } from "../../shared/modules/utils.js";
-import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class PieChart extends D3Visualization {
   static defaultConfig = {

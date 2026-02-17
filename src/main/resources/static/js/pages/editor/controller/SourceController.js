@@ -3,10 +3,10 @@ import {
   createElement,
   createTemplateElement,
 } from "../../../shared/modules/utils.js";
-import { createGenerator, removeSource } from "../utils/actions.js";
+import { createGenerator, removeSource } from "../utils/editorActions.js";
 import Source from "../configs/Source.js";
-import configs from "../utils/configs.js";
-import state from "../utils/state.js";
+import configs from "../configs/configs.js";
+import state from "../utils/editorState.js";
 
 export default class SourceController {
   constructor(item) {

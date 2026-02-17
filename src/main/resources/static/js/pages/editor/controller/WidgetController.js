@@ -1,4 +1,4 @@
-import state from "../utils/state.js";
+import state from "../utils/editorState.js";
 import getter from "../../../widgets/widgets.js";
 import FormBuilder from "../../../shared/classes/FormBuilder.js";
 import { createTemplateElement } from "../../../shared/modules/utils.js";

@@ -26,5 +26,3 @@ export default class CorpusFilter {
     this.filter = {};
   }
 }
-
-export const corpusFilter = new CorpusFilter(".dv-corpus-filter");

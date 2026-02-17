@@ -1,24 +1,25 @@
 import widgets from "../../widgets/widgets.js";
-import { corpusFilter } from "./filter/CorpusFilter.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
 import { getData } from "../../api/data.api.js";
 import ChartGPT from "../../shared/classes/ChartGPT.js";
+import state from "./utils/viewState.js";
 
 export default class View {
   constructor(pipeline) {
     this.pipeline = pipeline;
-    this.charts = [];
   }
 
   init(widgets) {
-    corpusFilter.init();
+    state.corpusFilter.init();
     sidepanels.init();
     accordions.init();
     dropdowns.init();
 
-    const chatBot = new ChartGPT("You are an assistant called ChartGPT.");
+    const chatBot = new ChartGPT(
+      "You are an assistant called ChartGPT. Do NOT use markdown in your answers.",
+    );
     chatBot.init();
 
     this.initSwitcher();
@@ -45,19 +46,19 @@ export default class View {
     const applyButton = document.querySelector("#apply-button");
 
     resetButton.addEventListener("click", () => {
-      corpusFilter.reset();
+      state.corpusFilter.reset();
       resetButton.classList.add("dv-hidden");
 
-      for (const chart of this.charts) {
+      for (const chart of state.charts) {
         chart.fetch().then((data) => chart.render(data));
       }
     });
 
     applyButton.addEventListener("click", () => {
-      corpusFilter.apply();
+      state.corpusFilter.apply();
       resetButton.classList.remove("dv-hidden");
 
-      for (const chart of this.charts) {
+      for (const chart of state.charts) {
         chart.fetch().then((data) => chart.render(data));
       }
     });
@@ -90,7 +91,7 @@ export default class View {
       widget.init();
 
       if (!config.src) {
-        this.charts.push(widget);
+        state.charts.push(widget);
       }
     });
   }

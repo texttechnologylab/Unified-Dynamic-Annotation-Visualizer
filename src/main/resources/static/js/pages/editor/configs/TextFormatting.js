@@ -1,5 +1,5 @@
 import { getFiles } from "../../../api/files.api.js";
-import { getGeneratorOptions } from "../utils/actions.js";
+import { getGeneratorOptions } from "../utils/editorActions.js";
 
 export default class TextFormatting {
   static token = "TF";

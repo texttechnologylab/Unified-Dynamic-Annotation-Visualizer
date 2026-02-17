@@ -1,5 +1,5 @@
 import D3Visualization from "../D3Visualization.js";
-import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class MedialAxis extends D3Visualization {
   static defaultConfig = {

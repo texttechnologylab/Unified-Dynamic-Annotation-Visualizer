@@ -1,8 +1,8 @@
 import FormBuilder from "../../../shared/classes/FormBuilder.js";
 import { createTemplateElement } from "../../../shared/modules/utils.js";
-import { removeGenerator } from "../utils/actions.js";
-import configs from "../utils/configs.js";
-import state from "../utils/state.js";
+import { removeGenerator } from "../utils/editorActions.js";
+import configs from "../configs/configs.js";
+import state from "../utils/editorState.js";
 
 export default class GeneratorController {
   constructor(item) {

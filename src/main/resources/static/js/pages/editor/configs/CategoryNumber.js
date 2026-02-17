@@ -1,4 +1,4 @@
-import { getGeneratorOptions } from "../utils/actions.js";
+import { getGeneratorOptions } from "../utils/editorActions.js";
 
 export default class CategoryNumber {
   static token = "CN";

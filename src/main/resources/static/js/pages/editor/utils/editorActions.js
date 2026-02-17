@@ -1,5 +1,5 @@
 import { deepClone, randomId } from "../../../shared/modules/utils.js";
-import state from "./state.js";
+import state from "./editorState.js";
 import WidgetController from "../controller/WidgetController.js";
 import SourceController from "../controller/SourceController.js";
 import GeneratorController from "../controller/GeneratorController.js";

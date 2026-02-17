@@ -1,4 +1,4 @@
-import state from "./state.js";
+import state from "./editorState.js";
 
 export function identifierValid(config) {
   // Check for empty id

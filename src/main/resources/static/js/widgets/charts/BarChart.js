@@ -1,6 +1,6 @@
 import D3Visualization from "../D3Visualization.js";
 import { maxOf, minOf } from "../../shared/modules/utils.js";
-import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class BarChart extends D3Visualization {
   static defaultConfig = {

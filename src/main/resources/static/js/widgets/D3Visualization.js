@@ -1,6 +1,6 @@
-import { corpusFilter } from "../pages/view/filter/CorpusFilter.js";
 import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
 import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
+import state from "../pages/view/utils/viewState.js";
 import { debounce, getElementDimensions } from "../shared/modules/utils.js";
 
 export default class D3Visualization {
@@ -55,7 +55,7 @@ export default class D3Visualization {
 
   async fetch() {
     return await this.getData({
-      corpus: corpusFilter.filter,
+      corpus: state.corpusFilter.filter,
       chart: this.filter,
     });
   }

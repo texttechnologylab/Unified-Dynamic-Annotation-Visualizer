@@ -1,6 +1,6 @@
 import D3Visualization from "../D3Visualization.js";
 import { randomId } from "../../shared/modules/utils.js";
-import { getGeneratorOptions } from "../../pages/editor/utils/actions.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class VoronoiDiagram extends D3Visualization {
   static defaultConfig = {
