@@ -1,0 +1,75 @@
+{
+  "id": "newformattest3",
+  "sources": [
+    {
+      "id": "0",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "createsGenerators": [
+        {
+          "type": "CategoryNumber",
+          "id": "total",
+          "name": "Gen1",
+          "token": "CN",
+          "extends": [],
+          "settings": {
+            "categoriesWhitelist": []
+          }
+        },
+        {
+          "type": "TextFormatting",
+          "id": "text-color",
+          "name": "Gen2",
+          "token": "TF",
+          "extends": [],
+          "settings": {
+            "sofaFile": "ID21200100.xmi",
+            "style": "underline"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "createsGenerators": [
+        {
+          "type": "CategoryNumber",
+          "id": "total",
+          "name": "Gen3",
+          "token": "CN",
+          "extends": [],
+          "settings": {
+            "categoriesWhitelist": []
+          }
+        },
+        {
+          "type": "TextFormatting",
+          "id": "text-color",
+          "name": "Gen4",
+          "token": "TF",
+          "extends": [],
+          "settings": {
+            "sofaFile": "ID21200100.xmi",
+            "style": "underline"
+          }
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "id": "text",
+      "x": 4,
+      "y": 2,
+      "w": 8,
+      "h": 8,
+      "type": "HighlightText",
+      "title": "TextFormatting",
+      "generator": {
+        "id": "text-color"
+      },
+      "options": {},
+      "icon": "bi bi-card-text"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "id": "medialaxis-demo",
+  "sources": [
+    {
+      "id": "0",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "settings": {
+        "categoriesWhitelist": ["NOUN", "ADV", "PRON", "ADP", "VERB"],
+        "sourceFilesWhitelist": ["ID21200100.xmi"]
+      },
+      "createsGenerators": [
+        {
+          "type": "CategoryNumber",
+          "name": "Gen1",
+          "id": "POS_Numbers",
+          "extends": []
+        },
+        {
+          "type": "TextFormatting",
+          "name": "Gen2",
+          "id": "POS_Formatting",
+          "extends": [],
+          "settings": {
+            "sofaFile": "ID21200100.xmi",
+            "style": "underline"
+          }
+        }
+      ]
+    },
+    {
+      "id": "1",
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity",
+      "settings": {
+        "sourceFilesWhitelist": ["ID21200100.xmi"]
+      },
+      "createsGenerators": [
+        {
+          "type": "CategoryNumber",
+          "name": "Gen3",
+          "id": "NE_Numbers",
+          "extends": []
+        },
+        {
+          "type": "TextFormatting",
+          "name": "Gen4",
+          "id": "NE_Formatting",
+          "extends": [],
+          "settings": {
+            "sofaFile": "ID21200100",
+            "sofaID": "_InitialView",
+            "style": "highlight"
+          }
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "uri": "",
+      "createsGenerators": [
+        {
+          "id": "Total_Formatting",
+          "name": "My DerivedGenerator",
+          "type": "TextFormatting",
+          "extends": ["POS_Formatting", "NE_Formatting"]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "uri": "points.json",
+      "createsGenerators": [
+        {
+          "id": "VoronoiMap",
+          "name": "My Voronoi",
+          "type": "MapCoordinates",
+          "settings": {
+            "keys": {
+              "coordinates": ["x", "y"],
+              "test": "x"
+            },
+            "fixedKeys": {
+              "fillColor": "#000000",
+              "strokeColor": "#000000",
+              "outsideColor": "#ffffff",
+              "scale": 1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "uri": "XY_dict_reducedSize.json@N",
+      "createsGenerators": [
+        {
+          "id": "VoronoiMap_@ID@",
+          "name": "My Voronoi @ID@",
+          "type": "MapCoordinates",
+          "settings": {
+            "keysMap": {
+              "1_0": {
+                "X": "coordinates@0",
+                "Y": "coordinates@1",
+                "Z_abs": "scale",
+                "colors_S": [
+                  "fillColor@Red",
+                  "fillColor@G",
+                  "fillColor@B",
+                  "fillColor@Alpha"
+                ],
+                "colors_SE": [
+                  "strokeColor@Red",
+                  "strokeColor@G",
+                  "strokeColor@B",
+                  "strokeColor@Alpha"
+                ]
+              }
+            },
+            "fixedKeys": {
+              "outsideColor": "#ffffff"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "widgets": [
+    {
+      "id": "VoronoiDiagram-jsdfksj",
+      "x": 0,
+      "y": 2,
+      "w": 12,
+      "h": 10,
+      "type": "VoronoiDiagram",
+      "title": "Voronoi Diagram",
+      "generator": {
+        "id": "VoronoiMap"
+      },
+      "options": {
+        "axes": false,
+        "dots": false
+      }
+    },
+    {
+      "id": "VoronoiDiagram-jsdffsdf",
+      "x": 12,
+      "y": 2,
+      "w": 12,
+      "h": 10,
+      "type": "VoronoiDiagram",
+      "title": "Voronoi Diagram",
+      "generator": {
+        "id": "VoronoiMap"
+      },
+      "options": {
+        "axes": true,
+        "dots": true
+      }
+    }
+  ]
+}

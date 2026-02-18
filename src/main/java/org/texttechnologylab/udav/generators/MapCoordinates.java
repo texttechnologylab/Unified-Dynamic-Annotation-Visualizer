@@ -33,9 +33,8 @@ public class MapCoordinates extends Generator {
         if (SourceJson.class.equals(source.getClass())) {
             SourceJson sourceJson = (SourceJson) source;
 
-            Map<String, Object> keysMap = (Map<String, Object>) settings.getMapSettingOrDefault("keysMap", null);
-            List<Map<String, Object>> flatKeysMap = sourceJson.generateFlatKeysMap(keysMap);
-            for (Map<String, Object> map : flatKeysMap) {
+            List<Map<String, Object>> keysMap = sourceJson.generateKeysMap(settings);
+            for (Map<String, Object> map : keysMap) {
 
                 // Coordinates (mandatory field)
                 Map<String, Number> coordinates = (Map<String, Number>) map.get("coordinates");
