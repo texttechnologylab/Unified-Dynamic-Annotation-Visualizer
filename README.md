@@ -1,3 +1,10 @@
+![GitHub License](https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer)
+![GitHub release (with filter)](https://img.shields.io/github/v/release/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer)
+
+[![Conference](http://img.shields.io/badge/conference-LREC--2026-4b44ce.svg)]([https://2023.emnlp.org/](https://lrec2026.info/))
+[![Paper](http://img.shields.io/badge/paper-LREC--2026-fb44ce.svg)](some...)
+
+
 # Unified Dynamic Annotation Visualizer
 
 UDAV is designed to enable different disciplines
