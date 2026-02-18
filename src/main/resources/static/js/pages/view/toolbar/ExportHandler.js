@@ -1,5 +1,5 @@
 import { getTikz } from "../../../api/convertions.api.js";
-import { createElement } from "../../../shared/modules/utils.js";
+import { applyStyles, createElement } from "../../../shared/modules/utils.js";
 
 export default class ExportHandler {
   constructor(widget, formats) {
@@ -103,18 +103,21 @@ export default class ExportHandler {
   }
 
   async exportTEX() {
-    const svg = this.getSVG().cloneNode(true);
-    const str = this.serializer.serializeToString(svg);
+    let svg = this.getSVG().cloneNode(true);
+    svg = applyStyles(svg, [
+      { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
+      { selector: '[fill="currentColor"]', styles: { fill: "black" } },
+      { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
+      { selector: '[fill="transparent"]', styles: { fill: "none" } },
+    ]);
 
-    const data = await getTikz(str);
+    const type = this.widget.constructor.defaultConfig.type;
+    const str = this.serializer.serializeToString(svg);
+    const json = this.getJSON();
     const metadata = this.getMetadata();
 
-    const tex = data.content.replace(
-      "begin{document}",
-      `begin{document}\n\n% Metadata: ${JSON.stringify(metadata)}`,
-    );
-
-    const url = this.createURL(tex, "application/x-tex");
+    const data = await getTikz(type, str, json, metadata);
+    const url = this.createURL(data, "application/x-tex");
 
     this.downloadURL(url, `${this.filename}.tex`);
   }

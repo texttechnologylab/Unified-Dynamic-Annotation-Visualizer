@@ -51,6 +51,7 @@ export default class HighlightText extends D3Visualization {
       getData,
       { top: 16, right: 16, bottom: 16, left: 16 },
       {
+        tex: "bi bi-file-earmark-font",
         csv: "bi bi-table",
         json: "bi bi-braces",
       },
