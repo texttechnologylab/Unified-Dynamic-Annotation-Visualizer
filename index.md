@@ -1,14 +1,66 @@
 # Unified Dynamic Annotation Visualizer
-Short introduction
+
+UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.
 
 ## Features
+
 - Feature 1
 - Feature 2
+- Feature 3
+- Feature 4
 
-## Getting Started
-Instructions to get started
+## Architecture
 
-# Frontend
+Work in progress...
+
+# Getting Started
+
+### Requirements
+
+- Java version 21 or higher
+
+### Usage
+
+1. Clone the repository:
+
+```
+git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
+```
+
+2. In the root folder, create an `.env` file that holds the following environment variables:
+
+```
+DB_URL=
+DB_USER=
+DB_PASS=
+DB_SCHEMA=
+DB_BATCH_SIZE=
+DB_MAX_IDENT=
+DB_DIALECT=
+SROUCE_BUILDER=
+DUUI_IMPORTER=
+PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=
+LLM_BASE_URL=
+LLM_API_TOKEN=
+```
+
+3. Run the File Importer to import the annotation data
+
+4. Start the `App.java` file
+
+# File Importer
+
+Work in progress...
+
+# Source Build and Generators
+
+Work in progress...
+
+# Data API
+
+Work in progress...
+
+# Webpage
 
 The frontend uses [Freemarker](https://freemarker.apache.org/) to render the html templates, [d3.js](https://d3js.org/) for some of the visualization components, [gridstack.js](https://gridstackjs.com/) for the draggable grid in the editor and [Bootstrap](https://getbootstrap.com/) for icons and styling.
 
@@ -16,11 +68,9 @@ The frontend uses [Freemarker](https://freemarker.apache.org/) to render the htm
 
 The frontend is located in the `resources` folder of the Java project. This directory contains all static assets and server-rendered templates, following a clear separation between static resources and template logic.
 
-The `static` directory includes stylesheets, images, and JavaScript logic, while `templates` contains the FreeMarker templates used to render the HTML pages. Both directories are structured into `pages` and `shared` subdirectories: `pages` contains page-specific content for each page of the application, while `shared` provides reusable code and resources used across multiple pages.
+The `static` directory includes stylesheets, images, and JavaScript logic, while `templates` contains the FreeMarker templates used to render the HTML pages. Both directories are structured into `pages` and `shared` subdirectories: `pages` contains page-specific content for each page of the application, while `shared` provides reusable code and resources used across multiple pages. The `api` directory holds the api communication and the `widgets` directory contains the available widgets divided into `charts` and `static` widgets.
 
-Global CSS variables are defined in `variables.css`. The visualization components are registered in the `getter.js` files within the `editor` and `view` directories . The `packages` directory contains third-party dependencies.
-
-Each template page includes a main file and may also have a `components` subdirectory for modular, page-specific templates.
+Global CSS variables are defined in `variables.css`. The widgets are registered in the `widgets.js` file. The `packages` directory contains third-party dependencies.
 
 ### Overview of the folder structure:
 
@@ -33,28 +83,35 @@ Each template page includes a main file and may also have a `components` subdire
 │  │  └─ 📄 variables.css
 │  ├─ 📁 img
 │  ├─ 📁 js
+│  │  ├─ 📁 api
 │  │  ├─ 📁 pages
 │  │  │  ├─ 📁 editor
-│  │  │  │  ├─ 📁 handler
+│  │  │  │  ├─ 📁 configs
+│  │  │  │  ├─ 📁 controller
+│  │  │  │  ├─ 📁 utils
 │  │  │  │  ├─ 📄 Editor.js
-│  │  │  │  └─ 📄 getter.js
 │  │  │  ├─ 📁 index
 │  │  │  └─ 📁 view
 │  │  │     ├─ 📁 filter
 │  │  │     ├─ 📁 toolbar
-│  │  │     ├─ 📁 widgets
-│  │  │     ├─ 📄 getter.js
+│  │  │     ├─ 📁 utils
 │  │  │     └─ 📄 View.js
-│  │  └─ 📁 shared
-│  │     ├─ 📁 classes
-│  │     └─ 📁 modules
+│  │  ├─ 📁 shared
+│  │  │  ├─ 📁 classes
+│  │  │  └─ 📁 modules
+│  │  ├─ 📁 widgets
+│  │  │  ├─ 📁 charts
+│  │  │  ├─ 📁 static
+│  │  │  ├─ 📄 D3Visualization.js
+│  │  │  └─ 📄 widgets.js
 │  ├─ 📁 packages
 │  └─ 📄 favicon.ico
 └─ 📁 templates
    ├─ 📁 pages
    │  ├─ 📁 editor
-   │  │  ├─ 📁 components
-   │  │  └─ 📄 editor.ftl
+   │  │  ├─ 📄 editor.ftl
+   │  │  ├─ 📄 editorGrid.ftl
+   │  │  └─ 📄 editorSidebar.ftl
    │  ├─ 📁 error
    │  ├─ 📁 index
    │  └─ 📁 view
@@ -63,188 +120,157 @@ Each template page includes a main file and may also have a `components` subdire
 
 ## Tutorials
 
-The following are some instructions for adding new components to the pipeline view or the editor.
+If you want to change the primary color of the application or other general properties you can simply change them in the `variables.css` file.
 
-### Adding a new widget to the pipeline view
+Below are some instructions for adding new components to the webpage.
 
-Create a new JavaScript class in the widgets folder of the view page. This class will get the html element of the chart area as `root`, the data api endpoint as `endpoint` and some `options`. This options could for example be the width or height of the chart area or custom settings for the new chart.
+### Adding a new chart widget
 
-The new class can optionally extend the `D3Visualization` class, which already has methods for fetching the data, creating and clearing the chart svg and the tooltip event handlers. To support the controls and export functionality of the toolbar, a `ControlsHandler` and an `ExportHandler` should be created and updated.
+To add a new chart widget, follow these steps:
 
-The new class also needs to provide an `init` and a `render` method. The init method will be called once after creation of the widget and should contain the first data fetch and rendering as well as the configuration of the controls. The render method will be called every time the chart data changes, for example after a filter is applied.
+1. Create a new JavaScript class in the `widgets/charts` folder. This class will define the widget's configuration and rendering.
 
-You can use the following code as a starting point:
+2. Define the defaultConfig object. This is the initial configuration for the widget after creation. Include:
+   - title: The display title of the chart.
+   - type: The chart's type (must match the class name).
+   - generator: Will be set by the user later.
+   - options: Chart-specific options.
+   - icon: The icon will be displayed in the editor.
+   - w: The initial width of the widget in grid cells.
+   - h: The initial height of the widget in grid cells.
 
-```js
-export default class NewChart extends D3Visualization {
-  constructor(root, endpoint, options) {
-    super(root, endpoint, margin, width, height);
+3. Define the formConfig object. This configures the modal form where users can edit the chart's settings. Use the property paths in defaultConfig for the keys. Each field requires:
+   - type: The input type (see `inputFactories.js` for available types).
+   - label: The label displayed to the user.
+   - options (optional): Additional configuration for the input.
 
-    this.controls = new ControlsHandler();
-    this.exports = new ExportHandler();
-  }
+4. To support the controls sidepanel and export functionality of the chart's toolbar, create a ControlsHandler and an ExportHandler in the constructor.
 
-  async init() {
-    const data = await this.fetch();
-    this.render(data);
+5. Provide a `data` property, an `init` and a `render` method.
+   - The data property is used to cache the latest data which allows re-rendering the chart without fetching the data again.
+   - The init method will be called once after creation of the widget and should contain the first data fetch and rendering as well as the configuration of the controls.
+   - The render method will be called every time the chart data changes, for example after a filter is applied.
 
-    // Add controls ...
-  }
+6. You can use this template as a starting point:
 
-  render(data) {
-    this.clear();
+   ```js
+   export default class NewChart {
+     static defaultConfig = {
+       type: "NewChart",
+       title: "New Chart",
+       generator: { id: "" },
+       options: {},
+       icon: "bi bi-chart",
+       w: 6,
+       h: 6,
+     };
+     static formConfig = {
+       title: {
+         type: "text",
+         label: "Title",
+       },
+       "generator.id": {
+         type: "select",
+         label: "Generator",
+         options: () => getGeneratorOptions("CategoryNumber"),
+       },
+     };
 
-    // Render chart data ...
+     constructor(root, getData, options) {
+       this.controls = new ControlsHandler(this);
+       this.exports = new ExportHandler(this);
 
-    // Pass data to export handler
-    this.exports.update();
-  }
-}
-```
+       this.data;
+     }
 
-Finally the new widget class has to be registered in the `getter.js` to be available in the pipeline view page:
+     init() {
+       const data = this.getData();
+       this.render(data);
 
-```js
-const _dynamic = {
-  BarChart,
-  LineChart,
-  // ...
-  NewChart,
-};
-```
+       // Add controls ...
+     }
 
-### Adding a new widget to the editor
+     render(data) {
+       this.clear();
 
-Create a new JavaScript class in the `handler/widgets` folder of the editor page. This class will get the gridstack item which contains the widget configuration.
+       // Append svg to root
+       // Render chart data ...
 
-The new handler can optionally extend the `FormHandler` class, which already has some methods for creating formular fields like text inputs and selects and initialization of the buttons.
+       this.data = data;
+     }
+   }
+   ```
 
-A static field with default values for the widget configuration must be set.
+7. Finally, register the new widget by adding it to the `widgets.js` file so it's available in the editor:
 
-The handler must define three methods: `init`, `createForm`, and `saveForm`. The `init` method is called once when the handler is created and should contain the initialization logic, such as setting up buttons or event listeners. The `createForm` method is executed each time the settings modal is opened. It must return a DOM element that contains the form fields used to modify the configuration. The `saveForm` method is triggered whenever the user saves changes in the modal. It should apply those changes to both the internal state and the DOM.
+   ```js
+   export default {
+     BarChart,
+     LineChart,
+     // ...
+     NewChart,
+   };
+   ```
 
-You can use the following code as a starting point:
+### Adding a new generator
 
-```js
-export default class NewChartHandler extends FormHandler {
-  static defaults = {
-    type: "NewChart",
-    title: "New Chart",
-    generator: { id: "" },
-    options: {},
-    icon: "",
-    w: 4,
-    h: 3,
-  };
+To add a new generator, follow these steps:
 
-  constructor(item) {
-    const template = document.querySelector("#default-chart-template");
-    super(template.content.cloneNode(true).children[0]);
+1. Create a new JavaScript class in the `configs` folder of the editor page. This class will define the generator's configuration.
 
-    this.item = item;
-  }
+2. Define the generator's token. The token is a short string that will be displayed as an icon in the editor.
 
-  init() {
-    this.initButtons("Chart Options", () => {
-      state.grid.removeWidget(this.item.el);
-    });
+3. Define the defaultConfig object. This is the initial configuration for the generator after creation. Include:
+   - name: The display name of the generator.
+   - type: The generator's type (must match the class name).
+   - settings: Generator-specific settings.
+   - extends: An array of other generators this one extends (optional).
 
-    // Set title, render chart preview ...
-  }
+4. Define the formConfig object. This configures the modal form where users can edit the generator's settings. Use the property paths in defaultConfig for the keys. Each field requires:
+   - type: The input type (see `inputFactories.js` for available types).
+   - label: The label displayed to the user.
+   - options (optional): Additional configuration for the input.
 
-  createForm() {
-    // Create and return input fields ...
-  }
+5. You can use this template as a starting point:
 
-  saveForm(form) {
-    // Save input to this.item ...
-    // Update title, chart preview ...
-  }
-}
-```
+   ```js
+   export default class NewGenerator {
+     static token = "NG";
+     static defaultConfig = {
+       name: "New Generator",
+       type: "NewGenerator",
+       settings: {},
+       extends: [],
+     };
+     static formConfig = {
+       name: {
+         type: "text",
+         label: "Name",
+       },
+       extends: {
+         type: "multiselect",
+         label: "Extends (optional)",
+         options: () => getGeneratorOptions("NewGenerator"),
+       },
+     };
+   }
+   ```
 
-Finally the new widget handler has to be registered in the `getter.js` to be available in the editor page:
+6. Finally, register the new generator by adding it to the `configs.js` file so it's available in the editor:
 
-```js
-const widgets = {
-  BarChart: BarChartHandler,
-  PieChart: PieChartHandler,
-  // ...
-  NewChart: NewChartHandler,
-};
-```
+   ```js
+   export default {
+     TextFormatting,
+     CategoryNumber,
+     // ...
+     NewGenerator,
+   };
+   ```
 
-### Adding a new generator to the editor
+## Screenshots
 
-Create a new JavaScript class in the `handler/generators` folder of the editor page. This class will get the generator configuration.
-
-The new handler can optionally extend the `FormHandler` class, which already has some methods for creating formular fields like text inputs and selects and initialization of the buttons.
-
-Static fields for the generator token (will be displayed as an icon for the generator), a short description of the generator (will be displayed in a tooltip) and the default values for the generator configuration must be set.
-
-The handler must define three methods: `init`, `createForm`, and `saveForm`. The `init` method is called once when the handler is created and should contain the initialization logic, such as setting up buttons or event listeners. The `createForm` method is executed each time the settings modal is opened. It must return a DOM element that contains the form fields used to modify the configuration. The `saveForm` method is triggered whenever the user saves changes in the modal. It should apply those changes to both the internal state and the DOM.
-
-You can use the following code as a starting point:
-
-```js
-export default class NewGeneratorHandler extends FormHandler {
-  static token = "NG";
-  static description = "Description of the NewGenerator generator.";
-  static defaults = {
-    name: "NewGenerator",
-    type: "NewGenerator",
-    source: "",
-    settings: {},
-  };
-
-  constructor(generator) {
-    const template = document.querySelector("#added-generator-template");
-    super(template.content.cloneNode(true).children[0]);
-
-    this.generator = generator;
-  }
-
-  init() {
-    this.initButtons("Generator Options", () => {
-      // Remove generator from the dom
-      this.element.remove();
-
-      // Remove generator from the state list
-      removeGenerator(this.generator);
-    });
-
-    // Set title ...
-  }
-
-  createForm() {
-    // Create and return input fields ...
-  }
-
-  saveForm(form) {
-    // Save input to this.generator ...
-    // Update title ...
-  }
-}
-```
-
-Finally the new generator handler has to be registered in the `getter.js` to be available in the editor page:
-
-```js
-const generators = {
-  TextFormatting: TextFormattingHandler,
-  // ...
-  NewGenerator: NewGeneratorHandler,
-};
-```
-
-
-## Contributing
-Guidelines for contributing
-
-## Contributors
-List of contributors
-- Contributor 1 
-- Contributor 2
+Work in progress...
 
 ## License
-License information
+
+This project is published under the AGPL-3.0 license.
