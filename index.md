@@ -23,26 +23,26 @@ Work in progress...
 
 1. Clone the repository:
 
-```
-git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
-```
+   ```
+   git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
+   ```
 
 2. In the root folder, create an `.env` file that holds the following environment variables:
 
-```
-DB_URL=
-DB_USER=
-DB_PASS=
-DB_SCHEMA=
-DB_BATCH_SIZE=
-DB_MAX_IDENT=
-DB_DIALECT=
-SROUCE_BUILDER=
-DUUI_IMPORTER=
-PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=
-LLM_BASE_URL=
-LLM_API_TOKEN=
-```
+   ```
+   DB_URL=
+   DB_USER=
+   DB_PASS=
+   DB_SCHEMA=
+   DB_BATCH_SIZE=
+   DB_MAX_IDENT=
+   DB_DIALECT=
+   SROUCE_BUILDER=
+   DUUI_IMPORTER=
+   PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=
+   LLM_BASE_URL=
+   LLM_API_TOKEN=
+   ```
 
 3. Run the File Importer to import the annotation data
 
