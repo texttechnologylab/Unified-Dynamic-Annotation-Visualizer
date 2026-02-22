@@ -25,11 +25,13 @@ public class ConvertionController {
         com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(body);
         String svg = node.get("svg").asText();
 
-        svg = svg.replaceAll("\"currentColor\"", "\"#000000\"");
-        svg = svg.replaceAll("\"transparent\"", "\"none\"");
+        // svg = svg.replaceAll("\"currentColor\"", "\"#000000\"");
+        // svg = svg.replaceAll("\"transparent\"", "\"none\"");
 
         // Convert SVG to TikZ
         String tikz = convertSvgToTikz(svg);
+
+        tikz = addMetaDataToTikz(tikz); // TODO
 
         Map<String, String> response = new HashMap<>();
         response.put("content", tikz);
@@ -102,6 +104,10 @@ public class ConvertionController {
             } catch (Exception ignored) {}
         }
 
-        throw new RuntimeException("svg2tikz not found. Install it via: pip install --user svg2tikz");
+        throw new RuntimeException("svg2tikz not found.");
+    }
+
+    private static String addMetaDataToTikz(String tikz) {
+        return tikz;
     }
 }

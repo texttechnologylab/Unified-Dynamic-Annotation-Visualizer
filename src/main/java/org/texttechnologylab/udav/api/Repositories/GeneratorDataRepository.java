@@ -189,20 +189,7 @@ public class GeneratorDataRepository {
         var CAT_SPEC = F_CATEGORY(schema, DBConstants.TABLENAME_GENERATORDATA_TYPECATEGORYCOLOR);
         var COL_SPEC = F_COLOR(schema, DBConstants.TABLENAME_GENERATORDATA_TYPECATEGORYCOLOR);
 
-        var T_GEN = T_CATCOLOR(schema);
-        var GEN_GEN = F_GEN_ID(schema, DBConstants.TABLENAME_GENERATORDATA_CATEGORYCOLOR);
-        var CAT_GEN = F_CATEGORY(schema, DBConstants.TABLENAME_GENERATORDATA_CATEGORYCOLOR);
-        var COL_GEN = F_COLOR(schema, DBConstants.TABLENAME_GENERATORDATA_CATEGORYCOLOR);
-
-        // 1) generic category -> color
-        Map<String, String> generic = new LinkedHashMap<>();
-        dsl.select(CAT_GEN, COL_GEN)
-                .from(T_GEN)
-                .where(GEN_GEN.eq(generatorId))
-                .fetch()
-                .forEach(r -> generic.put(r.get(CAT_GEN), r.get(COL_GEN)));
-
-        // 2) type-specific: type -> (category -> color)
+        // 1) Load type-specific: type -> (category -> color)
         Map<String, Map<String, String>> specific = new LinkedHashMap<>();
         dsl.select(TYPE, CAT_SPEC, COL_SPEC)
                 .from(T_SPEC)
@@ -212,13 +199,15 @@ public class GeneratorDataRepository {
                     String t = r.get(TYPE);
                     String cat = r.get(CAT_SPEC);
                     String col = r.get(COL_SPEC);
-                    specific.computeIfAbsent(t, k -> new LinkedHashMap<>()).put(cat, col);
+                    specific
+                            .computeIfAbsent(t, k -> new LinkedHashMap<>())
+                            .put(cat, col);
                 });
 
-        // 3) Determine all types we care about (from segments + styles + specific colors)
+        // 2) Determine all types we care about (segments + styles + specific colors)
         Set<String> types = new LinkedHashSet<>();
 
-        // from TYPESEGMENTS (distinct type)
+        // from TYPESEGMENTS
         {
             var T_SEG = T_TYPESEG(schema);
             var GEN_SEG = F_GEN_ID(schema, DBConstants.TABLENAME_GENERATORDATA_TYPESEGMENTS);
@@ -245,16 +234,14 @@ public class GeneratorDataRepository {
         // from specific color table itself
         types.addAll(specific.keySet());
 
-        // 4) Build final: for each type, start with generic colors then overlay specific
+        // 3) Build final
         Map<String, Map<String, String>> out = new LinkedHashMap<>();
         for (String t : types) {
-            Map<String, String> m = new LinkedHashMap<>(generic);
             Map<String, String> spec = specific.get(t);
-            if (spec != null) m.putAll(spec); // type-specific overrides generic
-            out.put(t, m);
+            out.put(t, spec != null ? new LinkedHashMap<>(spec) : new LinkedHashMap<>());
         }
 
-        // Edge case: no types at all — return empty map (handler will default color)
+        // If no types exist at all, return empty map
         return out;
     }
 
