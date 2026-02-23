@@ -62,10 +62,6 @@ export default class VoronoiDiagram extends D3Visualization {
     };
   }
 
-  async fetch() {
-    return await fetch("/data.json").then((response) => response.json());
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);

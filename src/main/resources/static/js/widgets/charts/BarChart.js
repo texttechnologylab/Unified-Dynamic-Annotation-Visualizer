@@ -1,5 +1,4 @@
 import D3Visualization from "../D3Visualization.js";
-import { maxOf, minOf } from "../../shared/modules/utils.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class BarChart extends D3Visualization {
@@ -57,8 +56,8 @@ export default class BarChart extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    const min = minOf(data.map((d) => d.value));
-    const max = maxOf(data.map((d) => d.value));
+    const min = d3.min(data.map((d) => d.value));
+    const max = d3.max(data.map((d) => d.value));
 
     this.controls.append([
       {
@@ -158,6 +157,6 @@ export default class BarChart extends D3Visualization {
     return d3
       .scaleLinear()
       .range(this.horizontal ? [0, this.width] : [this.height, 0])
-      .domain([0, maxOf(data.map((d) => d.value))]);
+      .domain([0, d3.max(data.map((d) => d.value))]);
   }
 }

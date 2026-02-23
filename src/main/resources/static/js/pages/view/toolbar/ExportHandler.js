@@ -117,7 +117,7 @@ export default class ExportHandler {
     const metadata = this.getMetadata();
 
     const data = await getTikz(type, str, json, metadata);
-    const url = this.createURL(data, "application/x-tex");
+    const url = this.createURL(data.content, "application/x-tex");
 
     this.downloadURL(url, `${this.filename}.tex`);
   }

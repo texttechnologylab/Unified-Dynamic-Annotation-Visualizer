@@ -4,14 +4,6 @@ export function flatData(datasets, key) {
   );
 }
 
-export function minOf(array) {
-  return Math.min(...array);
-}
-
-export function maxOf(array) {
-  return Math.max(...array);
-}
-
 export function randomId(str) {
   return str + "-" + Math.random().toString(36).slice(2, 9);
 }
@@ -28,13 +20,6 @@ export function debounce(fn, timeout = 300) {
       fn.apply(this, args);
     }, timeout);
   };
-}
-
-export function getElementDimensions(element) {
-  const area = element.querySelector(".dv-chart-area");
-  const rect = area.getBoundingClientRect();
-
-  return { width: rect.width, height: rect.height };
 }
 
 export function createElement(tag, attributes = {}, children = []) {

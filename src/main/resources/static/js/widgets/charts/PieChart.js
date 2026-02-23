@@ -1,9 +1,4 @@
 import D3Visualization from "../D3Visualization.js";
-import {
-  maxOf,
-  minOf,
-  getElementDimensions,
-} from "../../shared/modules/utils.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class PieChart extends D3Visualization {
@@ -33,7 +28,8 @@ export default class PieChart extends D3Visualization {
       label: "Hole (Doughnut)",
       options: {
         min: 0,
-        max: 500,
+        max: 99,
+        unit: "%",
       },
     },
   };
@@ -55,28 +51,27 @@ export default class PieChart extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, { hole = 0 }) {
-    const { width, height } = getElementDimensions(root);
-
+  constructor(root, getData, { hole = 0, legend = false }) {
     super(root, getData, {
-      top: height / 2,
-      right: width / 2,
-      bottom: height / 2,
-      left: width / 2,
+      top: 10,
+      right: 10,
+      bottom: 10,
+      left: 10,
     });
 
-    this.radius = minOf([width, height]) / 2;
+    const { width, height } = this.getDimensions();
+    this.radius = d3.min([width, height]) / 2 - 10;
     this.hole = hole;
   }
 
   resize(width, height) {
     this.margin = {
-      top: height / 2,
-      right: width / 2,
-      bottom: height / 2,
-      left: width / 2,
+      top: 10,
+      right: 10,
+      bottom: 10,
+      left: 10,
     };
-    this.radius = minOf([width, height]) / 2;
+    this.radius = d3.min([width, height]) / 2 - 10;
 
     this.render(this.data);
   }
@@ -85,8 +80,8 @@ export default class PieChart extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    const min = minOf(data.map((d) => d.value));
-    const max = maxOf(data.map((d) => d.value));
+    const min = d3.min(data.map((d) => d.value));
+    const max = d3.max(data.map((d) => d.value));
 
     this.controls.append([
       {
@@ -115,7 +110,7 @@ export default class PieChart extends D3Visualization {
     // Create the arc generator
     const arc = d3
       .arc()
-      .innerRadius(this.hole) // For a pie chart (0 for no hole, >0 for a donut chart)
+      .innerRadius((this.hole * this.radius) / 100) // For a pie chart (0 for no hole, >0 for a donut chart)
       .outerRadius(this.radius);
 
     // Bind data to pie slices

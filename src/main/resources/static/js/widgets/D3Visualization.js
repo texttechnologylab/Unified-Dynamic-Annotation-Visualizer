@@ -1,7 +1,7 @@
 import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
 import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
 import state from "../pages/view/utils/viewState.js";
-import { debounce, getElementDimensions } from "../shared/modules/utils.js";
+import { debounce } from "../shared/modules/utils.js";
 
 export default class D3Visualization {
   constructor(
@@ -19,7 +19,7 @@ export default class D3Visualization {
     this.root = d3.select(root);
     this.getData = getData;
 
-    const { width, height } = getElementDimensions(root);
+    const { width, height } = this.getDimensions();
     this.width = width - margin.left - margin.right;
     this.height = height - margin.top - margin.bottom;
     this.margin = margin;
@@ -36,7 +36,7 @@ export default class D3Visualization {
     const observer = new ResizeObserver(
       debounce(() => {
         if (this.data) {
-          const { width, height } = getElementDimensions(root);
+          const { width, height } = this.getDimensions();
           if (width && height) this.resize(width, height);
         }
       }, 10),
@@ -45,6 +45,13 @@ export default class D3Visualization {
 
     // Show chart
     this.root.classed("hide", false);
+  }
+
+  getDimensions() {
+    const area = this.root.select(".dv-chart-area").node();
+    const rect = area.getBoundingClientRect();
+
+    return { width: rect.width, height: rect.height };
   }
 
   resize(width, height) {
