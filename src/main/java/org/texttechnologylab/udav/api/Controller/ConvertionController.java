@@ -25,9 +25,6 @@ public class ConvertionController {
         com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(body);
         String svg = node.get("svg").asText();
 
-        // svg = svg.replaceAll("\"currentColor\"", "\"#000000\"");
-        // svg = svg.replaceAll("\"transparent\"", "\"none\"");
-
         // Convert SVG to TikZ
         String tikz = convertSvgToTikz(svg);
 
@@ -39,14 +36,15 @@ public class ConvertionController {
     }
 
     private static String convertSvgToTikz(String svgContent) throws Exception {
-
-        String executable = resolveSvg2Tikz();
+        String[] command = resolveSvg2TikzCommand(null);
 
         // Write SVG content to a temporary file
         java.nio.file.Path tempSvgFile = Files.createTempFile("input-svg", ".svg");
         Files.write(tempSvgFile, svgContent.getBytes(StandardCharsets.UTF_8));
 
-        ProcessBuilder pb = new ProcessBuilder(executable, tempSvgFile.toAbsolutePath().toString());
+        command[command.length - 1] = tempSvgFile.toAbsolutePath().toString();
+
+        ProcessBuilder pb = new ProcessBuilder(command);
         Process process = pb.start();
 
         // Read stdout
@@ -85,27 +83,79 @@ public class ConvertionController {
         return output.toString();
     }
 
-    private static String resolveSvg2Tikz() {
+    private static String[] resolveSvg2TikzCommand(String svgFilePath) {
+        String os = System.getProperty("os.name").toLowerCase();
         String home = System.getProperty("user.home");
 
-        String[] candidates = {
-                "svg2tikz",
-                home + "/.local/bin/svg2tikz",
-                "/usr/local/bin/svg2tikz",
-                "/usr/bin/svg2tikz"
-        };
-
-        for (String candidate : candidates) {
+        if (os.contains("win")) {
+            // 1. Check svg2tikz in PATH
             try {
-                Process p = new ProcessBuilder(candidate, "--help").start();
-                if (p.waitFor() == 0) {
-                    return candidate;
+                Process whereProc = new ProcessBuilder("where", "svg2tikz.exe").start();
+                boolean finished = whereProc.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                if (finished && whereProc.exitValue() == 0) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(whereProc.getInputStream(), StandardCharsets.UTF_8))) {
+                        String path = reader.readLine();
+                        if (path != null && !path.isEmpty()) {
+                            return new String[]{path, svgFilePath};
+                        }
+                    }
                 }
             } catch (Exception ignored) {}
-        }
 
-        throw new RuntimeException("svg2tikz not found.");
+            // 2. Check known installation paths
+            String[] candidates = {
+                    home + "\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\svg2tikz.exe",
+                    home + "\\.local\\bin\\svg2tikz.exe",
+                    home + "\\.local\\bin\\svg2tikz",
+            };
+            for (String candidate : candidates) {
+                java.io.File f = new java.io.File(candidate);
+                if (f.exists() && f.canExecute()) {
+                    return new String[]{candidate, svgFilePath};
+                }
+            }
+
+            // 3. Check python module svg2tikz
+            String[] pythonCandidates = {"python", "python3", "py"};
+            for (String py : pythonCandidates) {
+                try {
+                    Process p = new ProcessBuilder(py, "-m", "svg2tikz", "--help").start();
+                    boolean finished = p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    if (finished && p.exitValue() == 0) {
+                        return new String[]{py, "-m", "svg2tikz", svgFilePath};
+                    }
+                } catch (Exception ignored) {}
+            }
+            throw new RuntimeException("svg2tikz not found");
+        } else {
+            // Linux/Mac
+            String[] candidates = {
+                    "svg2tikz",
+                    home + "/.local/bin/svg2tikz",
+                    "/usr/local/bin/svg2tikz",
+                    "/usr/bin/svg2tikz"
+            };
+            for (String candidate : candidates) {
+                java.io.File f = new java.io.File(candidate);
+                if (f.exists() && f.canExecute()) {
+                    return new String[]{candidate, svgFilePath};
+                }
+            }
+            // Fallback: Python-Module
+            String[] pythonCandidates = {"python3", "python"};
+            for (String py : pythonCandidates) {
+                try {
+                    Process p = new ProcessBuilder(py, "-m", "svg2tikz", "--help").start();
+                    boolean finished = p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS);
+                    if (finished && p.exitValue() == 0) {
+                        return new String[]{py, "-m", "svg2tikz", svgFilePath};
+                    }
+                } catch (Exception ignored) {}
+            }
+            throw new RuntimeException("svg2tikz not found");
+        }
     }
+
 
     private static String addMetaDataToTikz(String tikz) {
         return tikz;
