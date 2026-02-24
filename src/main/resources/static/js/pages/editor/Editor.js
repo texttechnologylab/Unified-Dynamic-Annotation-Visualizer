@@ -51,13 +51,18 @@ export default class Editor {
         source.init();
       });
 
-    document
-      .querySelector("#discard-button")
-      .addEventListener("click", () =>
-        state.modal.confirm("Discard Changes", "Are you sure?", () =>
-          history.back(),
-        ),
-      );
+    document.querySelector("#discard-button").addEventListener("click", () => {
+      state.modal.confirm("Discard Changes", "Are you sure?", async () => {
+        const id = input.value;
+        const pipelines = await getPipelines();
+
+        if (pipelines.includes(id)) {
+          window.open("/view/" + id, "_self");
+        } else {
+          window.open("/", "_self");
+        }
+      });
+    });
 
     document
       .querySelector("#save-button")
