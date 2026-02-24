@@ -8,8 +8,7 @@ export default class LineChart extends D3Visualization {
     title: "Line Chart",
     generator: { id: "" },
     options: {
-      line: true,
-      dots: true,
+      points: true,
     },
     icon: "bi bi-graph-up",
     w: 8,
@@ -25,13 +24,9 @@ export default class LineChart extends D3Visualization {
       label: "Generator",
       options: () => getGeneratorOptions("MapCoordinates"),
     },
-    "options.line": {
+    "options.points": {
       type: "switch",
-      label: "Draw lines",
-    },
-    "options.dots": {
-      type: "switch",
-      label: "Draw dots",
+      label: "Draw points",
     },
   };
   static previewData = [
@@ -67,11 +62,14 @@ export default class LineChart extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, { line = true, dots = true }) {
+  constructor(root, getData, { points = true }) {
     super(root, getData, { top: 10, right: 30, bottom: 30, left: 60 });
 
-    this.line = line;
-    this.dots = dots;
+    this.points = points;
+  }
+
+  async fetch() {
+    return await fetch("/lines.json").then((response) => response.json());
   }
 
   async init() {
@@ -122,19 +120,17 @@ export default class LineChart extends D3Visualization {
       .y((item) => yAxis(item.y));
 
     // Add the line
-    if (this.line) {
-      this.svg
-        .select("g")
-        .selectAll(".line")
-        .data(data)
-        .join("path")
-        .attr("d", (item) => line(item.coordinates))
-        .attr("fill", "none")
-        .attr("stroke", (item) => item.color)
-        .attr("stroke-width", 2.5);
-    }
+    this.svg
+      .select("g")
+      .selectAll(".line")
+      .data(data)
+      .join("path")
+      .attr("d", (item) => line(item.coordinates))
+      .attr("fill", "none")
+      .attr("stroke", (item) => item.color)
+      .attr("stroke-width", 2.5);
 
-    // Add the dots
+    // Add the points
     this.svg
       .select("g")
       .selectAll(".circle")
@@ -143,7 +139,7 @@ export default class LineChart extends D3Visualization {
       .attr("cx", (item) => xAxis(item.x))
       .attr("cy", (item) => yAxis(item.y))
       .attr("r", 4)
-      .attr("fill", this.dots ? (item) => item.color : "transparent");
+      .attr("fill", this.points ? (item) => item.color : "transparent");
 
     if (!this.tooltip.empty()) {
       this.enableTooltip("circle", (d) => `(${d.x}, ${d.y})`);
