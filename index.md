@@ -26,7 +26,7 @@ Java-based component that serves as an importer
 for UDAV and ingests all annotated documents into
 the integrated database.
 
-![architecture](architecture.png)
+![architecture](/img/architecture.png)
 
 # Getting Started
 
@@ -285,7 +285,10 @@ To add a new generator, follow these steps:
 
 ## Screenshots
 
-Work in progress...
+![menu](/img/menu.png)
+![example1](/img/example1.png)
+![example2](/img/example2.png)
+![editor](/img/editor.png)
 
 ## License
 
