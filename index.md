@@ -11,13 +11,29 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 ## Architecture
 
-Work in progress...
+The architecture of UDAV includes a
+backend and frontend component that can interact
+with each other via an API layer, both instantiated
+within a Docker image. Nevertheless, it can be
+used on any system, as all system components are
+encapsulated in a Docker container. Importing data
+is performed using a standardized procedure as
+part of an existing DUUI pipeline. This involves a
+set of documents being read by the reader and auto-
+matically pre-processed by a set of NLP processes
+through a pipeline. At the end of this pipeline is a
+Java-based component that serves as an importer
+for UDAV and ingests all annotated documents into
+the integrated database.
+
+![architecture](architecture.png)
 
 # Getting Started
 
 ### Requirements
 
 - Java version 21 or higher
+- [svg2tikz](https://github.com/xyz2tex/svg2tikz)
 
 ### Usage
 
