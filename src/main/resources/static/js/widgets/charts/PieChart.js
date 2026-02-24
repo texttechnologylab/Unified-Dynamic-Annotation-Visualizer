@@ -8,6 +8,7 @@ export default class PieChart extends D3Visualization {
     generator: { id: "" },
     options: {
       hole: 0,
+      legend: false,
     },
     icon: "bi bi-pie-chart",
     w: 6,
@@ -31,6 +32,10 @@ export default class PieChart extends D3Visualization {
         max: 99,
         unit: "%",
       },
+    },
+    "options.legend": {
+      type: "switch",
+      label: "Show legend",
     },
   };
   static previewData = [
@@ -59,21 +64,8 @@ export default class PieChart extends D3Visualization {
       left: 10,
     });
 
-    const { width, height } = this.getDimensions();
-    this.radius = d3.min([width, height]) / 2 - 10;
     this.hole = hole;
-  }
-
-  resize(width, height) {
-    this.margin = {
-      top: 10,
-      right: 10,
-      bottom: 10,
-      left: 10,
-    };
-    this.radius = d3.min([width, height]) / 2 - 10;
-
-    this.render(this.data);
+    this.legendWidth = legend ? 140 : 0;
   }
 
   async init() {
@@ -101,28 +93,32 @@ export default class PieChart extends D3Visualization {
   render(data) {
     this.clear();
 
-    // Create a color scale
-    const color = d3.scaleOrdinal().range(data.map((item) => item.color));
+    const cx = (this.width - this.legendWidth) / 2;
+    const cy = this.height / 2;
+    const radius = Math.min(this.width - this.legendWidth, this.height) / 2;
+    const colors = d3.scaleOrdinal().range(data.map((d) => d.color));
 
-    // Create the pie generator
-    const pie = d3.pie().value((item) => item.value);
-
-    // Create the arc generator
+    const pie = d3.pie().value((d) => d.value);
     const arc = d3
       .arc()
-      .innerRadius((this.hole * this.radius) / 100) // For a pie chart (0 for no hole, >0 for a donut chart)
-      .outerRadius(this.radius);
+      .innerRadius((this.hole * radius) / 100) // For a pie chart (0 for no hole, >0 for a donut chart)
+      .outerRadius(radius);
 
-    // Bind data to pie slices
     this.svg
       .select("g")
-      .selectAll()
+      .append("g")
+      .attr("class", "chart")
+      .attr("transform", `translate(${cx}, ${cy})`)
+      .selectAll("path")
       .data(pie(data))
       .join("path")
       .attr("d", arc)
-      .attr("fill", color)
-      .attr("stroke", "white")
-      .style("stroke-width", "2px");
+      .attr("fill", (_, i) => colors(i))
+      .attr("stroke", "white");
+
+    if (this.legendWidth > 0) {
+      this.createLegend(data, colors);
+    }
 
     if (!this.tooltip.empty()) {
       this.enableTooltip(
@@ -131,7 +127,36 @@ export default class PieChart extends D3Visualization {
       );
     }
 
-    // Cache rendered data
     this.data = data;
+  }
+
+  createLegend(data, colors) {
+    const spacing = 20;
+    const cx = this.width - this.legendWidth + spacing;
+    const cy = (this.height - data.length * spacing) / 2;
+
+    const items = this.svg
+      .select("g")
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${cx}, ${cy})`)
+      .selectAll(".legend-item")
+      .data(data)
+      .join("g")
+      .attr("class", "legend-item")
+      .attr("transform", (_, i) => `translate(0, ${i * spacing})`);
+
+    items
+      .append("rect")
+      .attr("width", 14)
+      .attr("height", 14)
+      .attr("fill", (_, i) => colors(i));
+
+    items
+      .append("text")
+      .text((d) => d.label)
+      .attr("x", 20)
+      .attr("y", 11)
+      .style("font-size", "12px");
   }
 }
