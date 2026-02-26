@@ -32,7 +32,7 @@ the integrated database.
 ### Requirements
 
 - Java version 21 or higher
-- [svg2tikz](https://github.com/xyz2tex/svg2tikz)
+<!-- - [svg2tikz](https://github.com/xyz2tex/svg2tikz) -->
 
 ### Usage
 
@@ -55,8 +55,6 @@ the integrated database.
    SROUCE_BUILDER=
    DUUI_IMPORTER=
    PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=
-   LLM_BASE_URL=
-   LLM_API_TOKEN=
    ```
 
 3. Run the File Importer to import the annotation data
@@ -286,7 +284,7 @@ To add a new generator, follow these steps:
 
 ![menu](/img/menu.png)
 ![example1](/img/example1.png)
-![example2](/img/example2.png)
+![example3](/img/example3.png)
 ![editor](/img/editor.png)
 
 ## License
