@@ -8,6 +8,10 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 - Visual editor
 - Different export options
 
+### Demo
+
+You can find a demo [here](udav/demo) where you can play around a little.
+
 ## Architecture
 
 The architecture of UDAV includes a
@@ -283,9 +287,40 @@ To add a new generator, follow these steps:
 ## Screenshots
 
 ![menu](/img/menu.png)
-![example1](/img/example1.png)
+![example4](/img/example4.png)
 ![example3](/img/example3.png)
 ![editor](/img/editor.png)
+
+## Publications
+
+Here we list all publications related to UDAV, which you can also refer to when citing UDAV in your work:
+
+```bib
+@inproceedings{Dahmann:et:al:2026,
+  title     = {Towards the Generation and Application of Dynamic Web-Based Visualization
+               of UIMA-based Annotations for Big-Data Corpora with the Help of
+               Unified Dynamic Annotation Visualizer},
+  booktitle = {Proceedings of the 15th International Conference on Language Resources
+               and Evaluation (LREC 2026)},
+  year      = {2026},
+  author    = {Dahmann, Thiemo and Schneider, Julian and Stephan, Philipp and Abrami, Giuseppe
+               and Mehler, Alexander},
+  keywords  = {NLP, UIMA, Annotations, dynamic visualization, uce},
+  abstract  = {The automatic and manual annotation of unstructured corpora is
+               a daily task in various scientific fields, which is supported
+               by a variety of existing software solutions. Despite this variety,
+               there are currently only limited solutions for visualizing annotations,
+               especially with regard to dynamic generation and interaction.
+               To bridge this gap and to visualize and provide annotated corpora
+               based on user-, project- or corpus-specific aspects, Unified Dynamic
+               Annotation Visualizer (UDAV) was developed. UDAV is designed as
+               a web-based solution that implements a number of essential features
+               which comparable tools do not support to enable a customizable
+               and extensible toolbox for interacting with annotations, allowing
+               the integration into existing big data frameworks.},
+  note      = {accepted}
+}
+```
 
 ## License
 
