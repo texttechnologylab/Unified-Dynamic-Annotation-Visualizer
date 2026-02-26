@@ -35,8 +35,6 @@ export default class StaticVideo {
     this.src = src;
     this.controls = controls;
     this.autoplay = autoplay;
-
-    this.root.classed("hide", false);
   }
 
   clear() {

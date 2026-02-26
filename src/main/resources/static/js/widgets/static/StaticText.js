@@ -69,8 +69,6 @@ export default class StaticText {
     this.weight = weight;
     this.style = style;
     this.decoration = decoration;
-
-    this.root.classed("hide", false);
   }
 
   clear() {

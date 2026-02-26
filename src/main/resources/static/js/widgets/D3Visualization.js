@@ -1,3 +1,4 @@
+import { getData } from "../api/data.api.js";
 import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
 import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
 import state from "../pages/view/utils/viewState.js";
@@ -6,7 +7,7 @@ import { debounce } from "../shared/modules/utils.js";
 export default class D3Visualization {
   constructor(
     root,
-    getData,
+    config,
     margin,
     exportFormats = {
       svg: "bi bi-file-earmark-code",
@@ -17,7 +18,9 @@ export default class D3Visualization {
     },
   ) {
     this.root = d3.select(root);
-    this.getData = getData;
+    this.config = config;
+
+    this.setTitle(this.config.title);
 
     const { width, height } = this.getDimensions();
     this.width = width - margin.left - margin.right;
@@ -42,9 +45,10 @@ export default class D3Visualization {
       }, 10),
     );
     observer.observe(root);
+  }
 
-    // Show chart
-    this.root.classed("hide", false);
+  setTitle(title) {
+    this.root.select(".dv-toolbar-title").attr("title", title).text(title);
   }
 
   getDimensions() {
@@ -62,7 +66,7 @@ export default class D3Visualization {
   }
 
   async fetch() {
-    return await this.getData({
+    return await getData(this.config.pipeline, this.config.id, {
       corpus: state.corpusFilter.filter,
       chart: this.filter,
     });

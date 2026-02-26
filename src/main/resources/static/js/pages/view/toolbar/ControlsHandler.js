@@ -7,6 +7,12 @@ export default class ControlsHandler {
     const sidepanel = root.querySelector(".dv-sidepanel-body");
 
     if (sidepanel) {
+      const id = randomId("sidepanel");
+      root
+        .querySelector('[data-dv-toggle="sidepanel"]')
+        .setAttribute("data-dv-target", "#" + id);
+      root.querySelector(".dv-sidepanel").id = id;
+
       this.controls = createElement("div", { className: "dv-chart-controls" });
       sidepanel.append(this.controls);
     }
