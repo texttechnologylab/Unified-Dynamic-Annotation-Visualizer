@@ -4,10 +4,9 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 ## Features
 
-- Feature 1
-- Feature 2
-- Feature 3
-- Feature 4
+- Dynamic and interactive charts
+- Visual editor
+- Different export options
 
 ## Architecture
 
