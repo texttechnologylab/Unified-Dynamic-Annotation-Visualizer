@@ -79,7 +79,7 @@ export default class View {
         );
 
         const Widget = getter[item.type];
-        const { id, title, generator, options } = item;
+        const { id, title, generator, options, type } = item;
 
         const root = item.el.querySelector(".grid-stack-item-content");
         root.replaceChildren(...template.childNodes);
@@ -87,7 +87,7 @@ export default class View {
 
         const widget = new Widget(
           root,
-          item.src || { pipeline: this.pipeline, id, title },
+          item.src || { pipeline: this.pipeline, id, title, generator, type },
           options,
         );
         widget.init();

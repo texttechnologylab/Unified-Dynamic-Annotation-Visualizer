@@ -66,7 +66,8 @@ export default class D3Visualization {
   }
 
   async fetch() {
-    return await getData(this.config.pipeline, this.config.id, {
+    const { pipeline, generator, type } = this.config;
+    return await getData(pipeline, generator.id, type, {
       corpus: state.corpusFilter.filter,
       chart: this.filter,
     });
