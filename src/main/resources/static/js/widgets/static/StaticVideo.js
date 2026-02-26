@@ -4,8 +4,8 @@ export default class StaticVideo {
     title: "Video",
     src: "https://lorem.video/cat_10s",
     options: {
-      controls: true,
-      autoplay: false,
+      controls: false,
+      autoplay: true,
     },
     icon: "bi bi-film",
     w: 6,

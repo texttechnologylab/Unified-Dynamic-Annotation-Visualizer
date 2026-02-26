@@ -65,7 +65,7 @@ export default class PieChart extends D3Visualization {
     });
 
     this.hole = hole;
-    this.legendWidth = legend ? 140 : 0;
+    this.legend = legend;
   }
 
   async init() {
@@ -93,6 +93,8 @@ export default class PieChart extends D3Visualization {
   render(data) {
     this.clear();
 
+    this.legendWidth = this.legend ? 140 : 0;
+
     const cx = (this.width - this.legendWidth) / 2;
     const cy = this.height / 2;
     const radius = Math.min(this.width - this.legendWidth, this.height) / 2;
@@ -116,7 +118,7 @@ export default class PieChart extends D3Visualization {
       .attr("fill", (_, i) => colors(i))
       .attr("stroke", "white");
 
-    if (this.legendWidth > 0) {
+    if (this.legend) {
       this.createLegend(data, colors);
     }
 

@@ -1,6 +1,9 @@
 import FormBuilder from "../../../shared/classes/FormBuilder.js";
 import { createTemplateElement } from "../../../shared/modules/utils.js";
-import { removeGenerator } from "../utils/editorActions.js";
+import {
+  getGeneratorOptions,
+  removeGenerator,
+} from "../utils/editorActions.js";
 import configs from "../configs/configs.js";
 import state from "../utils/editorState.js";
 
@@ -26,10 +29,22 @@ export default class GeneratorController {
     this.root.querySelector(".dv-generator-card-type").textContent =
       this.item.type;
 
+    const formConfig = {
+      ...Generator.formConfig,
+      extends: {
+        type: "multiselect",
+        label: "Extends (optional)",
+        options: () =>
+          getGeneratorOptions(this.item.type).filter(
+            (option) => option.value !== this.item.id,
+          ),
+      },
+    };
+
     const builder = new FormBuilder(
       state.modal,
       "Generator Options",
-      Generator.formConfig,
+      formConfig,
     );
     const buttons = this.root.querySelectorAll("button");
 

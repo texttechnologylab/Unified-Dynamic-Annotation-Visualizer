@@ -1,5 +1,3 @@
-import { getGeneratorOptions } from "../utils/editorActions.js";
-
 export default class CategoryNumber {
   static token = "CN";
   static defaultConfig = {
@@ -12,11 +10,6 @@ export default class CategoryNumber {
     name: {
       type: "text",
       label: "Name",
-    },
-    extends: {
-      type: "multiselect",
-      label: "Extends (optional)",
-      options: () => getGeneratorOptions("CategoryNumber"),
     },
   };
 }
