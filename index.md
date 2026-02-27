@@ -296,7 +296,7 @@ To add a new generator, follow these steps:
 * Julian Schneider
 * Philipp Stephan
 * Giuseppe Abrami (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/abrami) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Giuseppe-Abrami)
-* Prof. Dr. Alexander Mehler (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/amehler) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Alexander-Mehler-2)
+* Prof. Dr. Alexander Mehler (Supervision) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Alexander-Mehler-2)
 
 ## Publications
 
