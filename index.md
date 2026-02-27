@@ -291,6 +291,13 @@ To add a new generator, follow these steps:
 ![example3](/img/example3.png)
 ![editor](/img/editor.png)
 
+## Authors / Contributors
+* Thiemo Dahmann
+* Julian Schneider
+* Philipp Stephan
+* Giuseppe Abrami (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/abrami) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Giuseppe-Abrami)
+* Prof. Dr. Alexander Mehler (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/amehler) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Alexander-Mehler-2)
+
 ## Publications
 
 Here we list all publications related to UDAV, which you can also refer to when citing UDAV in your work:
