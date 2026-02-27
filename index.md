@@ -301,7 +301,7 @@ Example of the Editor in UDAV for creating and modifying Pipelines as well as fo
 ## Authors / Contributors
 * Thiemo Dahmann
 * Julian Schneider
-* Philipp Stephan
+* Philipp Stephan [<img src="./img/github.svg" height="20px">](https://github.com/phpp28) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Philipp-Stephan-4)
 * Giuseppe Abrami (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/abrami) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Giuseppe-Abrami)
 * Prof. Dr. Alexander Mehler (Supervision) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Alexander-Mehler-2)
 
