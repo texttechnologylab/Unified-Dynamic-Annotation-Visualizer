@@ -30,11 +30,13 @@ export default class StaticVideo {
     },
   };
 
-  constructor(root, src, { controls = true, autoplay = false }) {
+  constructor(root, config) {
     this.root = d3.select(root);
-    this.src = src;
-    this.controls = controls;
-    this.autoplay = autoplay;
+    this.config = config;
+
+    this.src = config.src || "";
+    this.controls = config.options.controls || true;
+    this.autoplay = config.options.autoplay || false;
   }
 
   clear() {

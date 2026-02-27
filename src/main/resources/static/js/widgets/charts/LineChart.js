@@ -62,10 +62,10 @@ export default class LineChart extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, { points = true }) {
-    super(root, getData, { top: 10, right: 30, bottom: 30, left: 60 });
+  constructor(root, config) {
+    super(root, config, { top: 10, right: 30, bottom: 30, left: 60 });
 
-    this.points = points;
+    this.points = config.options.points || true;
   }
 
   async fetch() {

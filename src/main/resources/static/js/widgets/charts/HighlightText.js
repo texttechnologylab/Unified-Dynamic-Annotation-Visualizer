@@ -45,10 +45,10 @@ export default class HighlightText extends D3Visualization {
     ],
   };
 
-  constructor(root, getData, {}) {
+  constructor(root, config) {
     super(
       root,
-      getData,
+      config,
       { top: 16, right: 16, bottom: 16, left: 16 },
       {
         tex: "bi bi-file-earmark-font",

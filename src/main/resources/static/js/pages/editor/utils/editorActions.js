@@ -8,10 +8,10 @@ export function loadSources(configs) {
   const container = document.querySelector(".dv-sources-container");
 
   for (const config of configs) {
-    const source = createSource(config);
+    const controller = createSource(config);
 
-    container.prepend(source.root);
-    source.init();
+    container.prepend(controller.root);
+    controller.init();
   }
 }
 

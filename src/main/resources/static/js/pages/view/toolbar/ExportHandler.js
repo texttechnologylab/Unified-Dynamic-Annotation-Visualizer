@@ -114,9 +114,12 @@ export default class ExportHandler {
     const type = this.widget.constructor.defaultConfig.type;
     const str = this.serializer.serializeToString(svg);
     const json = this.getJSON();
-    const metadata = this.getMetadata();
+    const meta = {
+      metadata: this.getMetadata(),
+      options: this.widget.config.options,
+    };
 
-    const data = await getTikz(type, str, json, metadata);
+    const data = await getTikz(type, str, json, meta);
     const url = this.createURL(data.content, "application/x-tex");
 
     this.downloadURL(url, `${this.filename}.tex`);

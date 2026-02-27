@@ -39,11 +39,7 @@ export default class WidgetController {
     );
     const buttons = this.root.querySelectorAll("button");
 
-    this.widget = new Widget(
-      this.root,
-      this.item.src || { title: this.item.title },
-      this.item.options,
-    );
+    this.widget = new Widget(this.root, this.item);
     this.widget.render(Widget.previewData || this.item.src);
 
     buttons[0].addEventListener("click", () => {

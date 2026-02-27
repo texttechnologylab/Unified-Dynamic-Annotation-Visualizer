@@ -45,10 +45,10 @@ export default class Editor {
     document
       .querySelector(".dv-add-source-button")
       .addEventListener("click", () => {
-        const source = createSource(Source.defaultConfig);
+        const controller = createSource(Source.defaultConfig);
 
-        container.prepend(source.root);
-        source.init();
+        container.prepend(controller.root);
+        controller.init();
       });
 
     document.querySelector("#discard-button").addEventListener("click", () => {
@@ -98,17 +98,17 @@ export default class Editor {
     // Append and initialize added widgets to item content
     state.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        const widget = createWidget(item);
+        const controller = createWidget(item);
 
         const content = item.el.querySelector(".grid-stack-item-content");
         if (content) {
-          content.replaceChildren(...widget.root.childNodes);
-          content.className = widget.root.className;
-          widget.root = content;
+          content.replaceChildren(...controller.root.childNodes);
+          content.className = controller.root.className;
+          controller.root = content;
         } else {
-          item.el.prepend(widget.root);
+          item.el.prepend(controller.root);
         }
-        widget.init();
+        controller.init();
       });
     });
   }

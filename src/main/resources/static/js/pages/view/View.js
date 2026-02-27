@@ -79,17 +79,12 @@ export default class View {
         );
 
         const Widget = getter[item.type];
-        const { id, title, generator, options, type } = item;
 
         const root = item.el.querySelector(".grid-stack-item-content");
         root.replaceChildren(...template.childNodes);
         root.className = template.className;
 
-        const widget = new Widget(
-          root,
-          item.src || { pipeline: this.pipeline, id, title, generator, type },
-          options,
-        );
+        const widget = new Widget(root, { pipeline: this.pipeline, ...item });
         widget.init();
 
         if (!item.src) {

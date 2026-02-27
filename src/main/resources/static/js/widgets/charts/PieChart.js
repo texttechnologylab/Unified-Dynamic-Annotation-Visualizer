@@ -56,16 +56,11 @@ export default class PieChart extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, { hole = 0, legend = false }) {
-    super(root, getData, {
-      top: 10,
-      right: 10,
-      bottom: 10,
-      left: 10,
-    });
+  constructor(root, config) {
+    super(root, config, { top: 10, right: 10, bottom: 10, left: 10 });
 
-    this.hole = hole;
-    this.legend = legend;
+    this.hole = config.options.hole || 0;
+    this.legend = config.options.legend || false;
   }
 
   async init() {
