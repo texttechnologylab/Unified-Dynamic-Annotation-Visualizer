@@ -35,21 +35,31 @@ export default class SourceController {
     Object.values(configs).forEach((Generator) => {
       const config = Generator.defaultConfig;
 
+      const icon = createElement("i", { className: "bi bi-question-circle" });
+      new bootstrap.Popover(icon, {
+        trigger: "hover",
+        customClass: "dv-popover",
+        title: `<strong>${config.type}</strong>`,
+        content: Generator.description,
+        html: true,
+        offset: [0, 20],
+      });
+
       const option = createElement(
         "button",
-        {
-          className: "dv-btn dv-generator-option",
-          title: config.type,
-        },
+        { className: "dv-btn dv-generator-option" },
         [
-          createElement("div", {
-            className: "dv-generator-card-token",
-            textContent: Generator.token,
-          }),
-          createElement("span", {
-            className: "dv-text-truncate",
-            textContent: config.type,
-          }),
+          createElement("span", { className: "dv-generator-card-title" }, [
+            createElement("div", {
+              className: "dv-generator-card-token",
+              textContent: Generator.token,
+            }),
+            createElement("span", {
+              className: "dv-text-truncate",
+              textContent: config.type,
+            }),
+          ]),
+          icon,
         ],
       );
 
