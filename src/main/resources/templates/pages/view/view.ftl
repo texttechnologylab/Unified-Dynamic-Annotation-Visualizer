@@ -17,17 +17,20 @@
   </head>
 
   <body>
-    <#include "/pages/view/components/sidebar.ftl"> 
-    <#include "/pages/view/components/grid.ftl">
+    <#include "/shared/modal.ftl"> 
+    <#include "/pages/view/viewSidebar.ftl"> 
+    <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=id pipelines=pipelines?eval_json />
+      <@sidebar id=id pipelines=pipelines?eval_json widgets=widgets?eval_json />
 
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>
 
-        <@grid widgets=widgets?eval_json />
+        <@grid />
       </main>
+
+      <@modal />
     </div>
 
     <script type="module">
@@ -39,8 +42,7 @@
       const widgets = JSON.parse("${widgets?json_string}");
       const view = new View("${id}");
       
-      view.initGrid(widgets);
-      view.initWidgets(widgets);
+      view.init(widgets);
     </script>
   </body>
 </html>

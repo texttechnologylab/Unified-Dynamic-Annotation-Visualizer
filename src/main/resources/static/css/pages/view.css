@@ -109,6 +109,13 @@
   justify-content: space-between;
 }
 
+.dv-filter-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
 .dv-pipeline-switcher-title {
   display: flex;
   gap: 0.5rem;

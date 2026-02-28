@@ -20,14 +20,6 @@ public class TextChartHandler implements ChartHandler {
     private final ObjectMapper mapper;
     private final GeneratorDataRepository repo;
 
-    // ---- utils ----
-    private static Set<String> csvSet(String csv) {
-        if (csv == null || csv.isBlank()) return Collections.emptySet();
-        return Arrays.stream(csv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
 
     private static String toCss(String styleName, String color) {
         String s = styleName == null ? "" : styleName.toLowerCase(Locale.ROOT);
@@ -51,9 +43,9 @@ public class TextChartHandler implements ChartHandler {
         boolean categoriesProvided = filters.containsKey("categories");
         boolean stylesProvided = filters.containsKey("styles");
 
-        Set<String> includeTypes = csvSet(filters.get("types"));
-        Set<String> includeCategories = csvSet(filters.get("categories"));
-        Set<String> includeStyles = csvSet(filters.get("styles"))
+        Set<String> includeTypes = ChartHandler.parseCsvSet(filters.get("types"));
+        Set<String> includeCategories = ChartHandler.parseCsvSet(filters.get("categories"));
+        Set<String> includeStyles = ChartHandler.parseCsvSet(filters.get("styles"))
                 .stream().map(s -> s.toLowerCase(Locale.ROOT))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 

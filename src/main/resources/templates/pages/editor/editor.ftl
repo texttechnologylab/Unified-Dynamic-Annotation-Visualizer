@@ -18,9 +18,10 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
-    <#include "/shared/searchbox.ftl"> 
-    <#include "/pages/editor/components/sidebar.ftl">
-    <#include "/pages/editor/components/grid.ftl">
+    <#include "/shared/multiselect.ftl"> 
+    <#include "/shared/searchselect.ftl"> 
+    <#include "/pages/editor/editorSidebar.ftl">
+    <#include "/pages/editor/editorGrid.ftl">
 
     <div class="dv-layout">
       <@sidebar id=config?eval_json.id!"new-pipeline" />
@@ -30,7 +31,8 @@
       </main>
 
       <@modal />
-      <@searchbox />
+      <@multiselect />
+      <@searchselect />
     </div>
 
     <script type="module">

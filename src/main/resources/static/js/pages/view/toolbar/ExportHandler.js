@@ -1,37 +1,45 @@
+import { getTikz } from "../../../api/convertions.api.js";
+import { applyStyles, createElement } from "../../../shared/modules/utils.js";
+
 export default class ExportHandler {
-  constructor(node, formats, icons) {
+  constructor(widget, formats) {
     this.serializer = new XMLSerializer();
-    this.storage = {
-      metadata: null,
-      json: null,
-      svg: null,
-    };
+    this.widget = widget;
+
+    const root = widget.root.node ? widget.root.node() : widget.root;
+    const dropdown = root.querySelector(".dv-dropdown-menu");
 
     this.filename = "chart";
-    icons = {
-      svg: "bi bi-file-earmark-code",
-      png: "bi bi-image",
-      csv: "bi bi-table",
-      json: "bi bi-braces",
-      ...icons,
-    };
 
-    formats.forEach((format) => {
-      const btn = node
-        .append("button")
-        .attr("class", "dv-btn")
-        .attr("type", "button")
-        .on("click", () => this.prepareExport(format));
-
-      btn.append("i").attr("class", icons[format]);
-      btn.append("span").text("Export as " + format);
-    });
+    if (dropdown) {
+      Object.entries(formats).forEach(([format, icon]) => {
+        const button = createElement(
+          "button",
+          {
+            className: "dv-btn",
+            type: "button",
+            onclick: () => this.prepareExport(format),
+          },
+          [
+            createElement("i", { className: icon }),
+            createElement("span", { textContent: "Export as " + format }),
+          ],
+        );
+        dropdown.append(button);
+      });
+    }
   }
 
-  update(metadata, json, svg) {
-    this.storage.metadata = metadata;
-    this.storage.json = json;
-    this.storage.svg = svg;
+  getJSON() {
+    return this.widget.data || [];
+  }
+
+  getSVG() {
+    return this.widget.svg.node ? this.widget.svg.node() : this.widget.svg;
+  }
+
+  getMetadata() {
+    return this.widget.filter || {};
   }
 
   prepareExport(format) {
@@ -41,6 +49,9 @@ export default class ExportHandler {
         break;
       case "png":
         this.exportPNG();
+        break;
+      case "tex":
+        this.exportTEX();
         break;
       case "csv":
         this.exportCSV();
@@ -54,14 +65,14 @@ export default class ExportHandler {
   exportSVG() {
     const namespace = "http://www.w3.org/2000/svg";
     const metadata = document.createElementNS(namespace, "metadata");
-    const entries = Object.entries(this.storage.metadata);
+    const entries = Object.entries(this.getMetadata());
 
     for (const [key, value] of entries) {
       const node = document.createElementNS(namespace, key);
       node.textContent = value;
       metadata.appendChild(node);
     }
-    const svg = this.storage.svg.cloneNode(true);
+    const svg = this.getSVG().cloneNode(true);
     svg.prepend(metadata);
 
     const header = '<?xml version="1.0" standalone="no"?>\r\n';
@@ -72,12 +83,12 @@ export default class ExportHandler {
   }
 
   exportPNG() {
-    const str = this.serializer.serializeToString(this.storage.svg);
+    const str = this.serializer.serializeToString(this.getSVG());
     const url = this.createURL(str, "image/svg+xml");
     const img = new Image();
 
     img.onload = () => {
-      const bbox = this.storage.svg.getBBox();
+      const bbox = this.getSVG().getBBox();
 
       const canvas = document.createElement("canvas");
       canvas.width = bbox.width;
@@ -91,10 +102,33 @@ export default class ExportHandler {
     img.src = url;
   }
 
+  async exportTEX() {
+    let svg = this.getSVG().cloneNode(true);
+    svg = applyStyles(svg, [
+      { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
+      { selector: '[fill="currentColor"]', styles: { fill: "black" } },
+      { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
+      { selector: '[fill="transparent"]', styles: { fill: "none" } },
+    ]);
+
+    const type = this.widget.constructor.defaultConfig.type;
+    const str = this.serializer.serializeToString(svg);
+    const json = this.getJSON();
+    const meta = {
+      metadata: this.getMetadata(),
+      options: this.widget.config.options,
+    };
+
+    const data = await getTikz(type, str, json, meta);
+    const url = this.createURL(data.content, "application/x-tex");
+
+    this.downloadURL(url, `${this.filename}.tex`);
+  }
+
   exportCSV() {
-    const json = this.storage.json;
+    const json = this.getJSON();
     const keys = Object.keys(json[0]);
-    const entries = Object.entries(this.storage.metadata);
+    const entries = Object.entries(this.getMetadata());
 
     const escape = (value) => {
       const str = String(value);
@@ -113,8 +147,8 @@ export default class ExportHandler {
 
   exportJSON() {
     const json = {
-      metadata: this.storage.metadata,
-      data: this.storage.json,
+      metadata: this.getMetadata(),
+      data: this.getJSON(),
     };
     const str = JSON.stringify(json, null, 2);
     const url = this.createURL(str, "application/json");

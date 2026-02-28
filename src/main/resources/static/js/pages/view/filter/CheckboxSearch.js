@@ -1,6 +1,6 @@
 export default class CheckboxSearch {
-  constructor(id, endpoint) {
-    this.endpoint = endpoint;
+  constructor(id, getData) {
+    this.getData = getData;
     this.templates = {
       result: document.querySelector("#result-template"),
       checkbox: document.querySelector("#checkbox-template"),
@@ -13,14 +13,12 @@ export default class CheckboxSearch {
     this.info = root.querySelector(".dv-info-text");
     this.addedCheckboxes = [];
 
-    fetch(this.endpoint)
-      .then((response) => response.json())
-      .then((data) => {
-        this.total = data.length;
+    this.getData().then((data) => {
+      this.total = data.length;
 
-        const items = data.slice(0, 10);
-        items.forEach((item) => this.addCheckbox(item));
-      });
+      const items = data.slice(0, 10);
+      items.forEach((item) => this.addCheckbox(item));
+    });
 
     let timeout = null;
     this.input.addEventListener("input", () => {
@@ -56,8 +54,7 @@ export default class CheckboxSearch {
   }
 
   autocomplete(value) {
-    fetch(`${this.endpoint}?q=${value}`)
-      .then((response) => response.json())
+    this.getData(value)
       .then((data) => {
         const filtered = data.filter((d) => !this.addedCheckboxes.includes(d));
 

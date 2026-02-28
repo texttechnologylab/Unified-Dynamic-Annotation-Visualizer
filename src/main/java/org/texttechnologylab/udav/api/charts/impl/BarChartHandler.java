@@ -20,23 +20,7 @@ public class BarChartHandler implements ChartHandler {
     private final GeneratorDataRepository repo;
     private final ObjectMapper mapper;
 
-    private static Double parseDoubleOrNull(String s) {
-        if (s == null) return null;
-        try {
-            return Double.parseDouble(s.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
 
-    private static Integer parseIntOrNull(String s) {
-        if (s == null) return null;
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
 
     @Override
     public JsonNode render(String generatorId,
@@ -64,9 +48,9 @@ public class BarChartHandler implements ChartHandler {
                 valuesTx,
                 filters.getOrDefault("sort", "value"),
                 Boolean.parseBoolean(filters.getOrDefault("desc", "true")),
-                parseDoubleOrNull(filters.get("min")),
-                parseDoubleOrNull(filters.get("max")),
-                parseIntOrNull(filters.get("limit"))
+                ChartHandler.parseDoubleOrNull(filters.get("min")),
+                ChartHandler.parseDoubleOrNull(filters.get("max")),
+                ChartHandler.parseIntOrNull(filters.get("limit"))
         );
 
         // build a simple [{label, value, color}] array

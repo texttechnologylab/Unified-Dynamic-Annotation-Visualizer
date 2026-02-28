@@ -1,19 +1,33 @@
-import getter from "./getter.js";
-import { corpusFilter } from "./filter/CorpusFilter.js";
+import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
-import { getElementDimensions } from "../../shared/modules/utils.js";
+import ChartGPT from "../../shared/classes/ChartGPT.js";
+import state from "./utils/viewState.js";
+import { createTemplateElement } from "../../shared/modules/utils.js";
 
 export default class View {
   constructor(pipeline) {
-    corpusFilter.init();
-    corpusFilter.apply();
+    this.pipeline = pipeline;
+  }
+
+  init(widgets) {
+    this.initGrid(widgets);
+    this.initSwitcher();
+    this.initButtons();
+
+    state.corpusFilter.init();
     sidepanels.init();
     accordions.init();
     dropdowns.init();
 
-    // Initialize pipeline switcher
+    const chatBot = new ChartGPT(
+      "You are an assistant called ChartGPT. Do NOT use markdown in your answers.",
+    );
+    chatBot.init();
+  }
+
+  initSwitcher() {
     const dropdown = document.querySelector(".dv-dropdown");
     const trigger = document.querySelector(".dv-pipeline-switcher-trigger");
     trigger.addEventListener("click", () => {
@@ -24,51 +38,61 @@ export default class View {
         dropdown.classList.remove("show");
       }
     });
+  }
 
-    // Initialize corpus filter apply button
-    document.querySelector("#apply-button").addEventListener("click", () => {
-      corpusFilter.apply();
+  initButtons() {
+    const resetButton = document.querySelector("#reset-button");
+    const applyButton = document.querySelector("#apply-button");
 
-      for (const chart of this.charts) {
+    resetButton.addEventListener("click", () => {
+      state.corpusFilter.reset();
+      resetButton.classList.add("dv-hidden");
+
+      for (const chart of state.charts) {
         chart.fetch().then((data) => chart.render(data));
       }
     });
 
-    this.pipeline = pipeline;
-    this.charts = [];
+    applyButton.addEventListener("click", () => {
+      state.corpusFilter.apply();
+      resetButton.classList.remove("dv-hidden");
+
+      for (const chart of state.charts) {
+        chart.fetch().then((data) => chart.render(data));
+      }
+    });
   }
 
   initGrid(widgets) {
     const grid = GridStack.init({
+      column: 24,
       animate: false,
       float: true,
       disableDrag: true,
       disableResize: true,
     });
 
-    grid.load(widgets);
-  }
+    grid.on("added", (_, items) => {
+      items.forEach((item) => {
+        const template = createTemplateElement(
+          item.src ? "#static-widget-template" : "#chart-widget-template",
+        );
 
-  initWidgets(widgets) {
-    document.querySelectorAll("[data-dv-widget]").forEach((node) => {
-      const id = node.dataset.dvWidget;
-      const config = widgets.find((conf) => conf.id === id);
+        const Widget = getter[item.type];
 
-      if (getter._dynamic[config.type]) {
-        const WidgetClass = getter._dynamic[config.type];
+        const root = item.el.querySelector(".grid-stack-item-content");
+        root.replaceChildren(...template.childNodes);
+        root.className = template.className;
 
-        const endpoint = "/api/data?pipelineId=" + this.pipeline + "&id=" + id;
-        const options = { ...config.options, ...getElementDimensions(node) };
+        const widget = new Widget(root, { pipeline: this.pipeline, ...item });
+        widget.init();
 
-        const chart = new WidgetClass(node, endpoint, options);
-        chart.init();
-
-        this.charts.push(chart);
-      } else if (getter._static[config.type]) {
-        const WidgetClass = getter._static[config.type];
-
-        new WidgetClass(node, config.src, config.options).init();
-      }
+        if (!item.src) {
+          state.charts.push(widget);
+        }
+      });
     });
+
+    grid.load(widgets);
   }
 }

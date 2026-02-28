@@ -2,7 +2,6 @@ package org.texttechnologylab.udav.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -10,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import org.texttechnologylab.udav.api.service.utils.GeneratorConverter;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -77,18 +75,7 @@ public class PipelineService {
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
 
-            JsonNode parsedJson = parseJson(json);
-            String newFormat = GeneratorConverter.toNewFormat(json);
-            JsonNode generators = parseJson(newFormat).get("generators");
-
-            // cast to ObjectNode to modify (parsedJson may be an ObjectNode already)
-            ObjectNode obj = parsedJson.deepCopy();
-            // attach to root
-            obj.set("generators", generators);
-            obj.remove("sources");
-            obj.remove("derivedGenerators");
-
-            return obj;
+            return parseJson(json);
         }
     }
 
@@ -96,15 +83,7 @@ public class PipelineService {
     public String create(JsonNode json) throws Exception {
         String id = json.get("id").asText("main");
 
-        ObjectNode obj = json.deepCopy();
-        String oldFormat = GeneratorConverter.toOldFormat(json.toString());
-        JsonNode oldFormatJson = parseJson(oldFormat);
-
-        obj.set("sources", oldFormatJson.get("sources"));
-        obj.set("derivedGenerators", oldFormatJson.get("derivedGenerators"));
-        obj.remove("generators");
-
-        String jsonStr = toString(obj);
+        String jsonStr = toString(json);
 
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
@@ -133,20 +112,11 @@ public class PipelineService {
 
     @Transactional
     public void update(JsonNode json) throws Exception {
-
-        ObjectNode obj = json.deepCopy();
-        String oldFormat = GeneratorConverter.toOldFormat(json.toString());
-        JsonNode oldFormatJson = parseJson(oldFormat);
-
-        obj.set("sources", oldFormatJson.get("sources"));
-        obj.set("derivedGenerators", oldFormatJson.get("derivedGenerators"));
-        obj.remove("generators");
-
         String id = json.get("id").asText(null);
         if (id == null || id.isBlank()) {
             throw new ResponseStatusException(BAD_REQUEST, "Missing or empty pipeline id");
         }
-        String jsonStr = toString(obj);
+        String jsonStr = toString(json);
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
             int updated = dsl.update(DSL.table(TABLE))

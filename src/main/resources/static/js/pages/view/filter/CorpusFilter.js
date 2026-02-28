@@ -1,3 +1,4 @@
+import { getFiles } from "../../../api/files.api.js";
 import CheckboxSearch from "./CheckboxSearch.js";
 import DateRange from "./DateRange.js";
 
@@ -10,11 +11,8 @@ export default class CorpusFilter {
   }
 
   init() {
-    this.components.files = new CheckboxSearch(
-      "file-filter",
-      "/api/files/documents"
-    );
-    this.components.tags = new CheckboxSearch("tag-filter", "/api/filter/tags");
+    this.components.files = new CheckboxSearch("file-filter", getFiles);
+    this.components.tags = new CheckboxSearch("tag-filter", async () => []);
     this.components.date = new DateRange("date-filter");
   }
 
@@ -23,6 +21,8 @@ export default class CorpusFilter {
       this.filter[key] = component.getValues();
     }
   }
-}
 
-export const corpusFilter = new CorpusFilter(".dv-corpus-filter");
+  reset() {
+    this.filter = {};
+  }
+}

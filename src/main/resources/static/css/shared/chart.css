@@ -1,7 +1,3 @@
-.grid-stack-item-content.hide {
-  opacity: 0;
-}
-
 /* Chart */
 .dv-chart {
   display: flex;
@@ -33,6 +29,12 @@
   font-size: var(--font-size-lg);
   padding: 0.125rem 0.5rem;
   margin: 0.2rem;
+}
+
+.dv-chart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .dv-chart-area {

@@ -6,71 +6,196 @@
 
 .dv-main {
   grid-area: main;
+  min-height: 100vh;
+
+  --grid-size: 0px; /* will be updated by javascript */
+  --grid-strength: 1px;
+  --grid-dash: calc(var(--grid-size) / 14);
+  --grid-gap: calc(var(--grid-size) / 7);
+
   background-color: var(--bg-color);
+  background-size:
+    var(--grid-gap) var(--grid-gap),
+    var(--grid-size) var(--grid-size);
+  background-image:
+    linear-gradient(
+      to bottom,
+      transparent var(--grid-dash),
+      var(--bg-color) var(--grid-dash)
+    ),
+    linear-gradient(
+      to right,
+      var(--border-color) var(--grid-strength),
+      transparent var(--grid-strength)
+    ),
+    linear-gradient(
+      to right,
+      transparent var(--grid-dash),
+      var(--bg-color) var(--grid-dash)
+    ),
+    linear-gradient(
+      to bottom,
+      var(--border-color) var(--grid-strength),
+      transparent var(--grid-strength)
+    );
 }
 
-.dv-generators-container {
+.grid-stack.grid-stack-dragging {
+  cursor: grabbing;
+}
+
+.grid-stack-item-content {
+  cursor: grab;
+}
+
+.grid-stack-item:hover {
+  .dv-autohide-toolbar {
+    display: block;
+  }
+}
+
+.dv-editor-badge {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.25rem;
+  border-radius: var(--border-radius);
+  background-color: var(--hover-color);
+}
+
+.nav-tabs {
+  border: none !important;
+  border-radius: var(--border-radius);
+  background-color: var(--hover-color);
+  padding: 0.25rem !important;
+}
+
+.nav-tab {
+  display: flex;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  width: 100%;
+  padding: 0.375rem;
+  font-size: 1.125rem;
+}
+
+.nav-tab.active {
+  background-color: var(--bg-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-content {
+  padding: 0.75rem;
+}
+
+.dv-sources-container {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
-  margin: 0.25rem 0 0.75rem;
+  gap: 1rem;
 }
 
-.dv-generator {
-  font-size: 1.125rem;
+.dv-source-card {
   background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  padding: 0.25rem;
   box-shadow: var(--shadow-sm);
-
-  button {
-    padding: 0.125rem 0.5rem;
-    font-size: var(--font-size-lg);
-    margin: 0.125rem;
-  }
 }
 
-#available-generators {
-  .dv-generator-title {
-    cursor: help;
-  }
-}
-
-.dv-generator-header {
+.dv-source-card-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  background-color: var(--bg-color-emphasis);
+  padding: 0.25rem;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+
+  button {
+    padding: 0.125rem 0.375rem;
+  }
 }
 
-.dv-generator-title {
+.dv-source-card-body {
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+.dv-add-source-button {
+  width: 100%;
   display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 0.5rem;
-  overflow: hidden;
-  margin: 0.125rem;
+  background-color: transparent;
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: var(--border-radius);
+  transition: all 300ms ease;
+
+  &:hover {
+    background-color: var(--hover-color);
+  }
+
+  &:active {
+    background-color: var(--active-color);
+  }
 }
 
-.dv-generator-token {
+.dv-generator-option {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.dv-generator-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background-color: var(--bg-color);
+  padding: 0.375rem 0.25rem;
+  border-top: 1px solid var(--border-color);
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+.dv-generator-card-title {
+  display: flex;
+  gap: 0.375rem;
+  overflow: hidden;
+}
+
+.dv-generator-card-token {
   font-family: var(--bs-font-monospace);
-  font-size: var(--font-size-sm);
+  font-size: 0.75rem;
   color: var(--primary);
   border: 1px solid var(--primary);
   border-radius: var(--border-radius);
   padding: 0.125rem 0.375rem;
 }
 
-.dv-generator-type {
-  font-size: var(--font-size-sm);
+.dv-generator-card-type {
+  font-size: 0.75rem;
   font-weight: bold;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dv-generator-body {
-  margin: 0.125rem;
+.dv-generator-card-name {
+  font-size: var(--font-size-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dv-generator-card-buttons {
+  display: flex;
+  gap: 0.25rem;
+
+  button {
+    padding: 0.125rem 0.375rem;
+  }
 }
 
 .dv-available-widgets-container {
@@ -96,7 +221,9 @@
   font-size: 2rem;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 300ms ease, color 600ms ease;
+  transition:
+    box-shadow 300ms ease,
+    color 600ms ease;
   cursor: grab;
 
   &:hover {
@@ -117,20 +244,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.grid-stack.grid-stack-dragging {
-  cursor: grabbing;
-}
-
-.grid-stack-item-content {
-  cursor: grab;
-}
-
-.grid-stack-item:hover {
-  .dv-autohide-toolbar {
-    display: block;
-  }
 }
 
 .dv-form-column {

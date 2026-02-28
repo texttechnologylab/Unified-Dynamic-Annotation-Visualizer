@@ -20,8 +20,11 @@
 
     <div class="dv-layout">
       <div class="dv-main-title">
-        <h2>Dynamic Visualizations</h2>
-        <h4>Create, select or delete pipelines here</h4>
+        <div class="dv-main-title-logo">
+          <img src="/img/logo.png" alt="Logo">
+          <h2>UDAV</h2>
+        </div>
+        <h4>Unified Dynamic Annotation Visualizer</h4>
       </div>
 
       <div class="dv-menu-container">

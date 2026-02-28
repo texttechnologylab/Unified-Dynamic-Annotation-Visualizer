@@ -1,5 +1,6 @@
 package org.texttechnologylab.udav.pipeline;
 
+import lombok.Getter;
 import org.springframework.lang.NonNull;
 
 import java.util.Iterator;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 
 public class JSONView implements Iterable<JSONView> {
 
+    @Getter
     private final Object node;
 
     public JSONView(Object node) {

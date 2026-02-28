@@ -1,149 +1,115 @@
-import { modal } from "../../shared/classes/Modal.js";
-import {
-  deepClone,
-  getElementDimensions,
-  randomId,
-} from "../../shared/modules/utils.js";
 import accordions from "../../shared/modules/accordions.js";
-import getter from "./getter.js";
-import { tooltip } from "../../shared/classes/Tooltip.js";
+import { identifierValid, widgetsValid } from "./utils/editorValidations.js";
+import state from "./utils/editorState.js";
 import {
-  generatorsValid,
-  identifierValid,
-  widgetsValid,
-} from "./utils/validate.js";
-import state from "./utils/state.js";
+  createSource,
+  createWidget,
+  loadSources,
+  saveSources,
+} from "./utils/editorActions.js";
+import { debounce } from "../../shared/modules/utils.js";
+import {
+  createPipeline,
+  getPipelines,
+  updatePipeline,
+} from "../../api/pipelines.api.js";
+import widgets from "../../widgets/widgets.js";
+import Source from "./configs/Source.js";
 
 export default class Editor {
   constructor() {
-    this.input = document.querySelector("#identifier-input");
-    this.defaults = {
-      widgets: Object.values(getter.widgets).map((Handler) => Handler.defaults),
-      generators: Object.values(getter.generators).map(
-        (Handler) => Handler.defaults
-      ),
-    };
+    this.widgetDefaults = Object.values(widgets).map(
+      (Widget) => Widget.defaultConfig,
+    );
   }
 
   init(config) {
     accordions.init();
 
-    this.initAvailableGenerators();
     this.initAvailableWidgets();
     this.initGrid();
 
     // Load existing data
-    state.sources = config.sources || [];
-    state.derivedGenerators = config.derivedGenerators || [];
-    this.loadGenerators(config.generators || []);
+    loadSources(config.sources || []);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
-    this.input.addEventListener(
+    const input = document.querySelector("#identifier-input");
+    input.addEventListener(
       "input",
-      ({ target }) => (this.input.value = target.value.replaceAll(" ", "-"))
+      ({ target }) => (input.value = target.value.replaceAll(" ", "-")),
     );
 
     // Initialize buttons
+    const container = document.querySelector(".dv-sources-container");
     document
-      .querySelector("#discard-button")
-      .addEventListener("click", () =>
-        modal.confirm("Discard Changes", "Are you sure?", () =>
-          window.open("/", "_self")
-        )
-      );
+      .querySelector(".dv-add-source-button")
+      .addEventListener("click", () => {
+        const controller = createSource(Source.defaultConfig);
+
+        container.prepend(controller.root);
+        controller.init();
+      });
+
+    document.querySelector("#discard-button").addEventListener("click", () => {
+      state.modal.confirm("Discard Changes", "Are you sure?", async () => {
+        const id = input.value;
+        const pipelines = await getPipelines();
+
+        if (pipelines.includes(id)) {
+          window.open("/view/" + id, "_self");
+        } else {
+          window.open("/", "_self");
+        }
+      });
+    });
 
     document
       .querySelector("#save-button")
-      .addEventListener("click", () => this.validate());
+      .addEventListener("click", () => this.validate(input.value));
   }
 
   initGrid() {
     state.grid = GridStack.init({
-      minRow: 6,
+      column: 24,
+      minRow: 12,
       float: true,
       acceptWidgets: ".dv-available-widget-draggable",
     });
 
+    // Update grid lines on resize
+    const main = document.querySelector(".dv-main");
+    const observer = new ResizeObserver(
+      debounce(() => {
+        main.style.setProperty(
+          "--grid-size",
+          state.grid.getCellHeight() + "px",
+        );
+      }, 10),
+    );
+    observer.observe(main);
+
     GridStack.setupDragIn(
       ".dv-available-widget-draggable",
       { helper: "clone" },
-      this.defaults.widgets
+      this.widgetDefaults,
     );
 
     // Append and initialize added widgets to item content
     state.grid.on("added", (_, items) => {
       items.forEach((item) => {
-        Object.assign(item, deepClone(item, ["el", "grid"]));
-
-        item.id = item.id || randomId(item.type);
-
-        const HandlerClass = getter.widgets[item.type];
-        const handler = new HandlerClass(item);
-
-        item.el.classList.remove("dv-available-widget-draggable");
-        item.el.querySelector("i")?.remove();
+        const controller = createWidget(item);
 
         const content = item.el.querySelector(".grid-stack-item-content");
         if (content) {
-          content.replaceChildren(...handler.element.childNodes);
-          content.className = handler.element.className;
-          handler.element = content;
+          content.replaceChildren(...controller.root.childNodes);
+          content.className = controller.root.className;
+          controller.root = content;
         } else {
-          item.el.prepend(handler.element);
+          item.el.prepend(controller.root);
         }
-
-        handler.init();
+        controller.init();
       });
-    });
-
-    // Re-render chart with new dimensions after resize
-    state.grid.on("resizestop", (_, el) => {
-      const content = el.querySelector(".grid-stack-item-content");
-
-      if (content._chart) {
-        const dimensions = getElementDimensions(content);
-        content._chart.setDimensions(dimensions.width, dimensions.height);
-        content._chart.render(content._data);
-      }
-    });
-  }
-
-  initAvailableGenerators() {
-    const added = document.querySelector("#added-generators");
-    const available = document.querySelector("#available-generators");
-    const template = document.querySelector("#available-generator-template");
-
-    this.defaults.generators.forEach((values) => {
-      const element = template.content.cloneNode(true).children[0];
-      const HandlerClass = getter.generators[values.type];
-
-      tooltip.create(
-        element.querySelector(".dv-generator-title"),
-        values.name,
-        HandlerClass.description,
-        element,
-        "right"
-      );
-
-      element.querySelector(".dv-generator-token").textContent =
-        HandlerClass.token;
-      element.querySelector(".dv-generator-type").textContent = values.name;
-      element.querySelector("button").addEventListener("click", () => {
-        // Create generator
-        const generator = deepClone(values);
-        generator.id = generator.id || randomId(generator.type);
-        generator.name = "New " + generator.name;
-
-        const handler = new HandlerClass(generator);
-
-        added.append(handler.element);
-        state.generators.push(generator);
-
-        handler.init();
-      });
-
-      available.append(element);
     });
   }
 
@@ -151,68 +117,42 @@ export default class Editor {
     const container = document.querySelector(".dv-available-widgets-container");
     const template = document.querySelector("#available-widget-template");
 
-    this.defaults.widgets.forEach((widget) => {
+    this.widgetDefaults.forEach((widget) => {
       const element = template.content.cloneNode(true);
 
       element.querySelector("i").className = widget.icon;
       element.querySelector("span").title = widget.title;
       element.querySelector("span").textContent = widget.title;
+      delete widget.icon;
 
       container.append(element);
     });
   }
 
-  loadGenerators(generators) {
-    const added = document.querySelector("#added-generators");
-
-    for (const generator of generators) {
-      const HandlerClass = getter.generators[generator.type];
-      const handler = new HandlerClass(generator);
-
-      added.append(handler.element);
-      state.generators.push(generator);
-
-      handler.init();
-    }
-  }
-
-  async validate() {
-    const pipelines = await fetch("/api/pipelines").then((response) =>
-      response.json()
-    );
+  async validate(id) {
+    const pipelines = await getPipelines();
     const config = {
-      id: this.input.value,
-      sources: state.sources,
-      derivedGenerators: state.derivedGenerators,
-      generators: state.generators,
+      id: id,
+      sources: saveSources(),
       widgets: state.grid.save(false),
     };
 
-    const ok =
-      identifierValid(config) &&
-      generatorsValid(config) &&
-      widgetsValid(config);
+    const ok = identifierValid(config) && widgetsValid(config);
 
     if (ok && pipelines.includes(config.id)) {
-      modal.confirm(
+      state.modal.confirm(
         `Overwrite "${config.id}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        () => this.saveConfig("PUT", config)
+        async () => {
+          state.modal.loading("Updating pipeline, please wait...");
+          await updatePipeline(config);
+          window.open("/view/" + config.id, "_self");
+        },
       );
     } else if (ok) {
-      this.saveConfig("POST", config);
+      state.modal.loading("Creating pipeline, please wait...");
+      await createPipeline(config);
+      window.open("/view/" + config.id, "_self");
     }
-  }
-
-  saveConfig(method, config) {
-    const options = {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(config),
-    };
-
-    fetch("/api/pipelines", options).then(() => window.open("/", "_self"));
   }
 }

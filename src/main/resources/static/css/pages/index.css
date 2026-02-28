@@ -20,6 +20,17 @@
   }
 }
 
+.dv-main-title-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  img {
+    height: 5rem;
+  }
+}
+
 .dv-menu-container {
   width: 30%;
 }

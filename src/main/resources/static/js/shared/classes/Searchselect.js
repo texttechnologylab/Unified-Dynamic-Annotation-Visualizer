@@ -1,0 +1,109 @@
+import { createElement } from "../modules/utils.js";
+
+export default class Searchselect {
+  constructor({ getData, keys = ["", ""], header = ["Results", ""] }) {
+    this.getData = getData;
+    this.keys = keys;
+    this.header = header;
+    this.value = "";
+    this.dom = {};
+  }
+
+  create(key, selected) {
+    const template = document.querySelector("#searchselect-template");
+    const root = template.content.cloneNode(true);
+
+    this.dom.input = root.querySelector("input");
+    this.dom.dropdown = root.querySelector(".dv-dropdown");
+    this.dom.header = root.querySelectorAll(".dv-searchselect-header>span");
+    this.dom.container = root.querySelector(".dv-searchselect-container");
+
+    this.dom.header[0].textContent = this.header[0];
+    this.dom.header[1].textContent = this.header[1];
+    this.dom.input.name = key;
+    this.dom.input.value = selected;
+    this.value = selected;
+
+    this.dom.input.addEventListener("focus", () => {
+      this.dom.input.select();
+      this.autocomplete(this.dom.input.value, 20);
+    });
+
+    this.dom.input.addEventListener("blur", () => {
+      this.dom.input.value = this.value;
+      this.hide();
+      this.clear();
+    });
+
+    let timeout = null;
+    this.dom.input.addEventListener("input", () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(
+        () => this.autocomplete(this.dom.input.value, 20),
+        300,
+      );
+    });
+
+    this.dom.dropdown.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+
+    return root;
+  }
+
+  autocomplete(query, size) {
+    this.getData(query, size)
+      .then((items) => {
+        this.clear();
+
+        items.forEach((item) => {
+          const result = this.createResult(item);
+          this.dom.container.append(result);
+        });
+
+        this.show();
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  }
+
+  createResult(item) {
+    const label = createElement("span", {
+      className: "dv-text-truncate",
+      textContent: item[this.keys[0]] || item,
+    });
+    label.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.value = item[this.keys[0]] || item;
+      this.dom.input.blur();
+    });
+
+    const info = createElement("span", {
+      textContent: item[this.keys[1]] || "",
+    });
+
+    const result = createElement(
+      "div",
+      {
+        className: "dv-btn dv-searchselect-result",
+        title: item[this.keys[0]] || "",
+      },
+      [label, info],
+    );
+
+    return result;
+  }
+
+  show() {
+    this.dom.dropdown.classList.add("show");
+  }
+
+  hide() {
+    this.dom.dropdown.classList.remove("show");
+  }
+
+  clear() {
+    this.dom.container.innerHTML = "";
+  }
+}

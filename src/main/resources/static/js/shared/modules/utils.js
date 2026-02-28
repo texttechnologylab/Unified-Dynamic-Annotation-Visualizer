@@ -1,30 +1,42 @@
 export function flatData(datasets, key) {
   return datasets.flatMap(({ [key]: value, ...rest }) =>
-    value.map((item) => ({ ...rest, ...item }))
+    value.map((item) => ({ ...rest, ...item })),
   );
-}
-
-export function minOf(array) {
-  return Math.min(...array);
-}
-
-export function maxOf(array) {
-  return Math.max(...array);
 }
 
 export function randomId(str) {
   return str + "-" + Math.random().toString(36).slice(2, 9);
 }
 
-export function getElementDimensions(element) {
-  const area = element.querySelector(".dv-chart-area");
-  const rect = area.getBoundingClientRect();
+export function isObject(item) {
+  return typeof item === "object" && !Array.isArray(item) && item !== null;
+}
 
-  return { width: rect.width, height: rect.height };
+export function debounce(fn, timeout = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, timeout);
+  };
 }
 
 export function createElement(tag, attributes = {}, children = []) {
   const element = document.createElement(tag);
+  Object.assign(element, attributes);
+  element.append(...children);
+
+  return element;
+}
+
+export function createTemplateElement(
+  selector,
+  attributes = {},
+  children = [],
+) {
+  const template = document.querySelector(selector);
+  const element = template.content.cloneNode(true).children[0];
   Object.assign(element, attributes);
   element.append(...children);
 
@@ -47,4 +59,18 @@ export function deepClone(object, skip = []) {
   }
 
   return clone;
+}
+
+export function applyStyles(node, changes) {
+  node = d3.select(node);
+
+  changes.forEach((change) => {
+    const selection = node.selectAll(change.selector);
+
+    Object.entries(change.styles).forEach(([key, value]) => {
+      selection.attr(key, value);
+    });
+  });
+
+  return node.node();
 }
