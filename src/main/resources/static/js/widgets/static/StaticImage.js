@@ -19,11 +19,11 @@ export default class StaticImage {
     },
   };
 
-  constructor(root, src, {}) {
+  constructor(root, config) {
     this.root = d3.select(root);
-    this.src = src;
+    this.config = config;
 
-    this.root.classed("hide", false);
+    this.src = config.src || "";
   }
 
   clear() {

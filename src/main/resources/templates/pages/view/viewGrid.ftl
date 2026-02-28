@@ -1,33 +1,48 @@
-<#include "/shared/toolbar.ftl">
-<#include "/shared/sidepanel.ftl">
+<#macro grid>
+  <div class="grid-stack"></div>
 
-<#macro grid widgets>
-  <div class="grid-stack">
-    <#list widgets as widget>
-      <div class="grid-stack-item" gs-id="${widget.id}">
+  <template id="chart-widget-template">
+    <div class="grid-stack-item-content dv-chart">
+      <div class="dv-toolbar">
+        <button
+          class="dv-btn dv-btn-toolbar"
+          type="button"
+          title="Controls"
+          data-dv-toggle="sidepanel"
+          data-dv-target="#"
+        >
+          <i class="bi bi-sliders"></i>
+        </button>
 
-        <#if widget.type?contains("Static")>
-          <div
-            class="grid-stack-item-content hide"
-            title="${widget.title}"
-            data-dv-widget="${widget.id}"
-          >
+        <span class="dv-toolbar-title" title=""></span>
+
+        <button
+          class="dv-btn dv-btn-toolbar"
+          type="button"
+          title="Exports"
+          data-bs-toggle="dropdown"
+        >
+          <i class="bi bi-download"></i>
+        </button>
+        <div class="dropdown-menu">
+          <div class="dv-dropdown-menu"></div>
+        </div>
+      </div>
+
+      <div class="dv-chart-area">
+        <div id="#" class="dv-sidepanel">
+          <div class="dv-sidepanel-header">
+            <span class="dv-title">Controls</span>
+            <button class="dv-btn-close" data-dv-dismiss="sidepanel"></button>
           </div>
-
-        <#else>
-          <div
-            class="grid-stack-item-content dv-chart hide"
-            data-dv-widget="${widget.id}"
-          >
-            <@toolbar id=widget.id title=widget.title />
-
-            <div class="dv-chart-area">
-              <@sidepanel id=widget.id title="Controls" />
-            </div>
-          </div>
-        </#if>
+          <div class="dv-sidepanel-body"></div>
+        </div>
 
       </div>
-    </#list>
-  </div>
+    </div>
+  </template>
+
+  <template id="static-widget-template">
+    <div class="grid-stack-item-content"></div>
+  </template>
 </#macro>

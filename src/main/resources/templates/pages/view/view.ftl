@@ -27,7 +27,7 @@
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>
 
-        <@grid widgets=widgets?eval_json />
+        <@grid />
       </main>
 
       <@modal />

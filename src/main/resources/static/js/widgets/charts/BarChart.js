@@ -46,10 +46,10 @@ export default class BarChart extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, { horizontal = false }) {
-    super(root, getData, { top: 30, right: 30, bottom: 70, left: 60 });
+  constructor(root, config) {
+    super(root, config, { top: 30, right: 30, bottom: 70, left: 60 });
 
-    this.horizontal = horizontal;
+    this.horizontal = config.options.horizontal || false;
   }
 
   async init() {

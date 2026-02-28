@@ -99,6 +99,14 @@ export default {
   },
 
   select(key, selected, options, onchange) {
+    options = options.map((opt) => {
+      return typeof opt === "string" ? { label: opt, value: opt } : opt;
+    });
+
+    if (!options.find((opt) => opt.value === selected)) {
+      options.unshift({ label: "", value: "" });
+    }
+
     return createElement(
       "select",
       { name: key, className: "dv-select", onchange },

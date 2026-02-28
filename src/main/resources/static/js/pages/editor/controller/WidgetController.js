@@ -6,16 +6,15 @@ import { createTemplateElement } from "../../../shared/modules/utils.js";
 export default class WidgetController {
   constructor(item) {
     this.root = createTemplateElement(
-      item.src ? "#default-static-template" : "#default-chart-template",
+      item.src ? "#static-widget-template" : "#chart-widget-template",
     );
-    this.span = this.root.querySelector("span");
     this.item = item;
     this.widget = null;
   }
 
   setTitle(title) {
     this.item.title = title;
-    if (this.span) this.span.textContent = title;
+    if (this.widget.setTitle) this.widget.setTitle(title);
   }
 
   setSrc(src) {
@@ -32,8 +31,6 @@ export default class WidgetController {
   }
 
   init() {
-    this.setTitle(this.item.title);
-
     const Widget = getter[this.item.type];
     const builder = new FormBuilder(
       state.modal,
@@ -42,7 +39,7 @@ export default class WidgetController {
     );
     const buttons = this.root.querySelectorAll("button");
 
-    this.widget = new Widget(this.root, this.item.src, this.item.options);
+    this.widget = new Widget(this.root, this.item);
     this.widget.render(Widget.previewData || this.item.src);
 
     buttons[0].addEventListener("click", () => {

@@ -85,8 +85,8 @@ export default class MedialAxis extends D3Visualization {
     { x: 10, y: 20 },
   ];
 
-  constructor(root, getData, {}) {
-    super(root, getData, { top: 10, right: 10, bottom: 10, left: 10 });
+  constructor(root, config) {
+    super(root, config, { top: 10, right: 10, bottom: 10, left: 10 });
 
     this.draw = {
       boundary: true,

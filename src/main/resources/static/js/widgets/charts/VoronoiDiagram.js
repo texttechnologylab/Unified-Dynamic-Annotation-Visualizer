@@ -53,8 +53,8 @@ export default class VoronoiDiagram extends D3Visualization {
     },
   ];
 
-  constructor(root, getData, {}) {
-    super(root, getData, { top: 40, right: 40, bottom: 40, left: 40 });
+  constructor(root, config) {
+    super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });
 
     this.draw = {
       points: true,

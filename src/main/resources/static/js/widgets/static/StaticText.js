@@ -50,27 +50,16 @@ export default class StaticText {
     },
   };
 
-  constructor(
-    root,
-    src,
-    {
-      align = "start",
-      size = "5",
-      weight = "normal",
-      style = "normal",
-      decoration = "none",
-    },
-  ) {
+  constructor(root, config) {
     this.root = d3.select(root);
-    this.text = src;
+    this.config = config;
 
-    this.align = align;
-    this.size = size;
-    this.weight = weight;
-    this.style = style;
-    this.decoration = decoration;
-
-    this.root.classed("hide", false);
+    this.text = config.src || "";
+    this.align = config.options.align || "start";
+    this.size = config.options.size || "5";
+    this.weight = config.options.weight || "normal";
+    this.style = config.options.style || "normal";
+    this.decoration = config.options.decoration || "none";
   }
 
   clear() {

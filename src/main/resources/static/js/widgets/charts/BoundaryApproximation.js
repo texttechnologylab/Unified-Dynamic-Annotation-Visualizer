@@ -100,16 +100,16 @@ export default class BoundaryApproximation extends D3Visualization {
     { x: 47.323233864524155, y: 354.2313093705608 },
   ];
 
-  constructor(root, getData, { gridRows = 8, maxRadius = 35, threshold = 0 }) {
-    super(root, getData, { top: 0, right: 0, bottom: 0, left: 0 });
+  constructor(root, config) {
+    super(root, config, { top: 0, right: 0, bottom: 0, left: 0 });
 
     this.draw = {
       grid: false,
       clusters: false,
     };
-    this.gridRows = gridRows;
-    this.maxRadius = maxRadius;
-    this.threshold = threshold;
+    this.gridRows = config.options.gridRows || 8;
+    this.maxRadius = config.options.maxRadius || 35;
+    this.threshold = config.options.threshold || 0;
   }
 
   async fetch() {

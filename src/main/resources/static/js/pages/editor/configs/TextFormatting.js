@@ -30,10 +30,5 @@ export default class TextFormatting {
         getData: getFiles,
       },
     },
-    extends: {
-      type: "multiselect",
-      label: "Extends (optional)",
-      options: () => getGeneratorOptions("TextFormatting"),
-    },
   };
 }

@@ -103,34 +103,15 @@ public class DataController {
      */
     @PostMapping(value = "/data", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postData(
-            @RequestParam("id") String visId,
-            @RequestParam(value = "pipelineId", defaultValue = "main-9") String pipelineId,
+            @RequestParam("pipelineId") String pipelineId,  
+            @RequestParam("generatorId") String generatorId,
+            @RequestParam("chartType") String chartType,
             @RequestParam(value = "pretty", defaultValue = "false") boolean pretty,
             @RequestBody FilterEnvelope body
     ) throws Exception {
 
-        JsonNode widgets = pipelineService.get(pipelineId).get("widgets");
-        JsonNode widget = null;
-
-        if (widgets != null && widgets.isArray()) {
-            for (JsonNode node : widgets) {
-                JsonNode idNode = node.get("id");
-                if (idNode != null && visId.equals(idNode.asText())) {
-                    widget = node;
-                    break;
-                }
-            }
-        }
-
-        if (widget == null) {
-            return ResponseEntity.status(404).body("{\"error\":\"Visualization ID not found in pipeline\"}");
-        }
-
         Map<String, String> filterValues = toStringMap(body.chart());
         Map<String, String> corpusValues = toStringMap(body.corpus());
-
-        String generatorId = widget.get("generator").get("id").asText();
-        String chartType = widget.get("type").asText();
 
         String json = handler.buildArrayJson(generatorId, chartType, filterValues, corpusValues, pretty, pipelineId);
         return ResponseEntity.ok()

@@ -1,10 +1,10 @@
-import widgets from "../../widgets/widgets.js";
+import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
-import { getData } from "../../api/data.api.js";
 import ChartGPT from "../../shared/classes/ChartGPT.js";
 import state from "./utils/viewState.js";
+import { createTemplateElement } from "../../shared/modules/utils.js";
 
 export default class View {
   constructor(pipeline) {
@@ -12,6 +12,10 @@ export default class View {
   }
 
   init(widgets) {
+    this.initGrid(widgets);
+    this.initSwitcher();
+    this.initButtons();
+
     state.corpusFilter.init();
     sidepanels.init();
     accordions.init();
@@ -21,11 +25,6 @@ export default class View {
       "You are an assistant called ChartGPT. Do NOT use markdown in your answers.",
     );
     chatBot.init();
-
-    this.initSwitcher();
-    this.initButtons();
-    this.initGrid(widgets);
-    this.initWidgets(widgets);
   }
 
   initSwitcher() {
@@ -73,26 +72,27 @@ export default class View {
       disableResize: true,
     });
 
-    grid.load(widgets);
-  }
+    grid.on("added", (_, items) => {
+      items.forEach((item) => {
+        const template = createTemplateElement(
+          item.src ? "#static-widget-template" : "#chart-widget-template",
+        );
 
-  initWidgets(configs) {
-    document.querySelectorAll("[data-dv-widget]").forEach((node) => {
-      const id = node.dataset.dvWidget;
-      const config = configs.find((conf) => conf.id === id);
+        const Widget = getter[item.type];
 
-      const Widget = widgets[config.type];
+        const root = item.el.querySelector(".grid-stack-item-content");
+        root.replaceChildren(...template.childNodes);
+        root.className = template.className;
 
-      const widget = new Widget(
-        node,
-        config.src || ((filters) => getData(this.pipeline, id, filters)),
-        config.options,
-      );
-      widget.init();
+        const widget = new Widget(root, { pipeline: this.pipeline, ...item });
+        widget.init();
 
-      if (!config.src) {
-        state.charts.push(widget);
-      }
+        if (!item.src) {
+          state.charts.push(widget);
+        }
+      });
     });
+
+    grid.load(widgets);
   }
 }

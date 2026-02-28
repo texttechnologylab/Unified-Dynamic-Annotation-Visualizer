@@ -79,9 +79,9 @@ export default class SourceController {
   }
 
   appendGenerator(container, config) {
-    const generator = createGenerator(config, this.item.id);
+    const controller = createGenerator(config, this.item.id);
 
-    container.append(generator.root);
-    generator.init();
+    container.append(controller.root);
+    controller.init();
   }
 }
