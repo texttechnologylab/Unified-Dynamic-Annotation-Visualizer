@@ -68,27 +68,29 @@ export default class LineChart extends D3Visualization {
     this.points = config.options.points || true;
   }
 
-  async fetch() {
-    return await fetch("/lines.json").then((response) => response.json());
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);
 
-    for (const item of data) {
-      this.controls.append([
-        {
+    this.filter.hide = [];
+
+    this.controls.append(
+      data.map(({ name }) => {
+        return {
           type: "switch",
-          label: item.name,
+          label: name,
           value: true,
           onchange: (event) => {
-            console.log(event.target.value);
+            if (event.target.checked) {
+              this.filter.hide = this.filter.hide.filter((n) => n !== name);
+            } else {
+              this.filter.hide.push(name);
+            }
             this.fetch().then((data) => this.render(data));
           },
-        },
-      ]);
-    }
+        };
+      }),
+    );
   }
 
   render(data) {
