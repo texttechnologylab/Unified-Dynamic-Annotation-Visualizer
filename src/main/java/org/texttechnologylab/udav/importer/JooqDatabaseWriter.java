@@ -19,12 +19,14 @@ import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Comparator;
 import java.util.*;
+import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -40,6 +42,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
     public static final String PARAM_BATCH_SIZE = "batchSize";
     public static final String PARAM_MAX_IDENT = "maxIdentifierLength";
     public static final String PARAM_SQL_DIALECT = "sqlDialect"; // e.g., POSTGRES, MARIADB
+    private static final Logger LOGGER = LoggerFactory.getLogger(JooqDatabaseWriter.class);
     // Primitive UIMA type names -> jOOQ DataType
     private static final Map<String, DataType<?>> UIMA_PRIMITIVE_TO_SQL = Map.of(
             "uima.cas.String", SQLDataType.CLOB,         // use TEXT/CLOB
@@ -188,6 +191,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 .column("id", SQLDataType.BIGINT.identity(true))
                 .column("uima_type_uri", SQLDataType.CLOB.nullable(false))
                 .column("table_name", SQLDataType.CLOB.nullable(false))
+                .column("row_count", SQLDataType.BIGINT.defaultValue(0L))
                 .column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(DSL.currentOffsetDateTime()))
                 .constraints(
                         DSL.constraint(DSL.name(cut("pk_uima_type_registry"))).primaryKey("id"),
@@ -232,7 +236,29 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 .on(DSL.table(DSL.name(schema, "sofas")), DSL.field(DSL.name("doc_id")))
                 .execute();
 
+        // Migration: add row_count column if it doesn't exist (for existing tables)
+        ensureRowCountColumn();
+
         schemaEnsured = true;
+    }
+
+    private void ensureRowCountColumn() {
+        try {
+            // Check if row_count column exists by trying to select from it
+            dsl.select(field(name("row_count")))
+                    .from(table(name(schema, "uima_type_registry")))
+                    .limit(1)
+                    .fetch();
+        } catch (DataAccessException e) {
+            // Column doesn't exist, add it
+            if (e.getMessage() != null && e.getMessage().contains("column") && e.getMessage().contains("does not exist")) {
+                try {
+                    String alterSql = String.format("ALTER TABLE \"%s\".\"uima_type_registry\" ADD COLUMN \"row_count\" BIGINT DEFAULT 0", schema);
+                    dsl.execute(alterSql);
+                } catch (DataAccessException ignoreDuplicate) {
+                }
+            }
+        }
     }
 
     private String toSafeTableName(String uimaTypeName) {
@@ -286,6 +312,10 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 var idx = jCas.getCas().getAnnotationIndex(t);
                 if (idx == null || idx.isEmpty()) continue;
 
+                // Get document text length for bounds checking
+                String docText = jCas.getDocumentText();
+                int docLength = docText != null ? docText.length() : 0;
+
                 List<Query> batch = new ArrayList<>(Math.min(idx.size(), batchSize));
                 for (AnnotationFS fs : idx) {
                     String sofaId = sofaIdForFs(fs);
@@ -296,7 +326,12 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                     values.put(field(name(colSofaId)), sofaId);
                     values.put(field(name(colBegin)), fs.getBegin());
                     values.put(field(name(colEnd)), fs.getEnd());
-                    values.put(field(name(colText)), fs.getCoveredText());
+
+                    // Safely extract covered text with bounds checking
+                    int begin = fs.getBegin();
+                    int end = fs.getEnd();
+                    String coveredText = safeCoveredText(docText, docLength, begin, end);
+                    values.put(field(name(colText)), coveredText);
 
                     for (Feature f : t.getFeatures()) {
                         if (!isPrimitive(f)) continue;
@@ -307,11 +342,22 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
 
                     batch.add(insertIgnore(tableNameHash, values, colRowHash));
                     if (batch.size() >= batchSize) {
-                        dsl.batch(batch).execute();
+                        try {
+                            dsl.batch(batch).execute();
+                        } catch (Exception e) {
+                            LOGGER.error("Error executing batch insert for table {}: {}", tableNameHash, e.getMessage());
+                            // Continue with next batch instead of failing entire document
+                        }
                         batch.clear();
                     }
                 }
-                if (!batch.isEmpty()) dsl.batch(batch).execute();
+                if (!batch.isEmpty()) {
+                    try {
+                        dsl.batch(batch).execute();
+                    } catch (Exception e) {
+                        LOGGER.error("Error executing final batch insert for table {}: {}", tableNameHash, e.getMessage());
+                    }
+                }
 
             } else {
                 var it = jCas.getCas().getIndexRepository().getAllIndexedFS(t);
@@ -336,11 +382,22 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
 
                     batch.add(insertIgnore(tableNameHash, values, colRowHash));
                     if (batch.size() >= batchSize) {
-                        dsl.batch(batch).execute();
+                        try {
+                            dsl.batch(batch).execute();
+                        } catch (Exception e) {
+                            LOGGER.error("Error executing batch insert for table {}: {}", tableNameHash, e.getMessage());
+                            // Continue with next batch instead of failing entire document
+                        }
                         batch.clear();
                     }
                 });
-                if (!batch.isEmpty()) dsl.batch(batch).execute();
+                if (!batch.isEmpty()) {
+                    try {
+                        dsl.batch(batch).execute();
+                    } catch (Exception e) {
+                        LOGGER.error("Error executing final batch insert for table {}: {}", tableNameHash, e.getMessage());
+                    }
+                }
             }
         }
     }
@@ -637,6 +694,10 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         for (Type t : iterable(ts.getTypeIterator())) if (!isSkippableType(t)) typeNames.add(t.getName());
         Collections.sort(typeNames);
 
+        // Get document text length for bounds checking
+        String docText = jCas.getDocumentText();
+        int docLength = docText != null ? docText.length() : 0;
+
         for (String typeName : typeNames) {
             Type t = ts.getType(typeName);
             String tableHash = tableHash(typeName);
@@ -647,9 +708,15 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 var idx = jCas.getCas().getAnnotationIndex(t);
                 if (idx != null && !idx.isEmpty()) {
                     for (AnnotationFS fs : idx) {
-                        md.update(("A|" + fs.getBegin() + "|" + fs.getEnd() + "|").getBytes(StandardCharsets.UTF_8));
-                        String ct = fs.getCoveredText();
+                        int begin = fs.getBegin();
+                        int end = fs.getEnd();
+
+                        md.update(("A|" + begin + "|" + end + "|").getBytes(StandardCharsets.UTF_8));
+
+                        // Safely get covered text with bounds checking
+                        String ct = safeCoveredText(docText, docLength, begin, end);
                         if (ct != null) md.update(ct.getBytes(StandardCharsets.UTF_8));
+
                         // primitive features (name=value)
                         for (Feature f : t.getFeatures()) {
                             if (!isPrimitive(f)) continue;
@@ -677,6 +744,25 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             }
         }
         return DigestUtils.sha256Hex(md.digest());
+    }
+
+    private String safeCoveredText(String docText, int docLength, int begin, int end) {
+        try {
+            // Bounds checking: ensure indices are valid
+            if (begin < 0 || end > docLength || begin > end) {
+                // Invalid span; return null (skip this covered text)
+                return null;
+            }
+
+            // Safe to extract substring
+            if (docText != null) {
+                return docText.substring(begin, end);
+            }
+            return null;
+        } catch (StringIndexOutOfBoundsException e) {
+            // Fallback: shouldn't happen with checks above, but handle gracefully
+            return null;
+        }
     }
 
     private String computeRowHash(String tableNameHash,
@@ -987,10 +1073,38 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             }
             if (fs instanceof AnnotationFS a) {
                 if (!first) sb.append(",");
-                sb.append("\"coveredText\":").append(primitiveToJson(a.getCoveredText()));
+                // Safely get covered text with bounds checking
+                String coveredText = safeCoveredTextForAnnotation(a);
+                sb.append("\"coveredText\":").append(primitiveToJson(coveredText));
             }
             sb.append("}");
             return sb.toString();
+        }
+
+        private static String safeCoveredTextForAnnotation(AnnotationFS a) {
+            try {
+                String docText = a.getView().getDocumentText();
+                if (docText == null) return null;
+
+                int begin = a.getBegin();
+                int end = a.getEnd();
+                int docLength = docText.length();
+
+                // Bounds checking: ensure indices are valid
+                if (begin < 0 || end > docLength || begin > end) {
+                    // Invalid span; return null
+                    return null;
+                }
+
+                // Safe to extract substring
+                return docText.substring(begin, end);
+            } catch (StringIndexOutOfBoundsException e) {
+                // Fallback: shouldn't happen with checks above, but handle gracefully
+                return null;
+            } catch (Exception e) {
+                // Any other exception accessing the view/text
+                return null;
+            }
         }
 
         static Object readPrimitive(org.apache.uima.cas.FeatureStructure fs, Feature f) {
@@ -1015,7 +1129,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         }
 
         private static String escape(String s) {
-            return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+            return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\f", "\\f").replace("\t", "\\t").replace("\b", "\\b");
         }
     }
 
