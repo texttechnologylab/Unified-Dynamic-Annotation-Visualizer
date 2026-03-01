@@ -98,7 +98,7 @@ export default class VoronoiDiagram extends D3Visualization {
 
     const yScale = d3
       .scaleLinear()
-      .range([0, this.height])
+      .range([this.height, 0])
       .domain(this.domain(data, (d) => d.y));
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
@@ -144,7 +144,7 @@ export default class VoronoiDiagram extends D3Visualization {
       .selectAll("path.cell")
       .data(data)
       .join("path")
-      .attr("class", "cell")
+      .attr("class", (d) => (d.label ? "cell labeled" : "cell"))
       .attr("d", (_, i) => voronoi.renderCell(i))
       .attr("fill", (d) => d.cell || "transparent")
       .attr("stroke", "#555555");
@@ -166,7 +166,7 @@ export default class VoronoiDiagram extends D3Visualization {
 
       // Add tooltips
       this.enableTooltip(
-        ".zoom-area > path.cell",
+        ".zoom-area > path.cell.labeled",
         (d) => `<strong>${d.label}</strong>`,
       );
     }
