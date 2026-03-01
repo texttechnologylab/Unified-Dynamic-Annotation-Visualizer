@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,35 +24,29 @@ public class Voronoi2D extends Widget {
                            Set<String> files,
                            ValueMode valueMode,
                            String schema) {
+
+        assert repo != null;
+        Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> result = repo.loadMapCoordinatesByFile(schema, generatorId);
+
         assert mapper != null;
         ArrayNode out = mapper.createArrayNode();
-        var o1 = mapper.createObjectNode();
-        o1.put("label", "Cell 1");
-        o1.put("x", -0.17228836433487893);
-        o1.put("y", 0.0004034504818264395);
-        o1.put("fill", "#FF5400FF");
-        o1.put("stroke", "#800000FF");
-        o1.put("scale", 0.007084618021265124);
-        o1.put("abs", 0.008337255160062937);
-        out.add(o1);
-        var o2 = mapper.createObjectNode();
-        o2.put("label", "Cell 2");
-        o2.put("x", 0.08807457534091101);
-        o2.put("y", 0.288377970457077);
-        o2.put("fill", "#FFAA00FF");
-        o2.put("stroke", "#FF9090FF");
-        o2.put("scale", 0.41333009767848083);
-        o2.put("abs", 0.1593699070893901);
-        out.add(o2);
-        var o3 = mapper.createObjectNode();
-        o3.put("label", "Cell 3");
-        o3.put("x", -0.31771938753358686);
-        o3.put("y", 0.0005067524034529924);
-        o3.put("fill", "#FEFF00FF");
-        o3.put("stroke", "#800000FF");
-        o3.put("scale", 0.018789279751973822);
-        o3.put("abs", 0.012688777059128192);
-        out.add(o3);
+        for (Map.Entry<String, List<GeneratorDataRepository.MapCoordinatesRow>> entry : result.entrySet()) {
+            String label = entry.getKey();
+            List<GeneratorDataRepository.MapCoordinatesRow> rows = entry.getValue();
+            for (GeneratorDataRepository.MapCoordinatesRow row : rows) {
+                var obj = mapper.createObjectNode();
+                obj.put("label", row.label());
+                if (row.coordinates() != null && row.coordinates().size() > 1) {
+                    obj.put("x", row.coordinates().get(0));
+                    obj.put("y", row.coordinates().get(1));
+                }
+                obj.put("fill", row.fillColor());
+                obj.put("stroke", row.strokeColor());
+                obj.put("scale", row.scale());
+                obj.put("outside", row.outsideColor());
+                out.add(obj);
+            }
+        }
         return out;
     }
 }

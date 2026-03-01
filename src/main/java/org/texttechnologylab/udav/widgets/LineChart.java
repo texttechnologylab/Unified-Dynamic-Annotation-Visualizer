@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,33 +24,34 @@ public class LineChart extends Widget {
                            Set<String> files,
                            ValueMode valueMode,
                            String schema) {
+        assert repo != null;
+        if (filters != null && filters.containsKey("hide") && filters.get("hide") != null && !filters.get("hide").isEmpty()) {
+            return mapper.createArrayNode();
+        }
+        Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> result = repo.loadMapCoordinatesByFile(schema, generatorId);
+        assert mapper != null;
         ArrayNode out = mapper.createArrayNode();
-        // First dataset
-        var dataset1 = mapper.createObjectNode();
-        dataset1.put("name", "Dataset Test");
-        dataset1.put("color", "#00618f");
-        ArrayNode coordinates1 = mapper.createArrayNode();
-        coordinates1.add(mapper.createObjectNode().put("y", 5).put("x", 0));
-        coordinates1.add(mapper.createObjectNode().put("y", 20).put("x", 20));
-        coordinates1.add(mapper.createObjectNode().put("y", 10).put("x", 40));
-        coordinates1.add(mapper.createObjectNode().put("y", 40).put("x", 60));
-        coordinates1.add(mapper.createObjectNode().put("y", 5).put("x", 80));
-        coordinates1.add(mapper.createObjectNode().put("y", 60).put("x", 100));
-        dataset1.set("coordinates", coordinates1);
-        out.add(dataset1);
-        // Second dataset
-        var dataset2 = mapper.createObjectNode();
-        dataset2.put("name", "Test 2");
-        dataset2.put("color", "#ff8000");
-        ArrayNode coordinates2 = mapper.createArrayNode();
-        coordinates2.add(mapper.createObjectNode().put("y", 10).put("x", 0));
-        coordinates2.add(mapper.createObjectNode().put("y", 15).put("x", 20));
-        coordinates2.add(mapper.createObjectNode().put("y", 30).put("x", 40));
-        coordinates2.add(mapper.createObjectNode().put("y", 25).put("x", 60));
-        coordinates2.add(mapper.createObjectNode().put("y", 50).put("x", 80));
-        coordinates2.add(mapper.createObjectNode().put("y", 35).put("x", 100));
-        dataset2.set("coordinates", coordinates2);
-        out.add(dataset2);
+        for (Map.Entry<String, List<GeneratorDataRepository.MapCoordinatesRow>> entry : result.entrySet()) {
+            String datasetName = entry.getKey();
+            List<GeneratorDataRepository.MapCoordinatesRow> rows = entry.getValue();
+            if (rows == null || rows.isEmpty()) continue;
+            var datasetObj = mapper.createObjectNode();
+            datasetObj.put("name", datasetName);
+            // Use color from first row if available, else default
+            String color = (rows.getFirst() != null && rows.getFirst().fillColor() != null) ? rows.getFirst().fillColor() : "#00618f";
+            datasetObj.put("color", color);
+            ArrayNode coordinatesArr = mapper.createArrayNode();
+            for (GeneratorDataRepository.MapCoordinatesRow row : rows) {
+                if (row.coordinates() != null && row.coordinates().size() > 1) {
+                    var coordObj = mapper.createObjectNode();
+                    coordObj.put("x", row.coordinates().get(0));
+                    coordObj.put("y", row.coordinates().get(1));
+                    coordinatesArr.add(coordObj);
+                }
+            }
+            datasetObj.set("coordinates", coordinatesArr);
+            out.add(datasetObj);
+        }
         return out;
     }
 }
