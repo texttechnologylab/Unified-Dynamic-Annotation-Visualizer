@@ -68,6 +68,7 @@ public class DUUIImporter implements ApplicationRunner {
                 TypeSystemDescription tsd = UIMAFramework.getXMLParser()
                         .parseTypeSystemDescription(new XMLInputSource(tsFile));
                 // Inject into DUUI composer so XMI deserialization knows the types
+                tsd.resolveImports();
                 pComposer.setInstantiatedTypeSystem(tsd);
                 // Store for use in createEngineDescription() calls in execute()
                 externalTypeSystem = tsd;
@@ -118,7 +119,7 @@ public class DUUIImporter implements ApplicationRunner {
                         JooqDatabaseWriter.PARAM_SQL_DIALECT, db.getDialect()
                 )).withScale(1).build());
 
-        pComposer.run(processor, "Beispiel");
+        pComposer.run(processor, "Importer");
 
         pComposer.shutdown();
 
