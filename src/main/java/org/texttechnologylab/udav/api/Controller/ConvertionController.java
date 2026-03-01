@@ -14,19 +14,34 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.texttechnologylab.udav.widgets.Widget;
+
 @RestController
 @RequestMapping("/api/convertions")
 public class ConvertionController {
 
     @PostMapping("/tikz")
-    public ResponseEntity<Map<String, String>> svg2tikz(@RequestBody String body) throws Exception {
+    public ResponseEntity<Map<String, String>> widgetToTikz(@RequestBody String body) throws Exception {
         // Parse JSON body to extract SVG string
-        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(body);
-        String svg = node.get("svg").asText();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(body);
+        String widgetType = node.get("type").asText();
 
-        // Convert SVG to TikZ
-        String tikz = convertSvgToTikz(svg);
+        String tikz;
+        try {
+            Widget widget = Widget.constructWidget(widgetType);
+            tikz = widget.toTex(node);
+            if (tikz == null) throw new Exception();
+            // Native tikz defined!
+
+        } catch (Exception ignored) {
+            // No native tikz defined -> Use Svg2Tikz
+
+            String svg = node.get("svg").asText();
+            tikz = convertSvgToTikz(svg);
+        }
 
         tikz = addMetaDataToTikz(tikz); // TODO
 

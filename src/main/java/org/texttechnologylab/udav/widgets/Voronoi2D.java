@@ -1,24 +1,21 @@
-package org.texttechnologylab.udav.api.charts.impl;
+package org.texttechnologylab.udav.widgets;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
-import org.texttechnologylab.udav.api.charts.ChartHandler;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Set;
 
 @Component("VoronoiDiagram")
-@RequiredArgsConstructor
-public class Voronoi2DHandler implements ChartHandler {
+public class Voronoi2D extends Widget {
 
-    private final GeneratorDataRepository repo;
-    private final ObjectMapper mapper;
-
+    public Voronoi2D(GeneratorDataRepository repo, ObjectMapper mapper) {
+        super(repo, mapper);
+    }
 
     @Override
     public JsonNode render(String generatorId,
@@ -26,6 +23,7 @@ public class Voronoi2DHandler implements ChartHandler {
                            Set<String> files,
                            ValueMode valueMode,
                            String schema) {
+        assert mapper != null;
         ArrayNode out = mapper.createArrayNode();
         var o1 = mapper.createObjectNode();
         o1.put("label", "Cell 1");
