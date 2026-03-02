@@ -174,11 +174,4 @@ export default class VoronoiDiagram extends D3Visualization {
     // Cache rendered data
     this.data = data;
   }
-
-  domain(data, fn, padding = 0.05) {
-    const [min, max] = d3.extent(data, fn);
-    const range = max - min;
-
-    return [min - range * padding, max + range * padding];
-  }
 }

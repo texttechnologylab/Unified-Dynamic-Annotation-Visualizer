@@ -244,13 +244,6 @@ export default class MedialAxis extends D3Visualization {
     this.data = data;
   }
 
-  domain(data, fn, padding = 0.05) {
-    const [min, max] = d3.extent(data, fn);
-    const range = max - min;
-
-    return [min - range * padding, max + range * padding];
-  }
-
   circumcenter(a, b, c) {
     // Unpack the triangle vertices
     const [ax, ay] = a;

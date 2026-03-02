@@ -117,6 +117,13 @@ export default class D3Visualization {
       .on("mouseleave", (event) => this.mouseleave(event));
   }
 
+  domain(data, fn, padding = 0.05) {
+    const [min, max] = d3.extent(data, fn);
+    const range = max - min;
+
+    return [min - range * padding, max + range * padding];
+  }
+
   createAxis(scale, axisGenerator, transform) {
     if (!scale) return null;
 

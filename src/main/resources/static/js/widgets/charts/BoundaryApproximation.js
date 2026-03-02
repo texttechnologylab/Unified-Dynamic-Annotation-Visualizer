@@ -200,10 +200,7 @@ export default class BoundaryApproximation extends D3Visualization {
     const clusterScale = d3
       .scaleLinear()
       .range([1, this.maxRadius])
-      .domain([
-        d3.min(clusters, (d) => d[2].length),
-        d3.max(clusters, (d) => d[2].length),
-      ]);
+      .domain(d3.extent(clusters, (d) => d[2].length));
 
     // Get a value for each grid cell. The values are the distance
     // from the cell center to the nearest cluster boundary.
@@ -259,13 +256,6 @@ export default class BoundaryApproximation extends D3Visualization {
 
     // Cache rendered data
     this.data = data;
-  }
-
-  domain(data, fn, padding = 0.05) {
-    const [min, max] = d3.extent(data, fn);
-    const range = max - min;
-
-    return [min - range * padding, max + range * padding];
   }
 
   search(quadtree, xmin, ymin, xmax, ymax) {

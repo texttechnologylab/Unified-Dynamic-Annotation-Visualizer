@@ -114,13 +114,13 @@ export default class LineChart extends D3Visualization {
     const xScale = d3
       .scaleLinear()
       .range([0, this.width])
-      .domain(d3.extent(coordinates, (item) => item.x));
+      .domain(this.domain(coordinates, (item) => item.x));
 
     // Add y axis
     const yScale = d3
       .scaleLinear()
       .range([this.height, 0])
-      .domain(d3.extent(coordinates, (item) => item.y));
+      .domain(this.domain(coordinates, (item) => item.y));
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,
@@ -135,7 +135,7 @@ export default class LineChart extends D3Visualization {
 
     // Add the line
     area
-      .selectAll(".line")
+      .selectAll("path")
       .data(data)
       .join("path")
       .attr("d", (item) => line(item.coordinates))
@@ -145,7 +145,7 @@ export default class LineChart extends D3Visualization {
 
     // Add the points
     area
-      .selectAll(".circle")
+      .selectAll("circle")
       .data(coordinates)
       .join("circle")
       .attr("cx", (item) => xScale(item.x))
@@ -156,7 +156,11 @@ export default class LineChart extends D3Visualization {
     if (!this.tooltip.empty()) {
       this.svg.call(zoom);
 
-      this.enableTooltip("circle", (d) => `(${d.x}, ${d.y})`);
+      this.enableTooltip(
+        "circle",
+        (d) => `<strong>${d.name}</strong><br>x: ${d.x}, y: ${d.y}`,
+      );
+      this.enableTooltip("path", (d) => `<strong>${d.name}</strong>`);
     }
 
     // Cache rendered data
