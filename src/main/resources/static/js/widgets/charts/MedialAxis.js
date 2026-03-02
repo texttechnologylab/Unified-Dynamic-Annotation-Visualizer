@@ -217,7 +217,7 @@ export default class MedialAxis extends D3Visualization {
 
     if (!this.tooltip.empty()) {
       // Draw invisible hover targets
-      const container = this.svg.select("g").append("g");
+      const container = this.plotArea.append("g");
 
       this.drawLines("hover", medialEdges, "transparent", 20)
         .style("cursor", "help")
@@ -354,8 +354,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawPath(path, color = "gray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .append("path")
       .attr("fill", "none")
       .attr("stroke", color)
@@ -364,8 +363,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawLines(key, edges, color = "gray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("line." + key)
       .data(edges)
       .join("line")
@@ -379,8 +377,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawCircles(key, points, fill = "red", radius = 2, stroke = "none") {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("circle." + key)
       .data(points)
       .join("circle")

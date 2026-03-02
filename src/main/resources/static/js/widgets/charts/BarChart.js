@@ -98,8 +98,7 @@ export default class BarChart extends D3Visualization {
 
     // Add x axis
     const xAxis = this.horizontal ? this.linear(data) : this.band(data);
-    this.svg
-      .select("g")
+    this.plotArea
       .append("g")
       .attr("transform", `translate(0, ${this.height})`)
       .call(d3.axisBottom(xAxis))
@@ -109,7 +108,7 @@ export default class BarChart extends D3Visualization {
 
     // Add y axis
     const yAxis = this.horizontal ? this.band(data) : this.linear(data);
-    this.svg.select("g").append("g").call(d3.axisLeft(yAxis));
+    this.plotArea.append("g").call(d3.axisLeft(yAxis));
 
     const x = this.horizontal ? xAxis(0) : (item) => xAxis(item.label);
     const y = this.horizontal
@@ -123,9 +122,8 @@ export default class BarChart extends D3Visualization {
       : (item) => this.height - yAxis(item.value);
 
     // Add the bars
-    this.svg
-      .select("g")
-      .selectAll()
+    this.plotArea
+      .selectAll("rect")
       .data(data)
       .join("rect")
       .attr("x", x)

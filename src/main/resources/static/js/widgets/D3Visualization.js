@@ -79,7 +79,7 @@ export default class D3Visualization {
     this.svg
       .attr("width", this.width + this.margin.left + this.margin.right)
       .attr("height", this.height + this.margin.top + this.margin.bottom);
-    this.svg
+    this.plotArea = this.svg
       .append("g")
       .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
   }
@@ -127,18 +127,17 @@ export default class D3Visualization {
   createAxis(scale, axisGenerator, transform) {
     if (!scale) return null;
 
-    const g = this.svg.select("g").append("g");
+    const g = this.plotArea.append("g");
     if (transform) g.attr("transform", transform);
 
     return g.call(axisGenerator(scale));
   }
 
   createAxisZoom(extent, scales) {
-    const root = this.svg.select("g");
     const clipId = randomId("clip");
 
     // Clip path
-    root
+    this.plotArea
       .append("clipPath")
       .attr("id", clipId)
       .append("rect")
@@ -162,7 +161,7 @@ export default class D3Visualization {
     };
 
     // Zoom area
-    const area = root
+    const area = this.plotArea
       .append("g")
       .attr("clip-path", `url(#${clipId})`)
       .append("g")

@@ -337,8 +337,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawPath(key, data, path, color = "red", width = 2) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("path." + key)
       .data(data)
       .join("path")
@@ -350,8 +349,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawLines(key, edges, x1, y1, x2, y2, color = "lightgray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("line." + key)
       .data(edges)
       .join("line")
@@ -365,8 +363,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawCircles(key, points, fill = "red", radius = 2, stroke = "none") {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("circle." + key)
       .data(points)
       .join("circle")
