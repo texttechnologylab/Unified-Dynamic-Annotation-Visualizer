@@ -21,8 +21,8 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIUIMADriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProcessor;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReaderLazy;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
-import org.texttechnologylab.udav.importer.config.DbProps;
 import org.texttechnologylab.udav.importer.config.DUUIImporterProps;
+import org.texttechnologylab.udav.importer.config.DbProps;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -36,41 +36,37 @@ import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDesc
 @Component
 @RequiredArgsConstructor
 public class DUUIImporter implements ApplicationRunner {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DUUIImporter.class);
-    private static DUUIComposer pComposer = null;
-    private TypeSystemDescription externalTypeSystem = null;
     private final DbProps db;
     private final DUUIImporterProps duuiProps;
     private final PostImportRowCounter postImportRowCounter;
+    private DUUIComposer composer;
+    private TypeSystemDescription externalTypeSystem;
 
     private void init() throws IOException, URISyntaxException, UIMAException, SAXException {
         DUUILuaContext ctx = new DUUILuaContext().withJsonLibrary();
 
-        pComposer = new DUUIComposer()
+        composer = new DUUIComposer()
                 .withSkipVerification(true)
                 .withLuaContext(ctx)
                 .withWorkers(duuiProps.workers());
 
-        DUUIUIMADriver uima_driver = new DUUIUIMADriver();
+        DUUIUIMADriver uimaDriver = new DUUIUIMADriver();
         DUUIDockerDriver dockerDriver = new DUUIDockerDriver();
 
-        // Hinzufügen der einzelnen Driver zum Composer
-        pComposer.addDriver(uima_driver, dockerDriver);
+        composer.addDriver(uimaDriver, dockerDriver);
 
-        // If an external type system path is configured, load it and register it
-        // with both the DUUI composer and uimaFIT's TypeSystemDescriptionFactory.
-        // This covers types not bundled in the JAR (e.g. from DUUI_IMPORTER_TYPE_SYSTEM_PATH).
         String tsPath = duuiProps.typeSystemPath();
         if (tsPath != null && !tsPath.isBlank()) {
             File tsFile = new File(tsPath);
-            if (tsFile.exists() && tsFile.isFile()) {
+            if (tsFile.isFile()) {
                 LOGGER.info("Loading external type system from: {}", tsPath);
                 TypeSystemDescription tsd = UIMAFramework.getXMLParser()
                         .parseTypeSystemDescription(new XMLInputSource(tsFile));
-                // Inject into DUUI composer so XMI deserialization knows the types
                 tsd.resolveImports();
-                pComposer.setInstantiatedTypeSystem(tsd);
-                // Store for use in createEngineDescription() calls in execute()
+
+                composer.setInstantiatedTypeSystem(tsd);
                 externalTypeSystem = tsd;
             } else {
                 LOGGER.warn("DUUI_IMPORTER_TYPE_SYSTEM_PATH is set but file not found: {}", tsPath);
@@ -80,33 +76,44 @@ public class DUUIImporter implements ApplicationRunner {
 
     @DisplayName("NLP")
     public void execute() throws Exception {
+        DUUIFileReaderLazy corpusReader =
+                new DUUIFileReaderLazy(duuiProps.inputPath(), duuiProps.inputFileEnding(), 10);
 
-        //DUUIFileReaderLazy pCorpusReader = new DUUIFileReaderLazy("./src/main/resources/input", ".xmi", 10);
-        DUUIFileReaderLazy pCorpusReader = new DUUIFileReaderLazy(duuiProps.inputPath(), duuiProps.inputFileEnding(), 10);
+        DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(corpusReader);
 
-        DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(pCorpusReader);
+        // Docker NLP
+//        composer.add(new DUUIDockerDriver.Component("docker.texttechnologylab.org/textimager-duui-spacy-single-de_core_news_sm:0.1.4")
+//                .withScale(duuiProps.workers())
+//                .withImageFetching()
+//                .build());
 
-        pComposer.add(new DUUIDockerDriver.Component("docker.texttechnologylab.org/textimager-duui-spacy-single-de_core_news_sm:0.1.4")
+        // Cleanup
+        composer.add(new DUUIUIMADriver.Component(
+                createEngineDescription(RemoveMetaInformation.class, externalTypeSystem))
                 .withScale(duuiProps.workers())
-                .withImageFetching()
                 .build());
 
-        // remove
-        pComposer.add(new DUUIUIMADriver.Component(createEngineDescription(RemoveMetaInformation.class,
-                externalTypeSystem))
-                .withScale(duuiProps.workers())
-                .build());
+        // Debug XMI is a major bottleneck; keep it OFF by default.
+        // Enable by setting env DUUI_IMPORTER_DEBUG_XMI=true
+        boolean debugXmi = Boolean.parseBoolean(System.getenv().getOrDefault("DUUI_IMPORTER_DEBUG_XMI", "false"));
+        if (debugXmi) {
+            String target = System.getenv().getOrDefault("DUUI_IMPORTER_DEBUG_XMI_PATH", "/tmp/export");
+            composer.add(new DUUIUIMADriver.Component(
+                    createEngineDescription(
+                            XmiWriter.class,
+                            externalTypeSystem,
+                            XmiWriter.PARAM_TARGET_LOCATION, target,
+                            XmiWriter.PARAM_PRETTY_PRINT, false,
+                            XmiWriter.PARAM_OVERWRITE, true,
+                            XmiWriter.PARAM_VERSION, "1.1",
+                            XmiWriter.PARAM_COMPRESSION, "GZIP"
+                    ))
+                    .withScale(1)   // do not scale disk writers
+                    .build());
+        }
 
-        // write into XMI for debugging purposes.
-        pComposer.add(new DUUIUIMADriver.Component(createEngineDescription(XmiWriter.class,
-                XmiWriter.PARAM_TARGET_LOCATION, "/tmp/export",
-                XmiWriter.PARAM_PRETTY_PRINT, true,
-                XmiWriter.PARAM_OVERWRITE, true,
-                XmiWriter.PARAM_VERSION, "1.1",
-                XmiWriter.PARAM_COMPRESSION, "GZIP"
-        )).withScale(duuiProps.workers()).build());
-
-        pComposer.add(new DUUIUIMADriver.Component(
+        int dbScale = Math.max(1, Math.min(duuiProps.workers(), 4)); // start conservative; raise if DB can handle it
+        composer.add(new DUUIUIMADriver.Component(
                 createEngineDescription(
                         JooqDatabaseWriter.class,
                         externalTypeSystem,
@@ -117,13 +124,12 @@ public class DUUIImporter implements ApplicationRunner {
                         JooqDatabaseWriter.PARAM_BATCH_SIZE, db.getBatchSize(),
                         JooqDatabaseWriter.PARAM_MAX_IDENT, db.getMaxIdent(),
                         JooqDatabaseWriter.PARAM_SQL_DIALECT, db.getDialect()
-                )).withScale(1).build());
+                ))
+                .withScale(dbScale)
+                .build());
 
-        pComposer.run(processor, "Importer");
-
-        pComposer.shutdown();
-
-
+        composer.run(processor, "Importer");
+        composer.shutdown();
     }
 
     @Override
