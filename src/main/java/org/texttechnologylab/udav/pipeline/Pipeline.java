@@ -16,7 +16,6 @@ import org.texttechnologylab.udav.sources.DBAccess;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
@@ -225,7 +224,7 @@ public class Pipeline {
                             }
                         }
 
-                        Generator generator = constructGenerator(generatorID, generatorType, generatorEntry, sourcesEntry, settingsBundle, dbAccess);
+                        Generator generator = Generator.constructGenerator(generatorID, generatorType, generatorEntry, sourcesEntry, settingsBundle, dbAccess);
 
                         if (extendsGenerators == null) {
                             GeneratorSettings combinedSettings = generator.getSettings();
@@ -369,14 +368,6 @@ public class Pipeline {
         return view.get(name).toString().trim();
     }
 
-    private static Generator constructGenerator(String id, String className, JSONView config, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        if (className.contains(".")) {
-            throw new IllegalArgumentException("Class name can't contain \".\".");
-        }
-        Class<?> generatorClass = Class.forName(Generator.GENERATORS_PACKAGE_PATH + "." + className);
-        return (Generator) generatorClass.getDeclaredConstructor(String.class, JSONView.class, JSONView.class, GeneratorSettings.class, DBAccess.class)
-                .newInstance(id, config, configBundle, settingsBundle, dbAccess);
-    }
 
     private static String[] keysOnlyInA(Map<String, ?> mapA, Map<String, ?> mapB) {
         List<String> uniqueKeys = new ArrayList<>();

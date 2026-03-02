@@ -1,5 +1,4 @@
 import D3Visualization from "../D3Visualization.js";
-import { randomId } from "../../shared/modules/utils.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
 export default class VoronoiDiagram extends D3Visualization {
@@ -91,17 +90,6 @@ export default class VoronoiDiagram extends D3Visualization {
   render(data) {
     this.clear();
 
-    const root = this.svg.select("g");
-    const id = randomId("clip");
-
-    // Create clip path for zoom area
-    root
-      .append("clipPath")
-      .attr("id", id)
-      .append("rect")
-      .attr("width", this.width)
-      .attr("height", this.height);
-
     // Create the horizontal and vertical scales
     const xScale = d3
       .scaleLinear()
@@ -110,30 +98,15 @@ export default class VoronoiDiagram extends D3Visualization {
 
     const yScale = d3
       .scaleLinear()
-      .range([0, this.height])
+      .range([this.height, 0])
       .domain(this.domain(data, (d) => d.y));
 
-    // Add the axes
-    const axisTop = root.append("g").call(d3.axisTop(xScale));
-
-    const axisRight = root
-      .append("g")
-      .attr("transform", `translate(${this.width}, 0)`)
-      .call(d3.axisRight(yScale));
-
-    const axisBottom = root
-      .append("g")
-      .attr("transform", `translate(0, ${this.height})`)
-      .call(d3.axisBottom(xScale));
-
-    const axisLeft = root.append("g").call(d3.axisLeft(yScale));
-
-    // Create a dedicated zoom area
-    const area = root
-      .append("g")
-      .attr("clip-path", `url(#${id})`)
-      .append("g")
-      .attr("class", "zoom-area");
+    const { area, zoom } = this.createAxisZoom([1, 40], {
+      bottom: xScale,
+      left: yScale,
+      top: xScale,
+      right: yScale,
+    });
 
     // Calculate voronoi
     const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
@@ -171,7 +144,7 @@ export default class VoronoiDiagram extends D3Visualization {
       .selectAll("path.cell")
       .data(data)
       .join("path")
-      .attr("class", "cell")
+      .attr("class", (d) => (d.label ? "cell labeled" : "cell"))
       .attr("d", (_, i) => voronoi.renderCell(i))
       .attr("fill", (d) => d.cell || "transparent")
       .attr("stroke", "#555555");
@@ -189,33 +162,11 @@ export default class VoronoiDiagram extends D3Visualization {
     }
 
     if (!this.tooltip.empty()) {
-      // Add zoom
-      const zoom = d3
-        .zoom()
-        .scaleExtent([1, 40])
-        .extent([
-          [0, 0],
-          [this.width, this.height],
-        ])
-        .translateExtent([
-          [0, 0],
-          [this.width, this.height],
-        ])
-        .on("zoom", (event) => {
-          // Zoom chart content
-          area.attr("transform", event.transform);
-
-          // Rescale axes (without translating them)
-          axisTop.call(d3.axisTop(event.transform.rescaleX(xScale)));
-          axisRight.call(d3.axisRight(event.transform.rescaleY(yScale)));
-          axisBottom.call(d3.axisBottom(event.transform.rescaleX(xScale)));
-          axisLeft.call(d3.axisLeft(event.transform.rescaleY(yScale)));
-        });
       this.svg.call(zoom);
 
       // Add tooltips
       this.enableTooltip(
-        ".zoom-area > path.cell",
+        ".zoom-area > path.cell.labeled",
         (d) => `<strong>${d.label}</strong>`,
       );
     }
