@@ -153,9 +153,9 @@ export default class LineChart extends D3Visualization {
       .attr("r", 3)
       .attr("fill", this.points ? (item) => item.color : "transparent");
 
-    if (!this.tooltip.empty()) {
-      this.svg.call(zoom);
+    this.svg.call(zoom);
 
+    if (!this.tooltip.empty()) {
       this.enableTooltip(
         "circle",
         (d) => `<strong>${d.name}</strong><br>x: ${d.x}, y: ${d.y}`,
