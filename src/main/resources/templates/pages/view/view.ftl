@@ -18,6 +18,7 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
+    <#include "/shared/chatBot.ftl"> 
     <#include "/pages/view/viewSidebar.ftl"> 
     <#include "/pages/view/viewGrid.ftl">
 
@@ -28,6 +29,7 @@
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
+        <@chatBot widgets=widgets?eval_json />
       </main>
 
       <@modal />
