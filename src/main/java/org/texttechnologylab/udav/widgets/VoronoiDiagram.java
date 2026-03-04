@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 @Component("VoronoiDiagram")
-public class Voronoi2D extends Widget {
+public class VoronoiDiagram extends Widget {
 
-    public Voronoi2D(GeneratorDataRepository repo, ObjectMapper mapper) {
+    public VoronoiDiagram(GeneratorDataRepository repo, ObjectMapper mapper) {
         super(repo, mapper);
     }
 

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.widgets.Widget;
+import org.texttechnologylab.udav.widgets.tools.Svg2TikzFixes;
 
 @RestController
 @RequestMapping("/api/convertions")
@@ -40,7 +41,9 @@ public class ConvertionController {
             // No native tikz defined -> Use Svg2Tikz
 
             String svg = node.get("svg").asText();
+            svg = Svg2TikzFixes.preRun_hyphenMinusFix(svg);
             tikz = convertSvgToTikz(svg);
+            tikz = Svg2TikzFixes.postRun_southAnchorFix(tikz);
         }
 
         tikz = addMetaDataToTikz(tikz); // TODO
