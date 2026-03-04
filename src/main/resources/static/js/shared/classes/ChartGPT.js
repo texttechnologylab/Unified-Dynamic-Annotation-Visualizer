@@ -1,13 +1,20 @@
 import { getCompletion, getModels } from "../../api/chat.api.js";
+import state from "../../pages/view/utils/viewState.js";
+import { svgToBase64, svgToUrl } from "../modules/convert.js";
 import { createElement } from "../modules/utils.js";
 
 export default class ChartGPT {
   constructor(instruction) {
     const root = document.querySelector(".dv-chat-bot");
-    this.chat = root.querySelector(".dv-chat");
-    this.input = root.querySelector(".dv-text-input");
+    this.chat = root.querySelector(".dv-chat-messages");
+    this.textarea = root.querySelector("textarea");
     this.send = root.querySelector(".dv-chat-send");
-    this.select = root.querySelector("#model-select");
+    this.modelSelect = root.querySelector("#model-select");
+    this.contextSelect = root.querySelector("#context-select");
+
+    root
+      .querySelector(".dv-chat-header")
+      .addEventListener("click", () => root.classList.toggle("collapsed"));
 
     this.model = null;
     this.messages = [{ role: "system", content: instruction }];
@@ -17,8 +24,8 @@ export default class ChartGPT {
     this.addMessage({ role: "assistant", content: "How can I help you?" });
 
     // Enable/disable send button
-    this.input.addEventListener("input", () => {
-      if (this.input.value.trim() !== "") {
+    this.textarea.addEventListener("input", () => {
+      if (this.textarea.value.trim() !== "") {
         this.send.removeAttribute("disabled");
       } else {
         this.send.setAttribute("disabled", "true");
@@ -26,8 +33,9 @@ export default class ChartGPT {
     });
 
     // Send message
-    this.input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && this.input.value.trim() !== "") {
+    this.textarea.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && this.textarea.value.trim() !== "") {
+        event.preventDefault();
         this.completeMessages();
       }
     });
@@ -37,12 +45,13 @@ export default class ChartGPT {
     const models = await getModels();
     this.model = models.data[0].id;
 
+    models.data.unshift({ id: this.model, name: "Model" });
     models.data.forEach((model) => {
-      this.select.append(
+      this.modelSelect.append(
         createElement("option", { value: model.id, textContent: model.name }),
       );
     });
-    this.select.addEventListener(
+    this.modelSelect.addEventListener(
       "change",
       (event) => (this.model = event.target.value),
     );
@@ -50,12 +59,34 @@ export default class ChartGPT {
 
   async completeMessages() {
     this.setLoading(true);
-    this.addMessage({ role: "user", content: this.input.value });
-    this.input.value = "";
+
+    const chart = state.charts.find(
+      (chart) => chart.config.id === this.contextSelect.value,
+    );
+
+    const content = chart
+      ? [
+          { type: "text", text: this.textarea.value },
+          {
+            type: "image_url",
+            image_url: { url: svgToBase64(chart.svg.node()) },
+            widget: chart.config.title,
+          },
+        ]
+      : this.textarea.value;
+
+    this.addMessage({ role: "user", content });
+    this.textarea.value = "";
+
+    console.log({ model: this.model, messages: this.messages });
 
     const completion = await getCompletion(this.model, this.messages);
+    const answer = completion?.choices[0]?.message;
 
-    this.addMessage(completion.choices[0]?.message);
+    this.addMessage(
+      answer || { role: "assistant", content: "Error: no completion message" },
+    );
+
     this.setLoading(false);
   }
 
@@ -77,7 +108,7 @@ export default class ChartGPT {
       [
         createElement("div", {
           className: "dv-chat-message",
-          textContent: message.content,
+          textContent: this.parseContent(message.content),
         }),
       ],
     );
@@ -91,5 +122,23 @@ export default class ChartGPT {
       inline: "nearest",
       behavior: "smooth",
     });
+  }
+
+  parseContent(content) {
+    if (Array.isArray(content)) {
+      let string = "";
+
+      content.forEach((item) => {
+        if (item.type === "text") {
+          string += item.text;
+        } else if (item.type === "image_url") {
+          string += ` (+${item.widget})`;
+        }
+      });
+
+      return string;
+    }
+
+    return content;
   }
 }

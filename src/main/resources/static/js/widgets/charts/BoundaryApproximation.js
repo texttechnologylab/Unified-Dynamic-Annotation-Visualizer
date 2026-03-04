@@ -249,8 +249,12 @@ export default class BoundaryApproximation extends D3Visualization {
 
     // Draw clusters
     if (this.draw.clusters) {
-      this.drawCircles("cluster", clusters, "teal", (d) =>
-        clusterScale(d[2].length),
+      this.drawCircles(
+        "cluster",
+        clusters,
+        "none",
+        (d) => clusterScale(d[2].length),
+        "teal",
       ).attr("opacity", 0.4);
     }
 
@@ -290,19 +294,24 @@ export default class BoundaryApproximation extends D3Visualization {
           y * cellSize + cellSize,
         );
 
-        // Get the center of all found points
-        const center = found.reduce(
-          (prev, curr) => [prev[0] + curr[0], prev[1] + curr[1]],
-          [0, 0],
-        );
+        // // Get the center of all found points
+        // const center = found.reduce(
+        //   (prev, curr) => [prev[0] + curr[0], prev[1] + curr[1]],
+        //   [0, 0],
+        // );
 
-        center[0] = center[0] / found.length;
-        center[1] = center[1] / found.length;
-        center.push(found);
+        // center[0] = center[0] / found.length;
+        // center[1] = center[1] / found.length;
+        // center.push(found);
 
-        // center: [x, y, r]
-        if (center[0] && center[1]) {
-          clusters.push(center);
+        // // center: [x, y, r]
+        // if (center[0] && center[1]) {
+        //   clusters.push(center);
+        // }
+
+        for (const f of found) {
+          f.push(found);
+          clusters.push(f);
         }
       }
     }
