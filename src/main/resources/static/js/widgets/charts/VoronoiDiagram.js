@@ -161,10 +161,8 @@ export default class VoronoiDiagram extends D3Visualization {
         .style("fill", (d) => d.fill);
     }
 
-    this.svg.call(zoom);
-
     if (!this.tooltip.empty()) {
-      // Add tooltips
+      this.svg.call(zoom);
       this.enableTooltip(
         ".zoom-area > path.cell.labeled",
         (d) => `<strong>${d.label}</strong>`,
