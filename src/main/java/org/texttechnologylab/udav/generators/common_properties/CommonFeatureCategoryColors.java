@@ -1,7 +1,5 @@
 package org.texttechnologylab.udav.generators.common_properties;
 
-import lombok.Getter;
-
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,7 +42,7 @@ public class CommonFeatureCategoryColors extends CommonProperties {
     private static Map<String, Color> categoryColorMapFromCategoriesNumberMap(Map<String, Double> categoryNumberMap) {
         List<Color> distinctColors = Arrays.asList(
                 Color.RED,
-                Color.BLUE,
+                new Color(0, 191, 255),
                 Color.GREEN,
                 Color.MAGENTA,
                 Color.ORANGE,
@@ -60,7 +58,6 @@ public class CommonFeatureCategoryColors extends CommonProperties {
                 new Color(139, 69, 19),
                 new Color(0, 255, 127),
                 new Color(255, 165, 0),
-                new Color(0, 191, 255),
                 new Color(154, 205, 50)
         );
 

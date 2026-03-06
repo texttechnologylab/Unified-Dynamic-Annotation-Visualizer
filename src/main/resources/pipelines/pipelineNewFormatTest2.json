@@ -150,7 +150,7 @@
     {
       "type": "StaticText",
       "title": "Parts of Speech (POS) Caption",
-      "src": "This is a caption to explain something important for the chart above.",
+      "src": "The chart above shows the distribution of the different POS categories.",
       "options": {
         "style": "text-end fs-6 fw-normal fst-italic text-decoration-none"
       },
@@ -164,7 +164,7 @@
     {
       "type": "StaticText",
       "title": "Named Entities (NE) Caption",
-      "src": "This is a caption to explain something important for the chart above.",
+      "src": "The chart above shows the distribution of the different NE categories.",
       "options": {
         "style": "text-start fs-6 fw-normal fst-italic text-decoration-none"
       },

@@ -167,6 +167,15 @@ public class HighlightText extends Widget {
         boolean typesProvided = filters.containsKey("types");
         boolean categoriesProvided = filters.containsKey("categories");
         boolean stylesProvided = filters.containsKey("styles");
+        boolean hideProvided = filters.containsKey("hide");
+
+        List<String> hide = null;
+        if (hideProvided) {
+            String hideStr = filters.get("hide");
+            if (hideStr != null && !hideStr.isEmpty()) {
+                hide = Arrays.asList(hideStr.split(","));
+            }
+        }
 
         Set<String> includeTypes = ChartHandler.parseCsvSet(filters.get("types"));
         Set<String> includeCategories = ChartHandler.parseCsvSet(filters.get("categories"));
@@ -178,6 +187,8 @@ public class HighlightText extends Widget {
         String text = repo.loadText(schema, generatorId).orElse("");
         Map<String, String> typeStyles = repo.loadTypeStyles(schema, generatorId); // type -> styleName
         Map<String, Map<String, String>> typeCategoryColors = repo.loadTypeCategoryColors(schema, generatorId); // type -> (category -> color)
+
+        if (hide != null) for (String h : hide) { typeStyles.remove(h); typeCategoryColors.remove(h); }
 
         // Load all segments once; we'll filter in-memory (keeps repo simple)
         var segs = repo.loadSegments(schema, generatorId, null);
