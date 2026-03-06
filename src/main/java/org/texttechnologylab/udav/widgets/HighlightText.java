@@ -163,7 +163,6 @@ public class HighlightText extends Widget {
                            ValueMode vm,               // not used (text is not numerically transformed)
                            String schema) {
 
-        // Optional include filters
         boolean typesProvided = filters.containsKey("types");
         boolean categoriesProvided = filters.containsKey("categories");
         boolean stylesProvided = filters.containsKey("styles");
@@ -185,12 +184,11 @@ public class HighlightText extends Widget {
 
         // Load base data (schema-aware)
         String text = repo.loadText(schema, generatorId).orElse("");
-        Map<String, String> typeStyles = repo.loadTypeStyles(schema, generatorId); // type -> styleName
-        Map<String, Map<String, String>> typeCategoryColors = repo.loadTypeCategoryColors(schema, generatorId); // type -> (category -> color)
+        Map<String, String> typeStyles = repo.loadTypeStyles(schema, generatorId);
+        Map<String, Map<String, String>> typeCategoryColors = repo.loadTypeCategoryColors(schema, generatorId);
 
-        if (hide != null) for (String h : hide) { typeStyles.remove(h); }
+        if (hide != null) for (String h : hide) { typeStyles.remove(h); typeCategoryColors.remove(h); }
 
-        // Load all segments once; we'll filter in-memory (keeps repo simple)
         var segs = repo.loadSegments(schema, generatorId, null);
 
         // If key existed but list is empty → no segments
@@ -220,18 +218,21 @@ public class HighlightText extends Widget {
 
         // Build event list
         final int N = text.length();
-        record Ev(int idx, boolean start, String styleCss, String labelHtml) {
-        }
+
+        record Label(String text, String style) {}
+        record Ev(int idx, boolean start, String styleCss, Label label) {}
+
         List<Ev> evs = new ArrayList<>(segs.size() * 2);
 
         for (var s : segs) {
+
             String styleName = typeStyles.getOrDefault(s.type(), "");
             String color = Optional.ofNullable(typeCategoryColors.get(s.type()))
                     .map(m -> m.get(s.category()))
                     .orElse("#000000");
 
             String css = styletoCss(styleName, color);
-            String labelHtml = "<span style=\"color: " + color + ";\">" + s.category() + "</span>";
+            Label label = new Label(s.category(), "color: " + color + ";");
 
             int b = Math.max(0, Math.min(N, s.begin()));
             int e = Math.max(0, Math.min(N, s.end()));
@@ -241,46 +242,78 @@ public class HighlightText extends Widget {
                 e = tmp;
             }
 
-            evs.add(new Ev(b, true, css, labelHtml));
-            evs.add(new Ev(e, false, css, labelHtml));
+            evs.add(new Ev(b, true, css, label));
+            evs.add(new Ev(e, false, css, label));
         }
 
-        // Sort by index; at the same idx, end before start
         evs.sort(Comparator.<Ev>comparingInt(Ev::idx)
                 .thenComparing(ev -> ev.start ? 1 : 0));
 
-        // Sweep line to build spans
         List<String> activeCss = new ArrayList<>();
-        List<String> activeLbl = new ArrayList<>();
+        List<Label> activeLbl = new ArrayList<>();
+
         int last = 0;
         ArrayNode spans = mapper.createArrayNode();
 
         for (Ev e : evs) {
+
             if (last < e.idx) {
                 ObjectNode span = mapper.createObjectNode();
-                span.put("TEXT", text.substring(last, e.idx));
-                if (!activeCss.isEmpty()) span.put("style", String.join(" ", activeCss));
-                if (!activeLbl.isEmpty()) span.put("label", String.join(" ", activeLbl));
+                span.put("text", text.substring(last, e.idx));
+
+                if (!activeCss.isEmpty())
+                    span.put("style", String.join(" ", activeCss));
+
+                if (!activeLbl.isEmpty()) {
+                    ArrayNode labelArr = mapper.createArrayNode();
+                    for (Label l : activeLbl) {
+                        ObjectNode lnode = mapper.createObjectNode();
+                        lnode.put("text", l.text());
+                        lnode.put("style", l.style());
+                        labelArr.add(lnode);
+                    }
+                    span.set("label", labelArr);
+                }
+
                 spans.add(span);
             }
+
             if (e.start) {
-                if (!activeCss.contains(e.styleCss)) activeCss.add(e.styleCss);
-                if (!activeLbl.contains(e.labelHtml)) activeLbl.add(e.labelHtml);
+                if (!activeCss.contains(e.styleCss))
+                    activeCss.add(e.styleCss);
+
+                if (activeLbl.stream().noneMatch(l -> l.text().equals(e.label.text())))
+                    activeLbl.add(e.label);
+
             } else {
                 activeCss.remove(e.styleCss);
-                activeLbl.remove(e.labelHtml);
+                activeLbl.removeIf(l -> l.text().equals(e.label.text()));
             }
+
             last = e.idx;
         }
+
         if (last < N) {
             ObjectNode span = mapper.createObjectNode();
-            span.put("TEXT", text.substring(last));
-            if (!activeCss.isEmpty()) span.put("style", String.join(" ", activeCss));
-            if (!activeLbl.isEmpty()) span.put("label", String.join(" ", activeLbl));
+            span.put("text", text.substring(last));
+
+            if (!activeCss.isEmpty())
+                span.put("style", String.join(" ", activeCss));
+
+            if (!activeLbl.isEmpty()) {
+                ArrayNode labelArr = mapper.createArrayNode();
+                for (Label l : activeLbl) {
+                    ObjectNode lnode = mapper.createObjectNode();
+                    lnode.put("text", l.text());
+                    lnode.put("style", l.style());
+                    labelArr.add(lnode);
+                }
+                span.set("label", labelArr);
+            }
+
             spans.add(span);
         }
 
-        // Optional "datasets" section per type (basic skeleton)
         ArrayNode datasets = mapper.createArrayNode();
         for (String t : typeStyles.keySet()) {
             ObjectNode d = mapper.createObjectNode();
@@ -293,6 +326,7 @@ public class HighlightText extends Widget {
         root.put("textLength", N);
         root.set("spans", spans);
         root.set("datasets", datasets);
+
         return root;
     }
 }
