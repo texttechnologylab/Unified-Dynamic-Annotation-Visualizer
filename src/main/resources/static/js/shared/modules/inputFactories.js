@@ -35,12 +35,13 @@ export default {
     });
   },
 
-  range(key, value, { min, max, unit = "" }, onchange) {
+  range(key, value, { min, max, step = 1, unit = "" }, onchange) {
     const input = createElement("input", {
       name: key,
       type: "range",
       min,
       max,
+      step,
       value,
       className: "dv-slider",
       onchange,

@@ -2,24 +2,72 @@
   "id": "medial-axis",
   "sources": [
     {
-      "uri": "",
+      "id": "3",
+      "uri": "XY_dict_single.json",
       "createsGenerators": [
         {
-          "name": "New MapCoordinates",
+          "id": "VoronoiMap",
+          "name": "My Voronoi",
           "type": "MapCoordinates",
-          "settings": {},
-          "extends": [],
-          "id": "MapCoordinates-eopktix"
+          "settings": {
+            "keysMap": {
+              "1_0": {
+                "X": "coordinates@0",
+                "Y": "coordinates@1",
+                "Z_abs": "scale",
+                "colors_S": [
+                  "fillColor@Red",
+                  "fillColor@Green",
+                  "fillColor@Blue",
+                  "fillColor@Alpha"
+                ],
+                "colors_SE": [
+                  "strokeColor@Red",
+                  "strokeColor@Green",
+                  "strokeColor@Blue",
+                  "strokeColor@Alpha"
+                ]
+              }
+            },
+            "fixedKeys": { "outsideColor": "#ffffff" }
+          }
         }
-      ],
-      "id": "Source-vayjcsx"
+      ]
     }
   ],
   "widgets": [
     {
+      "type": "VoronoiDiagram",
+      "title": "Voronoi Diagram",
+      "generator": { "id": "VoronoiMap" },
+      "options": {},
+      "w": 11,
+      "h": 6,
+      "x": 12,
+      "y": 0,
+      "id": "VoronoiDiagram-zj7m165"
+    },
+    {
+      "type": "StaticText",
+      "title": "Text",
+      "src": "Demo of Voronoi Diagram, Medial Axis and Boundary Approximation",
+      "options": {
+        "align": "center",
+        "size": "4",
+        "weight": "normal",
+        "style": "normal",
+        "decoration": "none"
+      },
+      "w": 5,
+      "h": 2,
+      "x": 6,
+      "y": 1,
+      "id": "StaticText-b7vwdkb"
+    },
+    {
       "type": "MedialAxis",
       "title": "Medial Axis",
-      "generator": { "id": "MapCoordinates-eopktix" },
+      "generator": { "id": "VoronoiMap" },
       "options": {},
       "w": 11,
       "h": 8,
@@ -28,15 +76,15 @@
       "id": "MedialAxis-zj7m165"
     },
     {
-      "type": "VoronoiDiagram",
-      "title": "Voronoi Diagram",
-      "generator": { "id": "MapCoordinates-eopktix" },
-      "options": {},
-      "w": 11,
-      "h": 8,
+      "type": "BoundaryApproximation",
+      "title": "Boundary Approximation",
+      "generator": { "id": "VoronoiMap" },
+      "options": { "gridRows": 8, "maxRadius": 35, "threshold": 0 },
+      "w": 9,
+      "h": 7,
       "x": 12,
-      "y": 3,
-      "id": "VoronoiDiagram-zj7m165"
+      "y": 6,
+      "id": "BoundaryApproximation-dmfnw6o"
     }
   ]
 }
