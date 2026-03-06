@@ -108,12 +108,19 @@ export default class HighlightText extends D3Visualization {
       .selectAll("span")
       .data(data.spans)
       .join("span")
-      .text((d) => d.TEXT ?? d.text ?? "")
+      .text((d) => d.TEXT || d.text)
       .attr("class", (d) => d.label && "labeled")
       .attr("style", (d) => d.style || null);
 
     if (!this.tooltip.empty()) {
-      this.enableTooltip("span.labeled", (d) => `<strong>${d.label}</strong>`);
+      this.enableTooltip("span.labeled", (d) => {
+        return d.label
+          .map(
+            (l) =>
+              `<span style="font-weight: bold; ${l.style}">${l.text}</span>`,
+          )
+          .join(", ");
+      });
     }
 
     // Cache rendered data
