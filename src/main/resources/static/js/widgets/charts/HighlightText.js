@@ -80,8 +80,9 @@ export default class HighlightText extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    this.filter.hide = [];
-
+    this.filter = {
+      hide: [],
+    };
     this.controls.append(
       data.datasets.map(({ name }) => {
         return {

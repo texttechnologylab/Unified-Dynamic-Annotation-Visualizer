@@ -84,8 +84,9 @@ export default class LineChart extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    this.filter.hide = [];
-
+    this.filter = {
+      hide: [],
+    };
     this.controls.append(
       data.map(({ name }) => {
         return {
