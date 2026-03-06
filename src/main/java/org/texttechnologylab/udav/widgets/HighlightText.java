@@ -188,7 +188,7 @@ public class HighlightText extends Widget {
         Map<String, String> typeStyles = repo.loadTypeStyles(schema, generatorId); // type -> styleName
         Map<String, Map<String, String>> typeCategoryColors = repo.loadTypeCategoryColors(schema, generatorId); // type -> (category -> color)
 
-        if (hide != null) for (String h : hide) { typeStyles.remove(h); typeCategoryColors.remove(h); }
+        if (hide != null) for (String h : hide) { typeStyles.remove(h); }
 
         // Load all segments once; we'll filter in-memory (keeps repo simple)
         var segs = repo.loadSegments(schema, generatorId, null);
