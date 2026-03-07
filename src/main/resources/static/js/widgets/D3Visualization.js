@@ -99,7 +99,7 @@ export default class D3Visualization {
 
   mousemove(event, content) {
     this.tooltip
-      .html(content)
+      .html(DOMPurify.sanitize(content))
       .style("top", event.pageY + "px")
       .style("left", event.pageX + 20 + "px");
   }

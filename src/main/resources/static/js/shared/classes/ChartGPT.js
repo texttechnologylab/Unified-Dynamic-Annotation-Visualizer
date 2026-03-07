@@ -1,6 +1,6 @@
 import { getCompletion, getModels } from "../../api/chat.api.js";
 import state from "../../pages/view/utils/viewState.js";
-import { svgToBase64, svgToUrl } from "../modules/convert.js";
+import { svgToBase64 } from "../modules/convert.js";
 import { createElement } from "../modules/utils.js";
 
 export default class ChartGPT {
@@ -16,7 +16,6 @@ export default class ChartGPT {
       .querySelector(".dv-chat-header")
       .addEventListener("click", () => root.classList.toggle("collapsed"));
 
-    this.model = null;
     this.messages = [{ role: "system", content: instruction }];
   }
 
@@ -43,18 +42,33 @@ export default class ChartGPT {
 
     // Load available models
     const models = await getModels();
-    this.model = models.data[0].id;
 
-    models.data.unshift({ id: this.model, name: "Model" });
+    this.modelSelect.append(
+      createElement("option", {
+        value: models.data[0].id,
+        textContent: "Model",
+      }),
+    );
     models.data.forEach((model) => {
       this.modelSelect.append(
         createElement("option", { value: model.id, textContent: model.name }),
       );
     });
-    this.modelSelect.addEventListener(
-      "change",
-      (event) => (this.model = event.target.value),
+
+    // Get available charts
+    const charts = state.charts.filter((chart) => chart.svg);
+
+    this.contextSelect.append(
+      createElement("option", { value: "", textContent: "Context" }),
     );
+    charts.forEach((chart) => {
+      this.contextSelect.append(
+        createElement("option", {
+          value: chart.config.id,
+          textContent: chart.config.title,
+        }),
+      );
+    });
   }
 
   async completeMessages() {
@@ -64,23 +78,24 @@ export default class ChartGPT {
       (chart) => chart.config.id === this.contextSelect.value,
     );
 
-    const content = chart
-      ? [
-          { type: "text", text: this.textarea.value },
-          {
-            type: "image_url",
-            image_url: { url: svgToBase64(chart.svg.node()) },
-            widget: chart.config.title,
-          },
-        ]
-      : this.textarea.value;
+    // Create message
+    const content = [{ type: "text", text: this.textarea.value }];
+    if (chart) {
+      content.push({
+        type: "image_url",
+        image_url: { url: svgToBase64(chart.svg.node()) },
+        widget: chart.config.title,
+      });
+    }
 
     this.addMessage({ role: "user", content });
     this.textarea.value = "";
 
-    console.log({ model: this.model, messages: this.messages });
-
-    const completion = await getCompletion(this.model, this.messages);
+    // Get answer
+    const completion = await getCompletion(
+      this.modelSelect.value,
+      this.messages,
+    );
     const answer = completion?.choices[0]?.message;
 
     this.addMessage(
@@ -108,7 +123,7 @@ export default class ChartGPT {
       [
         createElement("div", {
           className: "dv-chat-message",
-          textContent: this.parseContent(message.content),
+          innerHTML: this.parseContent(message.content),
         }),
       ],
     );
@@ -125,9 +140,9 @@ export default class ChartGPT {
   }
 
   parseContent(content) {
-    if (Array.isArray(content)) {
-      let string = "";
+    let string = "";
 
+    if (Array.isArray(content)) {
       content.forEach((item) => {
         if (item.type === "text") {
           string += item.text;
@@ -135,10 +150,13 @@ export default class ChartGPT {
           string += ` (+${item.widget})`;
         }
       });
-
-      return string;
+    } else {
+      string = content;
     }
 
-    return content;
+    // string.replace("<think>", "<small>");
+    // string.replace("</think>", "</small>");
+
+    return DOMPurify.sanitize(marked.parse(string));
   }
 }

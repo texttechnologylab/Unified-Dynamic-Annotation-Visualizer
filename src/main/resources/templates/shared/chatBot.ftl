@@ -1,4 +1,4 @@
-<#macro chatBot widgets>
+<#macro chatBot>
   <div class="dv-chat-bot collapsed">
     <div class="dv-chat-header">
       <div class="dv-chat-title">
@@ -17,14 +17,7 @@
       
         <div class="dv-chat-controls">
           <select id="model-select" class="dv-select" title="Select a model"></select>
-          <select id="context-select" class="dv-select" title="Select a context">
-            <option value="">Context</option>
-            <#list widgets as widget>
-              <#if !widget.type?contains("Static")>
-                <option value="${widget.id}">${widget.title}</option>
-              </#if>
-            </#list>
-          </select>
+          <select id="context-select" class="dv-select" title="Select a context"></select>
           <button class="dv-btn dv-chat-send" title="Send message" disabled>
             <i class="bi bi-send"></i>
             <span class="spinner-grow spinner-grow-sm dv-hidden"></span>
