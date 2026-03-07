@@ -87,7 +87,7 @@ export default class HighlightText extends D3Visualization {
       data.datasets.map(({ name }) => {
         return {
           type: "switch",
-          label: name,
+          label: name.split(".").slice(-2).join("."),
           value: true,
           onchange: (event) => {
             if (event.target.checked) {
