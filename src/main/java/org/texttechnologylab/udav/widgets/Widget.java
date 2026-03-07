@@ -15,7 +15,7 @@ public abstract class Widget implements ChartHandler {
     protected final GeneratorDataRepository repo;
     protected final ObjectMapper mapper;
 
-    // Overwrite if diagram should have a custom tikz
+    // Overwrite if diagram should have a custom tex definition
     public String toTex(JsonNode jsonNode) { return null; }
 
     public static Widget constructWidget(String className, GeneratorDataRepository repo, ObjectMapper mapper) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {

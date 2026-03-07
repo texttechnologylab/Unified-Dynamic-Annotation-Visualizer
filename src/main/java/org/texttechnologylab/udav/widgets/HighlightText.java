@@ -31,10 +31,12 @@ public class HighlightText extends Widget {
         }
         StringBuilder latex = new StringBuilder();
         String nl = System.lineSeparator();
-        // Collect all underline colors
-        java.util.Set<String> underlineColors = new java.util.HashSet<>();
-        java.util.Set<String> bgColors = new java.util.HashSet<>();
+
+        Set<String> underlineColors = new HashSet<>();
+        Set<String> bgColors = new HashSet<>();
         JsonNode spans = dataNode.get("spans");
+
+        // Collect colors
         for (JsonNode span : spans) {
             String style = span.has("style") ? span.get("style").asText() : null;
             if (style != null) {
@@ -71,9 +73,8 @@ public class HighlightText extends Widget {
         latex.append("\\begin{document}").append(nl);
         latex.append("\\begingroup").append(nl);
         for (JsonNode span : spans) {
-            String text = span.has("TEXT") ? span.get("TEXT").asText() : "";
+            String text = span.has("text") ? span.get("text").asText() : "";
             String style = span.has("style") ? span.get("style").asText() : null;
-            String latexSpan;
             String underlineColor = null;
             String bgColor = null;
             if (style != null) {
@@ -83,34 +84,44 @@ public class HighlightText extends Widget {
                     if (part.startsWith("text-decoration: underline")) {
                         int colorIdx = part.indexOf('#');
                         if (colorIdx != -1) {
-                            underlineColor = part.substring(colorIdx, Math.min(colorIdx + 7, part.length())).replace("#", "").toUpperCase();
+                            underlineColor = part.substring(colorIdx,
+                                            Math.min(colorIdx + 7, part.length()))
+                                    .replace("#", "")
+                                    .toUpperCase();
                         }
                     } else if (part.startsWith("background-color:")) {
                         int colorIdx = part.indexOf('#');
                         if (colorIdx != -1) {
-                            bgColor = part.substring(colorIdx, Math.min(colorIdx + 7, part.length())).replace("#", "").toUpperCase();
+                            bgColor = part.substring(colorIdx,
+                                            Math.min(colorIdx + 7, part.length()))
+                                    .replace("#", "")
+                                    .toUpperCase();
                         }
                     }
                 }
-                // Build LaTeX for this span
-                if (underlineColor != null && bgColor != null) {
-                    // Highlight and colored underline (text stays black)
-                    latexSpan = String.format(
+            }
+
+            String latexSpan;
+
+            if (underlineColor != null && bgColor != null) {
+                // Highlight and colored underline (text stays black)
+                latexSpan = String.format(
                         "\\colorbox{bgcolor%s}{\\setulcolor{ulcolor%s}\\ul{%s}\\setulcolor{black}}",
                         bgColor, underlineColor, escapeLatex(text)
-                    );
-                } else if (underlineColor != null) {
-                    // Only colored underline (text stays black)
-                    latexSpan = String.format(
+                );
+            } else if (underlineColor != null) {
+                // Only colored underline (text stays black)
+                latexSpan = String.format(
                         "\\setulcolor{ulcolor%s}\\ul{%s}\\setulcolor{black}",
                         underlineColor, escapeLatex(text)
-                    );
-                } else if (bgColor != null) {
-                    // Only highlight
-                    latexSpan = String.format("\\colorbox{bgcolor%s}{%s}", bgColor, escapeLatex(text));
-                } else {
-                    latexSpan = escapeLatex(text);
-                }
+                );
+            } else if (bgColor != null) {
+                // Only highlight
+                latexSpan = String.format(
+                        "\\colorbox{bgcolor%s}{%s}",
+                        bgColor,
+                        escapeLatex(text)
+                );
             } else {
                 latexSpan = escapeLatex(text);
             }
@@ -119,10 +130,10 @@ public class HighlightText extends Widget {
         latex.append("\\endgroup").append(nl);
         latex.append("\\end{document}").append(nl);
         // Remove all lines that only contain spaces (or are empty)
-        String filteredLatex = java.util.Arrays.stream(latex.toString().split("\\R"))
-            .filter(line -> !line.trim().isEmpty())
-            .reduce((a, b) -> a + nl + b)
-            .orElse("");
+        String filteredLatex = Arrays.stream(latex.toString().split("\\R"))
+                .filter(line -> !line.trim().isEmpty())
+                .reduce((a, b) -> a + nl + b)
+                .orElse("");
         return filteredLatex;
     }
 
@@ -159,8 +170,8 @@ public class HighlightText extends Widget {
     @Override
     public JsonNode render(String generatorId,
                            Map<String, String> filters,
-                           Set<String> files,          // not used for text yet, kept for symmetry
-                           ValueMode vm,               // not used (text is not numerically transformed)
+                           Set<String> files,
+                           ValueMode vm,
                            String schema) {
 
         boolean typesProvided = filters.containsKey("types");
@@ -236,11 +247,7 @@ public class HighlightText extends Widget {
 
             int b = Math.max(0, Math.min(N, s.begin()));
             int e = Math.max(0, Math.min(N, s.end()));
-            if (e < b) {
-                int tmp = b;
-                b = e;
-                e = tmp;
-            }
+            if (e < b) { int tmp = b; b = e; e = tmp; }
 
             evs.add(new Ev(b, true, css, label));
             evs.add(new Ev(e, false, css, label));
@@ -249,60 +256,22 @@ public class HighlightText extends Widget {
         evs.sort(Comparator.<Ev>comparingInt(Ev::idx)
                 .thenComparing(ev -> ev.start ? 1 : 0));
 
+        // Track active labels by their text for O(1) add/remove
+        Map<String, Label> activeLblMap = new LinkedHashMap<>();
         List<String> activeCss = new ArrayList<>();
-        List<Label> activeLbl = new ArrayList<>();
-
-        int last = 0;
         ArrayNode spans = mapper.createArrayNode();
+        int last = 0;
 
-        for (Ev e : evs) {
-
-            if (last < e.idx) {
-                ObjectNode span = mapper.createObjectNode();
-                span.put("text", text.substring(last, e.idx));
-
-                if (!activeCss.isEmpty())
-                    span.put("style", String.join(" ", activeCss));
-
-                if (!activeLbl.isEmpty()) {
-                    ArrayNode labelArr = mapper.createArrayNode();
-                    for (Label l : activeLbl) {
-                        ObjectNode lnode = mapper.createObjectNode();
-                        lnode.put("text", l.text());
-                        lnode.put("style", l.style());
-                        labelArr.add(lnode);
-                    }
-                    span.set("label", labelArr);
-                }
-
-                spans.add(span);
-            }
-
-            if (e.start) {
-                if (!activeCss.contains(e.styleCss))
-                    activeCss.add(e.styleCss);
-
-                if (activeLbl.stream().noneMatch(l -> l.text().equals(e.label.text())))
-                    activeLbl.add(e.label);
-
-            } else {
-                activeCss.remove(e.styleCss);
-                activeLbl.removeIf(l -> l.text().equals(e.label.text()));
-            }
-
-            last = e.idx;
-        }
-
-        if (last < N) {
+        java.util.function.BiConsumer<Integer, Integer> addSpan = (startIdx, endIdx) -> {
+            if (startIdx >= endIdx) return;
             ObjectNode span = mapper.createObjectNode();
-            span.put("text", text.substring(last));
+            span.put("text", text.substring(startIdx, endIdx));
 
-            if (!activeCss.isEmpty())
-                span.put("style", String.join(" ", activeCss));
+            if (!activeCss.isEmpty()) span.put("style", String.join(" ", activeCss));
 
-            if (!activeLbl.isEmpty()) {
+            if (!activeLblMap.isEmpty()) {
                 ArrayNode labelArr = mapper.createArrayNode();
-                for (Label l : activeLbl) {
+                for (Label l : activeLblMap.values()) {
                     ObjectNode lnode = mapper.createObjectNode();
                     lnode.put("text", l.text());
                     lnode.put("style", l.style());
@@ -312,8 +281,25 @@ public class HighlightText extends Widget {
             }
 
             spans.add(span);
+        };
+
+        for (Ev e : evs) {
+            addSpan.accept(last, e.idx);
+
+            if (e.start) {
+                if (!activeCss.contains(e.styleCss)) activeCss.add(e.styleCss);
+                activeLblMap.putIfAbsent(e.label.text(), e.label);
+            } else {
+                activeCss.remove(e.styleCss);
+                activeLblMap.remove(e.label.text());
+            }
+
+            last = e.idx;
         }
 
+        addSpan.accept(last, N);
+
+        // Datasets section
         ArrayNode datasets = mapper.createArrayNode();
         for (String t : typeStyles.keySet()) {
             ObjectNode d = mapper.createObjectNode();

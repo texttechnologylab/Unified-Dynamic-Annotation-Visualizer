@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -30,26 +31,26 @@ public class ConvertionController {
         JsonNode node = mapper.readTree(body);
         String widgetType = node.get("type").asText();
 
-        String tikz;
+        String tex;
         try {
             Widget widget = Widget.constructWidget(widgetType);
-            tikz = widget.toTex(node);
-            if (tikz == null) throw new Exception();
-            // Native tikz defined!
+            tex = widget.toTex(node);
+            if (tex == null) throw new Exception();
+            // Native tex defined!
 
         } catch (Exception ignored) {
-            // No native tikz defined -> Use Svg2Tikz
+            // No native tex defined -> Use Svg2Tikz
 
             String svg = node.get("svg").asText();
             svg = Svg2TikzFixes.preRun_hyphenMinusFix(svg);
-            tikz = convertSvgToTikz(svg);
-            tikz = Svg2TikzFixes.postRun_southAnchorFix(tikz);
+            tex = convertSvgToTikz(svg);
+            tex = Svg2TikzFixes.postRun_southAnchorFix(tex);
         }
 
-        tikz = addMetaDataToTikz(tikz); // TODO
+        tex = addMetaDataToTex(tex, node);
 
         Map<String, String> response = new HashMap<>();
-        response.put("content", tikz);
+        response.put("content", tex);
         return ResponseEntity.ok(response);
     }
 
@@ -175,7 +176,68 @@ public class ConvertionController {
     }
 
 
-    private static String addMetaDataToTikz(String tikz) {
-        return tikz;
+    private static String addMetaDataToTex(String tex, JsonNode node) {
+        try {
+            JsonNode metadataNode = node.path("meta").path("metadata");
+
+            if (!metadataNode.isObject()) {
+                return tex;
+            }
+
+            StringBuilder header = new StringBuilder();
+            header.append("% ---\n");
+
+            appendNode(header, metadataNode, 0);
+
+            header.append("% ---\n\n");
+
+            return header + tex;
+
+        } catch (Exception ignored) {}
+
+        return tex;
+    }
+
+    private static void appendNode(StringBuilder sb, JsonNode node, int indent) {
+        String indentStr = "  ".repeat(indent);
+
+        if (node.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+
+                if (entry.getValue().isValueNode()) {
+                    sb.append("% ")
+                            .append(indentStr)
+                            .append(entry.getKey())
+                            .append(": ")
+                            .append(entry.getValue().asText())
+                            .append("\n");
+                } else {
+                    sb.append("% ")
+                            .append(indentStr)
+                            .append(entry.getKey())
+                            .append(":\n");
+                    appendNode(sb, entry.getValue(), indent + 1);
+                }
+            }
+        }
+
+        else if (node.isArray()) {
+            for (JsonNode item : node) {
+                if (item.isValueNode()) {
+                    sb.append("% ")
+                            .append(indentStr)
+                            .append("- ")
+                            .append(item.asText())
+                            .append("\n");
+                } else {
+                    sb.append("% ")
+                            .append(indentStr)
+                            .append("-\n");
+                    appendNode(sb, item, indent + 1);
+                }
+            }
+        }
     }
 }
