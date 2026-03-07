@@ -5,18 +5,7 @@ import state from "../pages/view/utils/viewState.js";
 import { debounce, randomId } from "../shared/modules/utils.js";
 
 export default class D3Visualization {
-  constructor(
-    root,
-    config,
-    margin,
-    exportFormats = {
-      svg: "bi bi-file-earmark-code",
-      png: "bi bi-image",
-      tex: "bi bi-file-earmark-font",
-      csv: "bi bi-table",
-      json: "bi bi-braces",
-    },
-  ) {
+  constructor(root, config, margin) {
     this.root = d3.select(root);
     this.config = config;
 
@@ -27,13 +16,13 @@ export default class D3Visualization {
     this.height = height - margin.top - margin.bottom;
     this.margin = margin;
 
-    this.filter = {};
-    this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this, exportFormats);
-
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.svg = this.root.select(".dv-chart-area").append("svg");
     this.data = null;
+
+    this.filter = {};
+    this.controls = new ControlsHandler(this);
+    this.exports = new ExportHandler(this);
 
     // Re-render chart on resize of container
     const observer = new ResizeObserver(

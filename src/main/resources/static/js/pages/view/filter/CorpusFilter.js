@@ -14,12 +14,16 @@ export default class CorpusFilter {
     this.components.files = new CheckboxSearch("file-filter", getFiles);
     this.components.tags = new CheckboxSearch("tag-filter", async () => []);
     this.components.date = new DateRange("date-filter");
+
+    this.apply();
   }
 
   apply() {
-    for (const [key, component] of Object.entries(this.components)) {
-      this.filter[key] = component.getValues();
-    }
+    this.filter = {
+      files: this.components.files.getValues(),
+      tags: this.components.tags.getValues(),
+      ...this.components.date.getValues(),
+    };
   }
 
   reset() {
