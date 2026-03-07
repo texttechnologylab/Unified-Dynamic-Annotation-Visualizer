@@ -70,10 +70,11 @@ public class TextFormatting extends GeneratorUIMA {
             }
         } else if (SourceUIMA.class.equals(source.getClass())) {
             // UIMA generator:
+            SourceUIMA sourceUIMA = (SourceUIMA) source;
             this.UIMAsofaID = settings.getStringSettingOrDefault("sofaID", null);
             String sofaFile = settings.getStringSettingOrDefault("sofaFile", null);
             if (sofaFile == null) {
-                Set<String> allFiles = ((SourceUIMA) source).determineAllSourceFiles();
+                Set<String> allFiles = sourceUIMA.determineAllSourceFiles();
                 settings.defineFilterListUniversalSetString("files", allFiles);
                 FilterList<String> filterListSourceFiles = settings.generateStringFilterList("files");
                 Set<String> sourceFiles = filterListSourceFiles.getWhitelist();
@@ -99,7 +100,8 @@ public class TextFormatting extends GeneratorUIMA {
             if (singleColorStr != null) { try { singleColor = Color.decode(singleColorStr); } catch (NumberFormatException ignored) {}}
             FilterList<String> filterListCategories = settings.generateStringFilterList("categories");
             ArrayList<Dataset.Segment> segments = dbCreateTextFormattingSegments(featureName, UIMAsofaFile, UIMAsofaID, filterListCategories.getWhitelist(), filterListCategories.getBlacklist());
-            Dataset newDataset = new Dataset(tempFeatureName, style, singleColor, segments);
+            String type = sourceUIMA.getUri() + "." + tempFeatureName;
+            Dataset newDataset = new Dataset(tempFeatureName, type, style, singleColor, segments);
             datasets.add(newDataset);
             commonFeatureCategoryColors.addFeatureToCategoryCountMap(tempFeatureName, newDataset.categoryCountMap);
         } else {
@@ -193,7 +195,7 @@ public class TextFormatting extends GeneratorUIMA {
                 // STYLE row
                 dsl.insertInto(T_STYLE)
                         .columns(GID_STYLE, TYP_STYLE, STY_STYLE)
-                        .values(id, ds.featureName, ds.style)
+                        .values(id, ds.type, ds.style)
                         .execute();
 
                 // COLORS batch
@@ -204,7 +206,7 @@ public class TextFormatting extends GeneratorUIMA {
                     batch.add(
                             dsl.insertInto(T_COLOR)
                                     .columns(GID_COLOR, TYP_COLOR, CAT_COLOR, COL_COLOR)
-                                    .values(id, ds.featureName, category, hex)
+                                    .values(id, ds.type, category, hex)
                     );
                 }
                 if (!batch.isEmpty()) dsl.batch(batch).execute();
@@ -215,7 +217,7 @@ public class TextFormatting extends GeneratorUIMA {
                     batch.add(
                             dsl.insertInto(T_SEGS)
                                     .columns(GID_SEGS, TYP_SEGS, BEG_SEGS, END_SEGS, CAT_SEGS)
-                                    .values(id, ds.featureName, s.begin, s.end, s.category)
+                                    .values(id, ds.type, s.begin, s.end, s.category)
                     );
                 }
                 if (!batch.isEmpty()) dsl.batch(batch).execute();
@@ -225,6 +227,7 @@ public class TextFormatting extends GeneratorUIMA {
 
     public static class Dataset {
         private final String featureName;
+        private final String type;
         private final String style;
         private final Color singleColor;
         private final List<Segment> segments;
@@ -232,8 +235,9 @@ public class TextFormatting extends GeneratorUIMA {
         private Map<String, Color> categoryColorMap;
 
 
-        private Dataset(String featureName, String style, Color singleColor, List<Segment> segments) {
+        private Dataset(String featureName, String type, String style, Color singleColor, List<Segment> segments) {
             this.featureName = featureName;
+            this.type = type;
             this.style = style;
             this.categoryColorMap = null;
             this.singleColor = singleColor;
@@ -243,6 +247,7 @@ public class TextFormatting extends GeneratorUIMA {
 
         private Dataset(Dataset copyOf) {
             this.featureName = copyOf.featureName;
+            this.type = copyOf.type;
             this.style = copyOf.style;
             this.categoryColorMap = new HashMap<>(copyOf.categoryColorMap);
             this.singleColor = copyOf.singleColor;

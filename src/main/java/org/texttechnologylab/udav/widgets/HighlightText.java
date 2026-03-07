@@ -308,8 +308,6 @@ public class HighlightText extends Widget {
         }
 
         ObjectNode root = mapper.createObjectNode();
-        root.put("generatorId", generatorId);
-        root.put("textLength", N);
         root.set("spans", spans);
         root.set("datasets", datasets);
 
