@@ -97,10 +97,6 @@ export default class MedialAxis extends D3Visualization {
     };
   }
 
-  async fetch() {
-    return await fetch("/points.json").then((response) => response.json());
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);

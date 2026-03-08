@@ -112,10 +112,6 @@ export default class BoundaryApproximation extends D3Visualization {
     this.threshold = config.options.threshold || 0;
   }
 
-  async fetch() {
-    return await fetch("/skeleton.json").then((response) => response.json());
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);
