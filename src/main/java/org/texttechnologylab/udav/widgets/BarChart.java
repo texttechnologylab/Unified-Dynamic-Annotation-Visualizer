@@ -8,7 +8,6 @@ import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
 import org.texttechnologylab.udav.api.charts.ChartHandler;
 import org.texttechnologylab.udav.api.charts.ValueTransforms;
-import org.texttechnologylab.udav.widgets.tools.SvgToLaTeXConverter;
 
 import java.util.Map;
 import java.util.Set;
@@ -17,16 +16,6 @@ import java.util.Set;
 public class BarChart extends Widget {
 
     public BarChart(GeneratorDataRepository repo, ObjectMapper mapper) { super(repo, mapper); }
-
-    @Override
-    public String toTex(JsonNode jsonNode) {
-        try {
-            String svg = jsonNode.get("svg").asText();
-            SvgToLaTeXConverter converter = new SvgToLaTeXConverter();
-            return converter.convert(svg);
-        } catch (Exception ignored) {}
-        return null;
-    }
 
     @Override
     public JsonNode render(String generatorId,

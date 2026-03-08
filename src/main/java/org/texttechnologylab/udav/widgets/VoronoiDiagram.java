@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
-import org.texttechnologylab.udav.widgets.tools.SvgToLaTeXConverter;
 
 import java.util.List;
 import java.util.Map;
@@ -17,16 +16,6 @@ public class VoronoiDiagram extends Widget {
 
     public VoronoiDiagram(GeneratorDataRepository repo, ObjectMapper mapper) {
         super(repo, mapper);
-    }
-
-    @Override
-    public String toTex(JsonNode jsonNode) {
-        try {
-            String svg = jsonNode.get("svg").asText();
-            SvgToLaTeXConverter converter = new SvgToLaTeXConverter();
-            return converter.convert(svg);
-        } catch (Exception ignored) {}
-        return null;
     }
 
     @Override

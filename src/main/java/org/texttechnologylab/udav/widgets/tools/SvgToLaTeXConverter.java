@@ -395,7 +395,7 @@ public class SvgToLaTeXConverter {
         double startX = 0, startY = 0;
         boolean firstSeg = true;
 
-        Matcher m = Pattern.compile("([MmLlHhVvZzCc])([^MmLlHhVvZzCc]*)").matcher(d);
+        Matcher m = Pattern.compile("([MmLlHhVvZzCcAa])([^MmLlHhVvZzCcAa]*)").matcher(d);
         while (m.find()) {
             char cmd  = m.group(1).charAt(0);
             double[] a = parseNumbers(m.group(2));
@@ -472,6 +472,28 @@ public class SvgToLaTeXConverter {
                     }
                     break;
                 }
+                case 'A': {
+                    for (int i = 0; i + 6 < a.length; i += 7) {
+                        double rx2 = scale * a[i];
+                        double ry2 = scale * a[i+1];
+                        boolean la = a[i+3] != 0, sw = a[i+4] != 0;
+                        double ex = scale * a[i+5] + tx, ey = scale * a[i+6] + ty;
+                        sb.append(svgArcToBezier(cx, cy, rx2, ry2, a[i+2], la, sw, ex, ey));
+                        cx = ex; cy = ey;
+                    }
+                    break;
+                }
+                case 'a': {
+                    for (int i = 0; i + 6 < a.length; i += 7) {
+                        double rx2 = scale * a[i];
+                        double ry2 = scale * a[i+1];
+                        boolean la = a[i+3] != 0, sw = a[i+4] != 0;
+                        double ex = cx + scale * a[i+5], ey = cy + scale * a[i+6];
+                        sb.append(svgArcToBezier(cx, cy, rx2, ry2, a[i+2], la, sw, ex, ey));
+                        cx = ex; cy = ey;
+                    }
+                    break;
+                }
                 case 'c': {
                     for (int i = 0; i + 5 < a.length; i += 6) {
                         double x1 = cx + scale * a[i],   y1 = cy + scale * a[i+1];
@@ -492,6 +514,138 @@ public class SvgToLaTeXConverter {
     /** Format one SVG coordinate pair as a TikZ coordinate after axis conversion. */
     private String tikzPt(double svgX, double svgY) {
         return String.format(Locale.US, "(%.4f, %.4f)", toX(svgX), toY(svgY));
+    }
+
+    // -----------------------------------------------------------------------
+    // SVG arc → cubic Bézier conversion
+    // -----------------------------------------------------------------------
+
+    /**
+     * Converts one SVG arc command (endpoint parameterization) into a series of
+     * TikZ ".. controls .. and .. .." Bézier segments.
+     *
+     * All coordinate parameters are in SVG world space (scale/tx/ty already applied).
+     * The conversion follows the algorithm in the SVG 1.1 spec, Appendix F.
+     *
+     * @param x1,y1  current point (start of arc)
+     * @param rx,ry  radii (already scaled)
+     * @param xRotDeg  x-axis rotation in degrees
+     * @param largeArc  large-arc-flag
+     * @param sweep     sweep-flag (true = positive angle direction in SVG, i.e. clockwise)
+     * @param x2,y2  endpoint
+     */
+    private String svgArcToBezier(double x1, double y1,
+                                  double rx, double ry, double xRotDeg,
+                                  boolean largeArc, boolean sweep,
+                                  double x2, double y2) {
+        if (x1 == x2 && y1 == y2) return "";
+        rx = Math.abs(rx);
+        ry = Math.abs(ry);
+        if (rx == 0 || ry == 0) {
+            // Degenerate: straight line
+            return String.format(Locale.US, " -- (%.4f, %.4f)", toX(x2), toY(y2));
+        }
+
+        double phi    = Math.toRadians(xRotDeg);
+        double cosPhi = Math.cos(phi);
+        double sinPhi = Math.sin(phi);
+
+        // Step 1 – midpoint transform
+        double dx2 = (x1 - x2) / 2.0;
+        double dy2 = (y1 - y2) / 2.0;
+        double x1p =  cosPhi * dx2 + sinPhi * dy2;
+        double y1p = -sinPhi * dx2 + cosPhi * dy2;
+
+        // Step 2 – ensure radii are large enough
+        double x1pSq = x1p * x1p, y1pSq = y1p * y1p;
+        double rxSq  = rx * rx,    rySq  = ry * ry;
+        double lambda = x1pSq / rxSq + y1pSq / rySq;
+        if (lambda > 1) {
+            double sqrtL = Math.sqrt(lambda);
+            rx *= sqrtL; ry *= sqrtL;
+            rxSq = rx * rx; rySq = ry * ry;
+        }
+
+        // Step 3 – compute center (cx', cy') in rotated frame
+        double num = Math.max(0, rxSq * rySq - rxSq * y1pSq - rySq * x1pSq);
+        double den = rxSq * y1pSq + rySq * x1pSq;
+        double sq  = (den == 0) ? 0 : Math.sqrt(num / den);
+        if (largeArc == sweep) sq = -sq;
+        double cxp =  sq * rx * y1p / ry;
+        double cyp = -sq * ry * x1p / rx;
+
+        // Step 4 – transform center back to original coords
+        double cx = cosPhi * cxp - sinPhi * cyp + (x1 + x2) / 2.0;
+        double cy = sinPhi * cxp + cosPhi * cyp + (y1 + y2) / 2.0;
+
+        // Step 5 – compute start angle θ1 and arc extent Δθ
+        double ux =  (x1p - cxp) / rx,  uy =  (y1p - cyp) / ry;
+        double vx = (-x1p - cxp) / rx,  vy = (-y1p - cyp) / ry;
+        double theta1 = svgVectorAngle(1, 0, ux, uy);
+        double dTheta  = svgVectorAngle(ux, uy, vx, vy);
+        if (!sweep && dTheta > 0) dTheta -= 2 * Math.PI;
+        if ( sweep && dTheta < 0) dTheta += 2 * Math.PI;
+
+        // Step 6 – split into ≤90° segments; approximate each with a cubic Bézier
+        int nSegs = Math.max(1, (int) Math.ceil(Math.abs(dTheta) / (Math.PI / 2)));
+        double dThetaSeg = dTheta / nSegs;
+        StringBuilder sb = new StringBuilder();
+        double t = theta1;
+        for (int i = 0; i < nSegs; i++) {
+            sb.append(arcSegmentToBezier(cx, cy, rx, ry, cosPhi, sinPhi, t, t + dThetaSeg));
+            t += dThetaSeg;
+        }
+        return sb.toString();
+    }
+
+    /** Signed angle between vectors (ux,uy) and (vx,vy). */
+    private double svgVectorAngle(double ux, double uy, double vx, double vy) {
+        double dot = ux * vx + uy * vy;
+        double len = Math.sqrt((ux*ux + uy*uy) * (vx*vx + vy*vy));
+        double a = Math.acos(Math.max(-1, Math.min(1, dot / len)));
+        if (ux * vy - uy * vx < 0) a = -a;
+        return a;
+    }
+
+    /**
+     * Approximates one arc segment (|dTheta| ≤ π/2) as a cubic Bézier and
+     * returns the TikZ ".. controls (p1) and (p2) .. (end)" string.
+     * All coordinates are in SVG world space; toX/toY are applied for output.
+     */
+    private String arcSegmentToBezier(double cx, double cy,
+                                      double rx, double ry,
+                                      double cosPhi, double sinPhi,
+                                      double theta, double thetaEnd) {
+        double dTheta = thetaEnd - theta;
+        // Cubic Bézier approximation: alpha = (4/3)*tan(dTheta/4)
+        double alpha = (4.0 / 3.0) * Math.tan(dTheta / 4.0);
+
+        double cosT  = Math.cos(theta),    sinT  = Math.sin(theta);
+        double cosT2 = Math.cos(thetaEnd), sinT2 = Math.sin(thetaEnd);
+
+        // Endpoint and derivative vectors on the unit ellipse (in ellipse frame)
+        double ex1 = rx * cosT,  ey1 = ry * sinT;   // start on ellipse
+        double ex2 = rx * cosT2, ey2 = ry * sinT2;  // end on ellipse
+        double dx1 = -rx * sinT,  dy1 = ry * cosT;  // derivative at start
+        double dx2 = -rx * sinT2, dy2 = ry * cosT2; // derivative at end
+
+        // Control points in ellipse frame → rotate by phi → translate by (cx, cy)
+        double[] cp1 = arcToWorld(cx, cy, cosPhi, sinPhi, ex1 + alpha * dx1, ey1 + alpha * dy1);
+        double[] cp2 = arcToWorld(cx, cy, cosPhi, sinPhi, ex2 - alpha * dx2, ey2 - alpha * dy2);
+        double[] ep  = arcToWorld(cx, cy, cosPhi, sinPhi, ex2, ey2);
+
+        return String.format(Locale.US,
+                ".. controls (%.4f, %.4f) and (%.4f, %.4f) .. (%.4f, %.4f)",
+                toX(cp1[0]), toY(cp1[1]),
+                toX(cp2[0]), toY(cp2[1]),
+                toX(ep[0]),  toY(ep[1]));
+    }
+
+    /** Rotate (px,py) by phi and translate by (cx,cy) — used for arc control points. */
+    private double[] arcToWorld(double cx, double cy, double cosPhi, double sinPhi,
+                                double px, double py) {
+        return new double[]{ cosPhi * px - sinPhi * py + cx,
+                sinPhi * px + cosPhi * py + cy };
     }
 
     // -----------------------------------------------------------------------
@@ -544,6 +698,8 @@ public class SvgToLaTeXConverter {
         double finalY = localY + ty;
 
         String fill = resolveFill(el, inh);
+        // SVG text default fill is black; "none" means no explicit fill was set anywhere
+        if ("none".equals(fill)) { registerHex(CURRENT_COLOR_HEX); fill = colorName(CURRENT_COLOR_HEX); }
 
         // text-anchor can be a direct attribute OR inside style="text-anchor: end;"
         String textAnchor = el.getAttribute("text-anchor");
@@ -721,10 +877,13 @@ public class SvgToLaTeXConverter {
                 // Bottom x-axis: y>0, dy≈0.71em → text hangs below → anchor=north
                 // Top x-axis:    y<0, dy=0em    → text sits above → anchor=south
                 return (rawY < 0) ? "south" : "north";
-            // "end" = right-aligned, vertically centred (left y-axis, dy≈0.32em)
+            // "end" = right-aligned; SVG y is baseline, dy≈0.32em ≈ half cap-height,
+            // so the visual center lands near the raw y.  TikZ `east` (center) matches.
             case "end":   return "east";
-            // "start" = left-aligned, vertically centred (right y-axis, dy≈0.32em)
-            case "start": return "west";
+            // "start" = left-aligned; SVG y is the baseline with no dy offset.
+            // TikZ `base west` aligns the baseline to the coordinate, matching SVG exactly.
+            // (vs `west` which centers vertically — that would sit ~half cap-height too low)
+            case "start": return "base west";
             default:      return "north";
         }
     }
