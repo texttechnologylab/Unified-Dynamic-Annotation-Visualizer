@@ -269,7 +269,8 @@ public class HighlightText extends Widget {
             ObjectNode span = mapper.createObjectNode();
             span.put("text", text.substring(startIdx, endIdx));
 
-            if (!activeCss.isEmpty()) span.put("style", String.join(" ", activeCss));
+            String styleVal = String.join(" ", activeCss);
+            if (!styleVal.isEmpty()) span.put("style", styleVal);
 
             if (!activeLblMap.isEmpty()) {
                 ArrayNode labelArr = mapper.createArrayNode();
