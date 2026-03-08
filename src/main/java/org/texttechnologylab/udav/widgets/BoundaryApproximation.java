@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Component("MedialAxis")
-public class MedialAxis extends Widget {
+@Component("BoundaryApproximation")
+public class BoundaryApproximation extends Widget {
 
-    public MedialAxis(GeneratorDataRepository repo, ObjectMapper mapper) {
+    public BoundaryApproximation(GeneratorDataRepository repo, ObjectMapper mapper) {
         super(repo, mapper);
     }
 

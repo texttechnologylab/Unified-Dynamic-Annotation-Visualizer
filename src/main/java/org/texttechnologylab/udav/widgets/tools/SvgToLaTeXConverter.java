@@ -136,17 +136,36 @@ public class SvgToLaTeXConverter {
             Element el = (Element) node;
             for (String attr : new String[]{"fill", "stroke"}) {
                 String v = el.getAttribute(attr).trim();
-                if (v.startsWith("#")) registerHex(v);
-                else if (v.startsWith("rgb")) { String h = rgbToHex(v); if (h != null) registerHex(h); }
+                if (v.startsWith("#")) {
+                    if (v.length() == 4) v = "#" + v.charAt(1) + "" + v.charAt(1)
+                            + v.charAt(2) + v.charAt(2)
+                            + v.charAt(3) + v.charAt(3);
+                    registerHex(v);
+                } else if (v.startsWith("rgb")) {
+                    String h = rgbToHex(v); if (h != null) registerHex(h);
+                } else if (!v.isEmpty() && !v.equals("none") && !v.equals("transparent")
+                        && !v.equals("currentColor")) {
+                    String h = CSS_NAMED_COLORS.get(v.toLowerCase());
+                    if (h != null) registerHex(h);
+                }
             }
             String style = el.getAttribute("style");
             if (!style.isEmpty()) {
-                // hex colors
-                Matcher m = Pattern.compile("(?:fill|stroke)\\s*:\\s*(#[0-9a-fA-F]{6})").matcher(style);
-                while (m.find()) registerHex(m.group(1));
-                // rgb() colors
+                Matcher m = Pattern.compile("(?:fill|stroke)\\s*:\\s*(#[0-9a-fA-F]{3,6})").matcher(style);
+                while (m.find()) {
+                    String hx = m.group(1);
+                    if (hx.length() == 4) hx = "#" + hx.charAt(1) + "" + hx.charAt(1)
+                            + hx.charAt(2) + hx.charAt(2)
+                            + hx.charAt(3) + hx.charAt(3);
+                    registerHex(hx);
+                }
                 Matcher rm = Pattern.compile("(?:fill|stroke)\\s*:\\s*(rgb\\([^)]+\\))").matcher(style);
                 while (rm.find()) { String h = rgbToHex(rm.group(1)); if (h != null) registerHex(h); }
+                Matcher nm = Pattern.compile("(?:fill|stroke)\\s*:\\s*([a-zA-Z]+)").matcher(style);
+                while (nm.find()) {
+                    String h = CSS_NAMED_COLORS.get(nm.group(1).toLowerCase());
+                    if (h != null) registerHex(h);
+                }
             }
         }
         NodeList kids = node.getChildNodes();
@@ -588,15 +607,73 @@ public class SvgToLaTeXConverter {
 
     private String resolveColorValue(String v) {
         if (v == null || v.isEmpty()) return "none";
-        if (v.startsWith("#")) return colorName(v);
+        v = v.trim();
+        if (v.startsWith("#")) {
+            // Expand 3-digit hex (#rgb → #rrggbb)
+            if (v.length() == 4) v = "#" + String.valueOf(v.charAt(1)) + v.charAt(1)
+                    + v.charAt(2) + v.charAt(2)
+                    + v.charAt(3) + v.charAt(3);
+            return colorName(v);
+        }
         if (v.equals("none") || v.equals("transparent")) return "none";
         if (v.startsWith("rgb")) {
             String hex = rgbToHex(v);
             if (hex != null) { registerHex(hex); return colorName(hex); }
         }
-        // "currentColor" and any other non-hex value → treat as black (#000000)
+        // CSS/SVG named colors
+        String namedHex = CSS_NAMED_COLORS.get(v.toLowerCase());
+        if (namedHex != null) { registerHex(namedHex); return colorName(namedHex); }
+        // "currentColor" and anything else → black
         registerHex(CURRENT_COLOR_HEX);
         return colorName(CURRENT_COLOR_HEX);
+    }
+
+    /** Subset of CSS named colors most likely to appear in D3/SVG output. */
+    private static final Map<String, String> CSS_NAMED_COLORS;
+    static {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("black",       "#000000"); m.put("white",       "#ffffff");
+        m.put("red",         "#ff0000"); m.put("green",       "#008000");
+        m.put("blue",        "#0000ff"); m.put("yellow",      "#ffff00");
+        m.put("cyan",        "#00ffff"); m.put("magenta",     "#ff00ff");
+        m.put("orange",      "#ffa500"); m.put("purple",      "#800080");
+        m.put("pink",        "#ffc0cb"); m.put("brown",       "#a52a2a");
+        m.put("grey",        "#808080"); m.put("gray",        "#808080");
+        m.put("darkgray",    "#a9a9a9"); m.put("darkgrey",    "#a9a9a9");
+        m.put("lightgray",   "#d3d3d3"); m.put("lightgrey",   "#d3d3d3");
+        m.put("darkred",     "#8b0000"); m.put("darkblue",    "#00008b");
+        m.put("darkgreen",   "#006400"); m.put("darkorange",  "#ff8c00");
+        m.put("steelblue",   "#4682b4"); m.put("royalblue",   "#4169e1");
+        m.put("navy",        "#000080"); m.put("teal",        "#008080");
+        m.put("olive",       "#808000"); m.put("maroon",      "#800000");
+        m.put("lime",        "#00ff00"); m.put("aqua",        "#00ffff");
+        m.put("fuchsia",     "#ff00ff"); m.put("silver",      "#c0c0c0");
+        m.put("gold",        "#ffd700"); m.put("coral",       "#ff7f50");
+        m.put("salmon",      "#fa8072"); m.put("tomato",      "#ff6347");
+        m.put("orangered",   "#ff4500"); m.put("crimson",     "#dc143c");
+        m.put("firebrick",   "#b22222"); m.put("indigo",      "#4b0082");
+        m.put("violet",      "#ee82ee"); m.put("plum",        "#dda0dd");
+        m.put("orchid",      "#da70d6"); m.put("hotpink",     "#ff69b4");
+        m.put("deeppink",    "#ff1493"); m.put("mediumpurple","#9370db");
+        m.put("slateblue",   "#6a5acd"); m.put("cornflowerblue","#6495ed");
+        m.put("dodgerblue",  "#1e90ff"); m.put("deepskyblue", "#00bfff");
+        m.put("lightskyblue","#87cefa"); m.put("skyblue",     "#87ceeb");
+        m.put("cadetblue",   "#5f9ea0"); m.put("mediumturquoise","#48d1cc");
+        m.put("turquoise",   "#40e0d0"); m.put("aquamarine",  "#7fffd4");
+        m.put("seagreen",    "#2e8b57"); m.put("mediumseagreen","#3cb371");
+        m.put("limegreen",   "#32cd32"); m.put("forestgreen", "#228b22");
+        m.put("yellowgreen", "#9acd32"); m.put("olivedrab",   "#6b8e23");
+        m.put("chartreuse",  "#7fff00"); m.put("greenyellow", "#adff2f");
+        m.put("khaki",       "#f0e68c"); m.put("darkkhaki",   "#bdb76b");
+        m.put("tan",         "#d2b48c"); m.put("burlywood",   "#deb887");
+        m.put("wheat",       "#f5deb3"); m.put("bisque",      "#ffe4c4");
+        m.put("peachpuff",   "#ffdab9"); m.put("moccasin",    "#ffe4b5");
+        m.put("goldenrod",   "#daa520"); m.put("darkgoldenrod","#b8860b");
+        m.put("sienna",      "#a0522d"); m.put("saddlebrown", "#8b4513");
+        m.put("chocolate",   "#d2691e"); m.put("peru",        "#cd853f");
+        m.put("rosybrown",   "#bc8f8f"); m.put("indianred",   "#cd5c5c");
+        m.put("lightcoral",  "#f08080"); m.put("darksalmon",  "#e9967a");
+        CSS_NAMED_COLORS = Collections.unmodifiableMap(m);
     }
 
     // -----------------------------------------------------------------------
