@@ -1,8 +1,9 @@
 import { getTikz } from "../../../api/convertions.api.js";
 import { applyStyles, createElement } from "../../../shared/modules/utils.js";
+import state from "../utils/viewState.js";
 
 export default class ExportHandler {
-  constructor(widget, formats) {
+  constructor(widget) {
     this.serializer = new XMLSerializer();
     this.widget = widget;
 
@@ -10,6 +11,17 @@ export default class ExportHandler {
     const dropdown = root.querySelector(".dv-dropdown-menu");
 
     this.filename = "chart";
+
+    const formats = {
+      tex: "bi bi-file-earmark-font",
+      csv: "bi bi-table",
+      json: "bi bi-braces",
+    };
+
+    if (widget.svg) {
+      formats.svg = "bi bi-file-earmark-code";
+      formats.png = "bi bi-image";
+    }
 
     if (dropdown) {
       Object.entries(formats).forEach(([format, icon]) => {
@@ -39,7 +51,7 @@ export default class ExportHandler {
   }
 
   getMetadata() {
-    return this.widget.filter || {};
+    return { ...state.corpusFilter.filter, ...this.widget.filter };
   }
 
   prepareExport(format) {
