@@ -47,7 +47,7 @@ export default class ExportHandler {
   }
 
   getSVG() {
-    return this.widget.svg.node ? this.widget.svg.node() : this.widget.svg;
+    return this.widget.svg?.node ? this.widget.svg.node() : this.widget.svg;
   }
 
   getMetadata() {
@@ -115,16 +115,23 @@ export default class ExportHandler {
   }
 
   async exportTEX() {
-    let svg = this.getSVG().cloneNode(true);
-    svg = applyStyles(svg, [
-      { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
-      { selector: '[fill="currentColor"]', styles: { fill: "black" } },
-      { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
-      { selector: '[fill="transparent"]', styles: { fill: "none" } },
-    ]);
+    let str = "";
+
+    // Prepare svg if one exists
+    if (this.widget.svg) {
+      let svg = this.getSVG().cloneNode(true);
+
+      svg = applyStyles(svg, [
+        { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
+        { selector: '[fill="currentColor"]', styles: { fill: "black" } },
+        { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
+        { selector: '[fill="transparent"]', styles: { fill: "none" } },
+      ]);
+
+      str = this.serializer.serializeToString(svg);
+    }
 
     const type = this.widget.constructor.defaultConfig.type;
-    const str = this.serializer.serializeToString(svg);
     const json = this.getJSON();
     const meta = {
       metadata: this.getMetadata(),
