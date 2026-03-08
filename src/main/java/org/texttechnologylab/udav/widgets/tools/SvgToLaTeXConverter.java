@@ -14,12 +14,12 @@ import java.util.regex.*;
  *   <line>, <text transform="translate(x,y)rotate(deg)">
  *
  * Coordinate conversion:
- *   - SVG px  �  TikZ cm  (1 cm = 37.795 px)
- *   - y-axis is flipped   (SVG y�  �  TikZ y�)
+ *   - SVG px  →  TikZ cm  (1 cm = 37.795 px)
+ *   - y-axis is flipped   (SVG y↓  →  TikZ y↑)
  *
  * Colors:
  *   Every hex colour found in the SVG is registered and emitted as a
- *   \definecolor{cRRGGBB}{RGB}{R,G,B} command  TikZ built-in names are
+ *   \definecolor{cRRGGBB}{RGB}{R,G,B} command — TikZ built-in names are
  *   NEVER used.  "currentColor" and other non-hex values resolve to #000000.
  */
 public class SvgToLaTeXConverter {
@@ -28,7 +28,7 @@ public class SvgToLaTeXConverter {
     // Constants
     // -----------------------------------------------------------------------
 
-    /** 1 inch = 96 px; 1 inch = 2.54 cm  �  1 px = 2.54/96 cm */
+    /** 1 inch = 96 px; 1 inch = 2.54 cm  →  1 px = 2.54/96 cm */
     private static final double PX_TO_CM = 2.54 / 96.0;
 
     /**
@@ -43,10 +43,10 @@ public class SvgToLaTeXConverter {
 
     private double svgHeight;
 
-    /** hex (lower-case, with #)  �  tikz color name */
+    /** hex (lower-case, with #)  →  tikz color name */
     private final Map<String, String> colorDefs = new LinkedHashMap<>();
 
-    /** id � [x, y, width, height] of the first <rect> child of each <clipPath> */
+    /** id → [x, y, width, height] of the first <rect> child of each <clipPath> */
     private final Map<String, double[]> clipRects = new LinkedHashMap<>();
 
     private final StringBuilder body = new StringBuilder();
@@ -77,12 +77,12 @@ public class SvgToLaTeXConverter {
         Element root = doc.getDocumentElement();
         svgHeight = parseDouble(root.getAttribute("height"), 0);
 
-        // Pass 1a  collect clipPath rect definitions
+        // Pass 1a – collect clipPath rect definitions
         collectClipPaths(root);
-        // Pass 1b  collect every colour referenced in the tree
+        // Pass 1b – collect every colour referenced in the tree
         collectColors(root);
 
-        // Pass 2  emit TikZ commands, accumulating absolute translations
+        // Pass 2 – emit TikZ commands, accumulating absolute translations
         processNode(root, 0, 0, 1.0, new InheritedAttrs());
 
         return buildDocument();
@@ -93,7 +93,7 @@ public class SvgToLaTeXConverter {
     // -----------------------------------------------------------------------
 
     /**
-     * Pre-scan the tree for every {@code <clipPath id="&">} and record the
+     * Pre-scan the tree for every {@code <clipPath id="…">} and record the
      * bounding rect of its first {@code <rect>} child.  The rect coordinates
      * are stored RAW (in the clipPath's own local space) so that the caller
      * can later combine them with the accumulated tx/ty of the referencing
@@ -137,15 +137,33 @@ public class SvgToLaTeXConverter {
             for (String attr : new String[]{"fill", "stroke"}) {
                 String v = el.getAttribute(attr).trim();
                 if (v.startsWith("#")) registerHex(v);
+                else if (v.startsWith("rgb")) { String h = rgbToHex(v); if (h != null) registerHex(h); }
             }
             String style = el.getAttribute("style");
             if (!style.isEmpty()) {
+                // hex colors
                 Matcher m = Pattern.compile("(?:fill|stroke)\\s*:\\s*(#[0-9a-fA-F]{6})").matcher(style);
                 while (m.find()) registerHex(m.group(1));
+                // rgb() colors
+                Matcher rm = Pattern.compile("(?:fill|stroke)\\s*:\\s*(rgb\\([^)]+\\))").matcher(style);
+                while (rm.find()) { String h = rgbToHex(rm.group(1)); if (h != null) registerHex(h); }
             }
         }
         NodeList kids = node.getChildNodes();
         for (int i = 0; i < kids.getLength(); i++) collectColors(kids.item(i));
+    }
+
+    /**
+     * Converts "rgb(255, 84, 0)" or "rgb(255,84,0)" to "#ff5400".
+     * Returns null if the string cannot be parsed.
+     */
+    private String rgbToHex(String rgb) {
+        Matcher m = Pattern.compile("rgb\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)").matcher(rgb.trim());
+        if (!m.find()) return null;
+        int r = Integer.parseInt(m.group(1));
+        int g = Integer.parseInt(m.group(2));
+        int b = Integer.parseInt(m.group(3));
+        return String.format("#%02x%02x%02x", r, g, b);
     }
 
     private void registerHex(String hex) {
@@ -268,9 +286,9 @@ public class SvgToLaTeXConverter {
 
         // SVG rect: top-left (x,y), bottom-right (x+w, y+h)
         double tikzX1 = toX(x);
-        double tikzY1 = toY(y);        // top    in SVG � higher y in TikZ
+        double tikzY1 = toY(y);        // top    in SVG → higher y in TikZ
         double tikzX2 = toX(x + w);
-        double tikzY2 = toY(y + h);    // bottom in SVG � lower y in TikZ
+        double tikzY2 = toY(y + h);    // bottom in SVG → lower y in TikZ
 
         List<String> opts = new ArrayList<>();
         if (!fill.equals("none"))   opts.add("fill="   + fill);
@@ -310,7 +328,7 @@ public class SvgToLaTeXConverter {
     }
 
     // -----------------------------------------------------------------------
-    // <path d="&">   M/L/H/V/Z/C and their lower-case relatives
+    // <path d="…">  – M/L/H/V/Z/C and their lower-case relatives
     // -----------------------------------------------------------------------
 
     private void processPath(Element el, double tx, double ty, double scale, InheritedAttrs inh) {
@@ -348,9 +366,9 @@ public class SvgToLaTeXConverter {
      *
      * Supported commands: M m  L l  H h  V v  Z z  C c
      *
-     * Straight segments  �  " -- (x,y)"
-     * Cubic bezier (C/c) �  ".. controls (c1) and (c2) .. (end)"
-     * Close path (Z/z)   �  " -- cycle"
+     * Straight segments  →  " -- (x,y)"
+     * Cubic bezier (C/c) →  ".. controls (c1) and (c2) .. (end)"
+     * Close path (Z/z)   →  " -- cycle"
      */
     private String buildTikzPath(String d, double tx, double ty, double scale) {
         StringBuilder sb = new StringBuilder();
@@ -515,7 +533,10 @@ public class SvgToLaTeXConverter {
             if (m.find()) textAnchor = m.group(1);
         }
         if (textAnchor.isEmpty()) textAnchor = inh.textAnchor;
-        String tikzAnchor = svgAnchorToTikz(textAnchor, rotate);
+        // Pass the raw (pre-scale) y attribute so the anchor can distinguish
+        // labels above the axis (y<0 → anchor=south) from below (y>0 → anchor=north).
+        double rawY = parseDouble(el.getAttribute("y"), 0);
+        String tikzAnchor = svgAnchorToTikz(textAnchor, rotate, rawY);
 
         String content = escapeTex(el.getTextContent());
 
@@ -523,7 +544,7 @@ public class SvgToLaTeXConverter {
         opts.add("text=" + fill);
         opts.add("anchor=" + tikzAnchor);
         if (rotate != 0)
-            opts.add(String.format(Locale.US, "rotate=%.1f", -rotate)); // SVG CW � TikZ CCW
+            opts.add(String.format(Locale.US, "rotate=%.1f", -rotate)); // SVG CW → TikZ CCW
 
         body.append(String.format(Locale.US,
                 "\\node[%s] at (%.4f, %.4f) {%s};\n",
@@ -568,8 +589,12 @@ public class SvgToLaTeXConverter {
     private String resolveColorValue(String v) {
         if (v == null || v.isEmpty()) return "none";
         if (v.startsWith("#")) return colorName(v);
-        if (v.equals("none")) return "none";
-        // "currentColor" and any other non-hex value � treat as black (#000000)
+        if (v.equals("none") || v.equals("transparent")) return "none";
+        if (v.startsWith("rgb")) {
+            String hex = rgbToHex(v);
+            if (hex != null) { registerHex(hex); return colorName(hex); }
+        }
+        // "currentColor" and any other non-hex value → treat as black (#000000)
         registerHex(CURRENT_COLOR_HEX);
         return colorName(CURRENT_COLOR_HEX);
     }
@@ -611,26 +636,24 @@ public class SvgToLaTeXConverter {
     // Miscellaneous helpers
     // -----------------------------------------------------------------------
 
-    private String svgAnchorToTikz(String anchor, double rotate) {
-        // Rotated labels (e.g. -45�) with text-anchor=end � top-right corner at the point.
+    private String svgAnchorToTikz(String anchor, double rotate, double rawY) {
+        // Rotated labels (e.g. -45°) with text-anchor=end → top-right corner at the point.
         if (Math.abs(rotate) == 45 && "end".equals(anchor)) return "north east";
         switch (anchor) {
-            // "middle" = horizontally centred; in SVG the label hangs *below* its y
-            // coordinate (dyH0.71em pushes the baseline down by ~1 line height so the
-            // top of the glyph sits at y).  TikZ `north` places the top of the text
-            // box at the coordinate, which is the exact equivalent.
-            case "middle": return "north";
-            // "end" = right-aligned, vertically centred at the coordinate.
-            // SVG dyH0.32em (~half line height) achieves the same centering that
-            // TikZ `east` gives automatically.
-            case "end":    return "east";
-            case "start":  return "west";
-            default:       return "north";
+            case "middle":
+                // Bottom x-axis: y>0, dy≈0.71em → text hangs below → anchor=north
+                // Top x-axis:    y<0, dy=0em    → text sits above → anchor=south
+                return (rawY < 0) ? "south" : "north";
+            // "end" = right-aligned, vertically centred (left y-axis, dy≈0.32em)
+            case "end":   return "east";
+            // "start" = left-aligned, vertically centred (right y-axis, dy≈0.32em)
+            case "start": return "west";
+            default:      return "north";
         }
     }
 
     private String escapeTex(String s) {
-        return s.replace("\u2212", "-")   // Unicode MINUS SIGN � ASCII hyphen-minus
+        return s.replace("\u2212", "-")   // Unicode MINUS SIGN → ASCII hyphen-minus
                 .replace("\\", "\\textbackslash{}")
                 .replace("_",  "\\_")
                 .replace("%",  "\\%")
@@ -679,7 +702,7 @@ public class SvgToLaTeXConverter {
         sb.append("\\usepackage{tikz}\n");
         sb.append("\\begin{document}\n");
 
-        // Emit \definecolor for every colour found in the SVG  no exceptions
+        // Emit \definecolor for every colour found in the SVG — no exceptions
         for (Map.Entry<String, String> e : colorDefs.entrySet()) {
             String name = e.getValue();
             String hex  = e.getKey().replace("#", "");
