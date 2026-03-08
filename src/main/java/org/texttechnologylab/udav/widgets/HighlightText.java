@@ -243,7 +243,9 @@ public class HighlightText extends Widget {
                     .orElse("#000000");
 
             String css = styletoCss(styleName, color);
-            Label label = new Label(s.category(), "color: " + color + ";");
+            Label label = typeStyles.containsKey(s.type())
+                    ? new Label(s.category(), "color: " + color + ";")
+                    : null;
 
             int b = Math.max(0, Math.min(N, s.begin()));
             int e = Math.max(0, Math.min(N, s.end()));
@@ -288,10 +290,10 @@ public class HighlightText extends Widget {
 
             if (e.start) {
                 if (!activeCss.contains(e.styleCss)) activeCss.add(e.styleCss);
-                activeLblMap.putIfAbsent(e.label.text(), e.label);
+                if (e.label != null) activeLblMap.putIfAbsent(e.label.text(), e.label);
             } else {
                 activeCss.remove(e.styleCss);
-                activeLblMap.remove(e.label.text());
+                if (e.label != null) activeLblMap.remove(e.label.text());
             }
 
             last = e.idx;

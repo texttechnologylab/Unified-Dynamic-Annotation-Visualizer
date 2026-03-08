@@ -208,7 +208,7 @@ public class SvgToLaTeXConverter {
      * We only track the small subset used in this SVG grammar.
      */
     private static class InheritedAttrs {
-        String fill   = "none";
+        String fill   = "currentColor";  // SVG spec default fill is black
         String stroke = "currentColor";
         String textAnchor = "start";
         double fontSize = 10;
