@@ -6,7 +6,9 @@ export default class SimpleMap extends D3Visualization {
     type: "SimpleMap",
     title: "Simple Map",
     generator: { id: "" },
-    options: {},
+    options: {
+      worldColor: "#b8b8b8",
+    },
     icon: "bi bi-map",
     w: 8,
     h: 6,
@@ -20,6 +22,10 @@ export default class SimpleMap extends D3Visualization {
       type: "select",
       label: "Generator",
       options: () => getGeneratorOptions("MapCoordinates"),
+    },
+    "options.worldColor": {
+      type: "color",
+      label: "World color",
     },
   };
   static previewData = [
@@ -41,6 +47,8 @@ export default class SimpleMap extends D3Visualization {
 
   constructor(root, config) {
     super(root, config, { top: 0, right: 0, bottom: 0, left: 0 });
+
+    this.worldColor = config.options.worldColor || "#b8b8b8";
   }
 
   async fetch() {
@@ -71,7 +79,7 @@ export default class SimpleMap extends D3Visualization {
         .join("path")
         .attr("class", "world")
         .attr("d", path)
-        .attr("fill", "#b8b8b8")
+        .attr("fill", this.worldColor)
         .style("stroke", "#fff")
         .style("stroke-width", 0.1);
 

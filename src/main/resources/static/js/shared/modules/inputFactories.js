@@ -147,4 +147,14 @@ export default {
 
     return createElement("div", { className: "dv-switch" }, [input, track]);
   },
+
+  color(key, value, _, onchange) {
+    return createElement("input", {
+      name: key,
+      type: "color",
+      value,
+      className: "dv-color-input",
+      onchange,
+    });
+  },
 };
