@@ -49,16 +49,62 @@ the integrated database.
 2. In the root folder, create an `.env` file that holds the following environment variables:
 
    ```
-   DB_URL=
-   DB_USER=
-   DB_PASS=
-   DB_SCHEMA=
-   DB_BATCH_SIZE=
-   DB_MAX_IDENT=
-   DB_DIALECT=
-   SROUCE_BUILDER=
-   DUUI_IMPORTER=
-   PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=
+   # UDAV Environment Configuration Example
+   # Copy this file to .env and modify values as needed
+   
+   # ============================================
+   # Database Configuration
+   # ============================================
+   DB_URL=jdbc:postgresql://postgres:5432/udav
+   DB_USER=postgres
+   DB_PASS=postgres
+   DB_SCHEMA=public
+   DB_DIALECT=POSTGRES
+   # Batch size for database inserts (default: 5000)
+   # Higher = fewer DB roundtrips, more memory. Range: 1000-15000
+   DB_BATCH_SIZE=5000
+   # Max identifier length (PostgreSQL: 63, MySQL: 64, MSSQL: 128)
+   DB_MAX_IDENT=255
+   
+   # ============================================
+   # DUUI Importer Configuration
+   # ============================================
+   # Enable/disable DUUI importer
+   DUUI_IMPORTER=false
+   # Path to input files
+   DUUI_IMPORTER_PATH=/app/data/input
+   # File extension: .xmi (uncompressed) or .gz (gzip compressed)
+   DUUI_IMPORTER_FILE_ENDING=.xmi
+   # Number of parallel workers (default: 4, rule: 1 per CPU core)
+   DUUI_IMPORTER_WORKERS=4
+   # UIMA CAS pool size (default: 2×workers)
+   DUUI_IMPORTER_CAS_POOL_SIZE=8
+   # Optional: External TypeSystem XML file path (auto-detected from XMI if not set)
+   DUUI_IMPORTER_TYPE_SYSTEM_PATH=
+   
+   # ============================================
+   # Pipeline Configuration
+   # ============================================
+   PIPELINE_IMPORTER=true
+   PIPELINE_IMPORTER_FOLDER=/app/data/pipelines
+   PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=false
+   
+   # ============================================
+   # Source Builder
+   # ============================================
+   SROUCE_BUILDER=false
+   
+   # ============================================
+   # LLM API Configuration (optional)
+   # ============================================
+   LLM_BASE_URL=http://your-llm-server:8000
+   LLM_API_TOKEN=your-api-token-here
+   
+   # ============================================
+   # Java Options
+   # ============================================
+   # Adjust memory based on your system and data size
+   JAVA_OPTS=-Xmx2048m -Xms1024m
    ```
 
 3. Run the File Importer to import the annotation data
@@ -67,7 +113,16 @@ the integrated database.
 
 # File Importer
 
-Work in progress...
+UDAV is using DUUI for importing the annotated documents. To do so, you can use the integrated DUUIImporter which is a Java-based component that serves as an importer for UDAV and ingests all annotated documents into the integrated database. You  need to configure the importer by setting environment variables in the `.env` file.
+
+| Environmentvariable              | Default   | Description                                                                          |
+|----------------------------------|-----------|--------------------------------------------------------------------------------------|
+| `DUUI_IMPORTER`                  | false     | activate the importer                                                                |
+| `DUUI_IMPORTER_PATH`             | -         | path to the DUUI pipeline descriptor file(s)                                         |
+| `DUUI_IMPORTER_FILE_ENDING`      | .xmi      | specifies the file ending of the document(s) to be imported                          |
+| `DUUI_IMPORTER_WORKERS`          | 4         | Number of parallel workers (rule: 1 per CPU core)                                    |
+| `DUUI_IMPORTER_CAS_POOL_SIZE`    | 2*workers | UIMA CAS pool size                                                                   |
+| `DUUI_IMPORTER_TYPE_SYSTEM_PATH` | -         | Optional: External TypeSystem XML file path (auto-detected from XMI/DUUI if not set) |
 
 # Source Build and Generators
 
@@ -75,7 +130,11 @@ Work in progress...
 
 # Data API
 
-Work in progress...
+UDAV provides a RESTful API for fetching the data to be visualized on the frontend. The API is built using Java and Spring Boot, and it interacts with the integrated database to retrieve the necessary data based on the user's requests. The API endpoints are designed to support various types of queries, allowing for flexible data retrieval that can be easily consumed by the frontend components.
+The API is constructed in a modular way. With Controller, Service and Repository layers, it follows the common best practices for building maintainable and scalable APIs. The Controller layer handles incoming HTTP requests and maps them to the appropriate Service methods. The Service layer contains the business logic for processing the requests and interacting with the Repository layer, which is responsible for database operations.
+This makes it easy to extend the API with new endpoints or modify existing ones as needed, without affecting other parts of the application. The API also includes error handling and validation to ensure that requests are processed correctly and that any issues are communicated back to the client in a clear and consistent manner.
+
+The only exception is the data API, which uses a custom ChartHandler to support different types of charts in a modular way. Each chart type has its own handler.
 
 # Webpage
 
