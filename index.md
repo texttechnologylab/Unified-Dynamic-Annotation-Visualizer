@@ -349,13 +349,16 @@ To add a new generator, follow these steps:
 | ---------------------- |
 | The main menu in UDAV for selecting and managing different pipeline views. |
 
+
 | ![example4](/img/example4.png) |
 | ---------------------- |
 | This pipeline view shows diagrams with annotations for part-of-speech. Filters can be set at the corpus level in the sidebar on the left. |
 
+
 | ![example3](/img/example3.png) |
 | ---------------------- |
 | This pipeline view provides some diagrams with annotations for part-of-speech and named entities as well as static text and image to provide a title (top) and captions below each diagram. In the middle, a text selected via UDAV is visualized, where the highlighting corresponds to the colors of the other diagrams due to a shared Generator. The control panel for filtering the displayed data of the bar chart on the right is opened. |
+
 
 | ![editor](/img/editor.png) |
 | ---------------------- |
