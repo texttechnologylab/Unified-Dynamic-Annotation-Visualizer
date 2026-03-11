@@ -5,7 +5,6 @@ import {
   createSource,
   createWidget,
   loadSources,
-  saveSources,
 } from "./utils/editorActions.js";
 import { debounce } from "../../shared/modules/utils.js";
 import {
@@ -30,7 +29,7 @@ export default class Editor {
     this.initGrid();
 
     // Load existing data
-    loadSources(config.sources || []);
+    loadSources(config.sources || [], config.generators || []);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
@@ -133,7 +132,8 @@ export default class Editor {
     const pipelines = await getPipelines();
     const config = {
       id: id,
-      sources: saveSources(),
+      sources: state.sources,
+      generators: state.generators,
       widgets: state.grid.save(false),
     };
 
