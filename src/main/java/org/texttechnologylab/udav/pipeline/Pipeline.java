@@ -178,6 +178,8 @@ public class Pipeline {
 
     public static Pipeline generatePipelineFromJSONView(JSONView pipelineView, DBAccess dbAccess) {
         try {
+            pipelineView = new JSONView(mergeGeneratorsIntoSources(pipelineView.asMap()));
+
             String id = getJSONViewString(pipelineView, "id");
             JSONView sourcesView = pipelineView.get("sources");
             HashMap<String, Generator> generators = new HashMap<>();
@@ -369,11 +371,54 @@ public class Pipeline {
     }
 
 
-    private static String[] keysOnlyInA(Map<String, ?> mapA, Map<String, ?> mapB) {
-        List<String> uniqueKeys = new ArrayList<>();
-        for (String key : mapA.keySet()) {
-            if (!mapB.containsKey(key)) { uniqueKeys.add(key); }
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> mergeGeneratorsIntoSources(Map<String, Object> input) {
+        Map<String, Object> result = new LinkedHashMap<>(input);
+
+        // Deep-copy sources into a new list so we don't mutate the original
+        List<Map<String, Object>> originalSources = (List<Map<String, Object>>) input.get("sources");
+        List<Map<String, Object>> newSources = new ArrayList<>();
+
+        // Build a map of sourceId -> createsGenerators list for quick lookup
+        Map<String, List<Map<String, Object>>> sourceGeneratorMap = new LinkedHashMap<>();
+
+        for (Map<String, Object> source : originalSources) {
+            Map<String, Object> newSource = new LinkedHashMap<>(source);
+            String sourceId = (String) source.get("id");
+
+            // Ensure createsGenerators exists; copy existing ones if present
+            List<Map<String, Object>> existingGenerators =
+                    (List<Map<String, Object>>) source.getOrDefault("createsGenerators", new ArrayList<>());
+            List<Map<String, Object>> generatorList = new ArrayList<>(existingGenerators);
+
+            newSource.put("createsGenerators", generatorList);
+            sourceGeneratorMap.put(sourceId, generatorList);
+            newSources.add(newSource);
         }
-        return uniqueKeys.toArray(new String[0]);
+
+        // Iterate over standalone generators and merge them into the matching source
+        List<Map<String, Object>> standaloneGenerators =
+                (List<Map<String, Object>>) input.getOrDefault("generators", new ArrayList<>());
+
+        for (Map<String, Object> generator : standaloneGenerators) {
+            String sourceId = (String) generator.get("source");
+
+            List<Map<String, Object>> targetList = sourceGeneratorMap.get(sourceId);
+            if (targetList == null) {
+                throw new IllegalArgumentException(
+                        "Generator references unknown source id: " + sourceId);
+            }
+
+            // Copy the generator without the "source" key, as it's now implied by nesting
+            Map<String, Object> strippedGenerator = new LinkedHashMap<>(generator);
+            strippedGenerator.remove("source");
+            targetList.add(strippedGenerator);
+        }
+
+        // Build the result: same top-level structure but with updated sources and no "generators"
+        result.put("sources", newSources);
+        result.remove("generators");
+
+        return result;
     }
 }
