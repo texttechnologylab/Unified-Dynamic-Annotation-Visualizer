@@ -1,5 +1,9 @@
 import accordions from "../../shared/modules/accordions.js";
-import { identifierValid, widgetsValid } from "./utils/editorValidations.js";
+import {
+  identifierValid,
+  widgetsValid,
+  sourcesValid,
+} from "./utils/editorValidations.js";
 import state from "./utils/editorState.js";
 import {
   createSource,
@@ -137,7 +141,8 @@ export default class Editor {
       widgets: state.grid.save(false),
     };
 
-    const ok = identifierValid(config) && widgetsValid(config);
+    const ok =
+      identifierValid(config) && widgetsValid(config) && sourcesValid(config);
 
     if (ok && pipelines.includes(config.id)) {
       state.modal.confirm(

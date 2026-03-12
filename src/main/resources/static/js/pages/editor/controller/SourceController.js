@@ -14,7 +14,7 @@ export default class SourceController {
     this.item = item;
   }
 
-  init(generators) {
+  init(generators = []) {
     const buttons = this.root.querySelectorAll("button");
     const options = this.root.querySelector(".dv-dropdown-menu");
     const body = this.root.querySelector(".dv-source-card-body");
