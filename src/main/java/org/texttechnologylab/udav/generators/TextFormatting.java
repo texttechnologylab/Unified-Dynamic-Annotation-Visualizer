@@ -80,8 +80,6 @@ public class TextFormatting extends GeneratorUIMA {
                 Set<String> sourceFiles = filterListSourceFiles.getWhitelist();
                 if (sourceFiles == null || sourceFiles.isEmpty()) {
                     throw new IllegalArgumentException("No sofaFile defined for generator \"" + id + "\" and fileWhitelist is empty or undefined.");
-                } else if (sourceFiles.size() > 1) {
-                    throw new IllegalArgumentException("No sofaFile defined for generator \"" + id + "\" and fileWhitelist contains more than one file.");
                 } else {
                     for (String f : sourceFiles) { this.UIMAsofaFile = f; break; }
                 }
