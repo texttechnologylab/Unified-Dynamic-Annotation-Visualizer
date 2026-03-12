@@ -14,7 +14,7 @@ export default class SourceController {
     this.item = item;
   }
 
-  init() {
+  init(generators = []) {
     const buttons = this.root.querySelectorAll("button");
     const options = this.root.querySelector(".dv-dropdown-menu");
     const body = this.root.querySelector(".dv-source-card-body");
@@ -26,10 +26,13 @@ export default class SourceController {
     );
 
     // Load existing generators
-    for (const config of this.item.createsGenerators) {
+    for (const config of [
+      ...(this.item.createsGenerators || []),
+      ...generators,
+    ]) {
       this.appendGenerator(body, config);
     }
-    this.item.createsGenerators = [];
+    delete this.item.createsGenerators;
 
     // Append available generator options
     Object.values(configs).forEach((Generator) => {
