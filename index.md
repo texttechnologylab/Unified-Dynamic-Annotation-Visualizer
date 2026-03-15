@@ -48,7 +48,7 @@ the integrated database.
 
 2. In the root folder, create an `.env` file that holds the following environment variables:
 
-   ```
+   ```env
    # UDAV Environment Configuration Example
    # Copy this file to .env and modify values as needed
    
