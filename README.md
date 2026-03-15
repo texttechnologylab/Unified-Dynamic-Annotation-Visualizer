@@ -6,12 +6,19 @@
 </div>
 
 <div align="center">
-  <h1>Unified Dynamic Annotation Visualizer</h1>
+  <h1>Unified Dynamic Annotation Visualizer (UDAV)</h1>
   <img height="200px" src="/src/main/resources/static/img/logo.png"/>
+  <h3>A tool for generating dynamic and interactive annotation visualizations.</h3>
   <hr/>
 </div>
 
 UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.
+
+## Features
+
+- Dynamic and interactive charts
+- Visual editor
+- Different export options
 
 ## Getting Started
 
