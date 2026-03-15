@@ -95,12 +95,6 @@ the integrated database.
    SROUCE_BUILDER=false
    
    # ============================================
-   # LLM API Configuration (optional)
-   # ============================================
-   LLM_BASE_URL=http://your-llm-server:8000
-   LLM_API_TOKEN=your-api-token-here
-   
-   # ============================================
    # Java Options
    # ============================================
    # Adjust memory based on your system and data size
@@ -126,7 +120,10 @@ UDAV is using DUUI for importing the annotated documents. To do so, you can use 
 
 # Source Build and Generators
 
-Work in progress...
+To visualize annotations from imported UIMA documents subject to user requirements, UDAV implements a Data Generation Layer with two modules:
+
+- `SourceBuilder` interprets pipeline configurations and instantiates generators for each visualization.
+- Generators transform, aggregate, and structure annotations to meet the requirements of the API and underlying visualizations (according to the pipeline definition). That is, each diagram or visualization type with distinct data requirements is produced by a dedicated generator. To support new data structures, developers need to implement the standard `Generator` interface with custom logic.
 
 # Data API
 
@@ -349,23 +346,26 @@ To add a new generator, follow these steps:
 | ---------------------- |
 | The main menu in UDAV for selecting and managing different pipeline views. |
 
+<br>
 
 | ![example4](/img/example4.png) |
 | ---------------------- |
 | This pipeline view shows diagrams with annotations for part-of-speech. Filters can be set at the corpus level in the sidebar on the left. |
 
+<br>
 
 | ![example3](/img/example3.png) |
 | ---------------------- |
 | This pipeline view provides some diagrams with annotations for part-of-speech and named entities as well as static text and image to provide a title (top) and captions below each diagram. In the middle, a text selected via UDAV is visualized, where the highlighting corresponds to the colors of the other diagrams due to a shared Generator. The control panel for filtering the displayed data of the bar chart on the right is opened. |
 
+<br>
 
 | ![editor](/img/editor.png) |
 | ---------------------- |
 | Example of the Editor in UDAV for creating and modifying Pipelines as well as for arranging the resulting widgets. The sources and generators can be modified in the sidebar on the left. |
 
 ## Authors / Contributors
-* Thiemo Dahmann
+* Thiemo Dahmann [<img src="./img/github.svg" height="20px">](https://github.com/LociStar)
 * Julian Schneider
 * Philipp Stephan [<img src="./img/github.svg" height="20px">](https://github.com/phpp28) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Philipp-Stephan-4)
 * Giuseppe Abrami (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/abrami) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Giuseppe-Abrami)
