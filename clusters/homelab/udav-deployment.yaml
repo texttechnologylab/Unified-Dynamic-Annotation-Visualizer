@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: app
-          image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer:20260316143936-b005f15c744e57cfaaaf521eb0a5d056f828674d # {"$imagepolicy": "flux-system:udav"}
+          image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer:20260316154745-778d52d9c44c1c8967d7d0ea69de717d452ffbb6 # {"$imagepolicy": "flux-system:udav"}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
