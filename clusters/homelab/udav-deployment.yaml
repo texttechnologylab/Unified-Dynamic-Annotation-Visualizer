@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udav
+  namespace: uni
+  labels:
+    app: udav
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: udav
+  template:
+    metadata:
+      labels:
+        app: udav
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: app
+          image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer:latest # {"$imagepolicy": "flux-system:udav"}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: udav-config
+            - secretRef:
+                name: udav-secrets
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1.5Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: udav
+  namespace: uni
+  labels:
+    app: udav
+spec:
+  selector:
+    app: udav
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: udav-ingress
+  namespace: uni
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - udav.example.com   # TODO: replace with your actual hostname
+      secretName: udav-tls
+  rules:
+    - host: udav.example.com   # TODO: replace with your actual hostname
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: udav
+                port:
+                  name: http
+

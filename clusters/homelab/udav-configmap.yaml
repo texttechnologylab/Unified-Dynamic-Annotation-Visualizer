@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: udav-config
+  namespace: uni
+data:
+  # Database configuration (non-sensitive)
+  DB_URL: "jdbc:postgresql://pg-postgresql.dlti.svc.cluster.local:5432/udav"
+  DB_SCHEMA: "public"
+  DB_BATCH_SIZE: "5000"
+  DB_MAX_IDENT: "255"
+  DB_DIALECT: "POSTGRES"
+
+  # DUUI Importer Configuration
+  DUUI_IMPORTER: "false"
+  DUUI_IMPORTER_PATH: "/app/data/input"
+  DUUI_IMPORTER_WORKERS: "4"
+  DUUI_IMPORTER_CAS_POOL_SIZE: "8"
+
+  # Application Configuration
+  APP_INPUT_DIR: "/app/data/input"
+  SROUCE_BUILDER: "false"
+  PIPELINE_IMPORTER: "true"
+  PIPELINE_IMPORTER_FOLDER: "/app/pipelines"
+
+  # JVM options
+  JAVA_OPTS: "-Xmx1024m -Xms512m"
