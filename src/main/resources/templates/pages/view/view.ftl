@@ -18,6 +18,7 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
+    <#include "/shared/chatBot.ftl"> 
     <#include "/pages/view/viewSidebar.ftl"> 
     <#include "/pages/view/viewGrid.ftl">
 
@@ -28,6 +29,7 @@
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
+        <@chatBot />
       </main>
 
       <@modal />
@@ -37,6 +39,8 @@
       import "/packages/gridstack-12.3.3/package/dist/gridstack-all.js";
       import "/packages/bootstrap-5.3.8/package/dist/js/bootstrap.bundle.min.js";
       import "/packages/d3-7.9.0/package/dist/d3.min.js";
+      import "/packages/marked-17.0.4/package/lib/marked.umd.js";
+      import "/packages/dompurify-3.3.2/package/dist/purify.min.js";
       import View from "/js/pages/view/View.js";
 
       const widgets = JSON.parse("${widgets?json_string}");

@@ -4,28 +4,15 @@ import WidgetController from "../controller/WidgetController.js";
 import SourceController from "../controller/SourceController.js";
 import GeneratorController from "../controller/GeneratorController.js";
 
-export function loadSources(configs) {
+export function loadSources(sources, generators) {
   const container = document.querySelector(".dv-sources-container");
 
-  for (const config of configs) {
+  for (const config of sources) {
     const controller = createSource(config);
 
     container.prepend(controller.root);
-    controller.init();
+    controller.init(generators);
   }
-}
-
-export function saveSources() {
-  const sources = structuredClone(state.sources);
-
-  for (const generator of state.generators) {
-    const { source: id, ...rest } = generator;
-    const source = sources.find((item) => item.id === id);
-
-    source.createsGenerators.push(rest);
-  }
-
-  return sources;
 }
 
 export function createSource(config) {

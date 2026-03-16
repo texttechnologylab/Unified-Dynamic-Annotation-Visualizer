@@ -1,8 +1,9 @@
 import { getTikz } from "../../../api/convertions.api.js";
 import { applyStyles, createElement } from "../../../shared/modules/utils.js";
+import state from "../utils/viewState.js";
 
 export default class ExportHandler {
-  constructor(widget, formats) {
+  constructor(widget) {
     this.serializer = new XMLSerializer();
     this.widget = widget;
 
@@ -10,6 +11,17 @@ export default class ExportHandler {
     const dropdown = root.querySelector(".dv-dropdown-menu");
 
     this.filename = "chart";
+
+    const formats = {
+      tex: "bi bi-file-earmark-font",
+      csv: "bi bi-table",
+      json: "bi bi-braces",
+    };
+
+    if (widget.svg) {
+      formats.svg = "bi bi-file-earmark-code";
+      formats.png = "bi bi-image";
+    }
 
     if (dropdown) {
       Object.entries(formats).forEach(([format, icon]) => {
@@ -35,11 +47,11 @@ export default class ExportHandler {
   }
 
   getSVG() {
-    return this.widget.svg.node ? this.widget.svg.node() : this.widget.svg;
+    return this.widget.svg?.node ? this.widget.svg.node() : this.widget.svg;
   }
 
   getMetadata() {
-    return this.widget.filter || {};
+    return { ...state.corpusFilter.filter, ...this.widget.filter };
   }
 
   prepareExport(format) {
@@ -103,16 +115,23 @@ export default class ExportHandler {
   }
 
   async exportTEX() {
-    let svg = this.getSVG().cloneNode(true);
-    svg = applyStyles(svg, [
-      { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
-      { selector: '[fill="currentColor"]', styles: { fill: "black" } },
-      { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
-      { selector: '[fill="transparent"]', styles: { fill: "none" } },
-    ]);
+    let str = "";
+
+    // Prepare svg if one exists
+    if (this.widget.svg) {
+      let svg = this.getSVG().cloneNode(true);
+
+      svg = applyStyles(svg, [
+        { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
+        { selector: '[fill="currentColor"]', styles: { fill: "black" } },
+        { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
+        { selector: '[fill="transparent"]', styles: { fill: "none" } },
+      ]);
+
+      str = this.serializer.serializeToString(svg);
+    }
 
     const type = this.widget.constructor.defaultConfig.type;
-    const str = this.serializer.serializeToString(svg);
     const json = this.getJSON();
     const meta = {
       metadata: this.getMetadata(),

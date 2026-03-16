@@ -1,8 +1,10 @@
 import { getFiles } from "../../../api/files.api.js";
-import { getGeneratorOptions } from "../utils/editorActions.js";
 
 export default class TextFormatting {
   static token = "TF";
+  static description = `
+  A generator for storing text, including various types of formatting and colorization.
+  <br> Compatible with: <strong>Highlight Text</strong>`;
   static defaultConfig = {
     name: "New TextFormatting",
     type: "TextFormatting",

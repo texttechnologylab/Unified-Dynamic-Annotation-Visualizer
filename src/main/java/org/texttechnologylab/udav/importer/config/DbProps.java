@@ -8,11 +8,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "app.db")
 public class DbProps {
-    private String url;
-    private String user;
-    private String pass;
+    private String url = "jdbc:postgresql://localhost:5432/postgres";
+    private String user = "postgres";
+    private String pass = "postgres";
     private String schema = "public";
-    private int batchSize = 2000;
+    private int batchSize = 5000;
     private int maxIdent = 255;
     private String dialect = "POSTGRES";
 }

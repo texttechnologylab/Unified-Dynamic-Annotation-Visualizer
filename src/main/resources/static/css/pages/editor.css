@@ -145,7 +145,15 @@
 
 .dv-generator-option {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.375rem;
+
+  i {
+    color: unset !important;
+    margin: 0 !important;
+    font-size: var(--font-size-sm);
+  }
 }
 
 .dv-generator-card {

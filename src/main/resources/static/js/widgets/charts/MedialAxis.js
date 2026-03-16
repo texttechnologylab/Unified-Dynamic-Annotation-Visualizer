@@ -86,7 +86,7 @@ export default class MedialAxis extends D3Visualization {
   ];
 
   constructor(root, config) {
-    super(root, config, { top: 10, right: 10, bottom: 10, left: 10 });
+    super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });
 
     this.draw = {
       boundary: true,
@@ -95,10 +95,6 @@ export default class MedialAxis extends D3Visualization {
       centers: false,
       voronoi: false,
     };
-  }
-
-  async fetch() {
-    return await fetch("/points.json").then((response) => response.json());
   }
 
   async init() {
@@ -165,8 +161,16 @@ export default class MedialAxis extends D3Visualization {
 
     const yScale = d3
       .scaleLinear()
-      .range([0, this.height])
+      .range([this.height, 0])
       .domain(this.domain(data, (d) => d.y));
+
+    const { area, zoom } = this.createAxisZoom([1, 40], {
+      bottom: xScale,
+      left: yScale,
+      top: xScale,
+      right: yScale,
+    });
+    this.plotArea = area;
 
     const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
     const delaunay = d3.Delaunay.from(points);
@@ -202,7 +206,7 @@ export default class MedialAxis extends D3Visualization {
         "transparent",
         (d) => d.radius,
         "steelblue",
-      );
+      ).attr("opacity", 0.4);
     }
 
     // Draw circumcenters
@@ -216,8 +220,10 @@ export default class MedialAxis extends D3Visualization {
     }
 
     if (!this.tooltip.empty()) {
+      this.svg.call(zoom);
+
       // Draw invisible hover targets
-      const container = this.svg.select("g").append("g");
+      const container = this.plotArea.append("g");
 
       this.drawLines("hover", medialEdges, "transparent", 20)
         .style("cursor", "help")
@@ -242,13 +248,6 @@ export default class MedialAxis extends D3Visualization {
 
     // Cache rendered data
     this.data = data;
-  }
-
-  domain(data, fn, padding = 0.05) {
-    const [min, max] = d3.extent(data, fn);
-    const range = max - min;
-
-    return [min - range * padding, max + range * padding];
   }
 
   circumcenter(a, b, c) {
@@ -361,8 +360,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawPath(path, color = "gray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .append("path")
       .attr("fill", "none")
       .attr("stroke", color)
@@ -371,8 +369,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawLines(key, edges, color = "gray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("line." + key)
       .data(edges)
       .join("line")
@@ -386,8 +383,7 @@ export default class MedialAxis extends D3Visualization {
   }
 
   drawCircles(key, points, fill = "red", radius = 2, stroke = "none") {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("circle." + key)
       .data(points)
       .join("circle")

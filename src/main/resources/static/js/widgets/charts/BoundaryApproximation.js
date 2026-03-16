@@ -8,7 +8,7 @@ export default class BoundaryApproximation extends D3Visualization {
     generator: { id: "" },
     options: {
       gridRows: 8,
-      maxRadius: 35,
+      radiusMultiplier: 1.0,
       threshold: 0,
     },
     icon: "bi bi-bounding-box-circles",
@@ -30,10 +30,10 @@ export default class BoundaryApproximation extends D3Visualization {
       label: "Initial grid rows",
       options: { min: 1, max: 100 },
     },
-    "options.maxRadius": {
+    "options.radiusMultiplier": {
       type: "range",
-      label: "Initial max radius",
-      options: { min: 1, max: 100 },
+      label: "Initial radius multiplier",
+      options: { min: 1.0, max: 10.0, step: 0.1 },
     },
     "options.threshold": {
       type: "range",
@@ -101,19 +101,15 @@ export default class BoundaryApproximation extends D3Visualization {
   ];
 
   constructor(root, config) {
-    super(root, config, { top: 0, right: 0, bottom: 0, left: 0 });
+    super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });
 
     this.draw = {
       grid: false,
       clusters: false,
     };
     this.gridRows = config.options.gridRows || 8;
-    this.maxRadius = config.options.maxRadius || 35;
+    this.radiusMultiplier = config.options.radiusMultiplier || 1.0;
     this.threshold = config.options.threshold || 0;
-  }
-
-  async fetch() {
-    return await fetch("/skeleton.json").then((response) => response.json());
   }
 
   async init() {
@@ -152,10 +148,10 @@ export default class BoundaryApproximation extends D3Visualization {
       {
         type: "range",
         label: "Cluster Radius",
-        value: this.maxRadius,
-        options: { min: 1, max: 100 },
+        value: this.radiusMultiplier,
+        options: { min: 1.0, max: 10.0, step: 0.1 },
         onchange: (event) => {
-          this.maxRadius = event.target.value;
+          this.radiusMultiplier = event.target.value;
           this.render(this.data);
         },
       },
@@ -183,8 +179,16 @@ export default class BoundaryApproximation extends D3Visualization {
 
     const yScale = d3
       .scaleLinear()
-      .range([0, this.height])
+      .range([this.height, 0])
       .domain(this.domain(data, (d) => d.y));
+
+    const { area, zoom } = this.createAxisZoom([1, 40], {
+      bottom: xScale,
+      left: yScale,
+      top: xScale,
+      right: yScale,
+    });
+    this.plotArea = area;
 
     const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
 
@@ -196,24 +200,9 @@ export default class BoundaryApproximation extends D3Visualization {
     // Calculate clusters
     const clusters = this.getClusters(points, rows, cols, cellSize);
 
-    // Prepare scale for cluster radii
-    const clusterScale = d3
-      .scaleLinear()
-      .range([1, this.maxRadius])
-      .domain([
-        d3.min(clusters, (d) => d[2].length),
-        d3.max(clusters, (d) => d[2].length),
-      ]);
-
     // Get a value for each grid cell. The values are the distance
     // from the cell center to the nearest cluster boundary.
-    const values = this.getCellValues(
-      clusters,
-      rows,
-      cols,
-      cellSize,
-      clusterScale,
-    );
+    const values = this.getCellValues(clusters, rows, cols, cellSize);
 
     // Calculate boundary
     const contour = d3
@@ -252,20 +241,21 @@ export default class BoundaryApproximation extends D3Visualization {
 
     // Draw clusters
     if (this.draw.clusters) {
-      this.drawCircles("cluster", clusters, "teal", (d) =>
-        clusterScale(d[2].length),
+      this.drawCircles(
+        "cluster",
+        clusters,
+        "none",
+        (d) => this.radiusMultiplier * d[2].length,
+        "teal",
       ).attr("opacity", 0.4);
+    }
+
+    if (!this.tooltip.empty()) {
+      this.svg.call(zoom);
     }
 
     // Cache rendered data
     this.data = data;
-  }
-
-  domain(data, fn, padding = 0.05) {
-    const [min, max] = d3.extent(data, fn);
-    const range = max - min;
-
-    return [min - range * padding, max + range * padding];
   }
 
   search(quadtree, xmin, ymin, xmax, ymax) {
@@ -300,19 +290,24 @@ export default class BoundaryApproximation extends D3Visualization {
           y * cellSize + cellSize,
         );
 
-        // Get the center of all found points
-        const center = found.reduce(
-          (prev, curr) => [prev[0] + curr[0], prev[1] + curr[1]],
-          [0, 0],
-        );
+        // // Get the center of all found points
+        // const center = found.reduce(
+        //   (prev, curr) => [prev[0] + curr[0], prev[1] + curr[1]],
+        //   [0, 0],
+        // );
 
-        center[0] = center[0] / found.length;
-        center[1] = center[1] / found.length;
-        center.push(found);
+        // center[0] = center[0] / found.length;
+        // center[1] = center[1] / found.length;
+        // center.push(found);
 
-        // center: [x, y, r]
-        if (center[0] && center[1]) {
-          clusters.push(center);
+        // // center: [x, y, r]
+        // if (center[0] && center[1]) {
+        //   clusters.push(center);
+        // }
+
+        for (const f of found) {
+          f.push(found);
+          clusters.push(f);
         }
       }
     }
@@ -320,7 +315,7 @@ export default class BoundaryApproximation extends D3Visualization {
     return clusters;
   }
 
-  getCellValues(clusters, rows, cols, cellSize, clusterScale) {
+  getCellValues(clusters, rows, cols, cellSize) {
     const values = [];
 
     for (let y = 0; y < rows; y++) {
@@ -333,7 +328,7 @@ export default class BoundaryApproximation extends D3Visualization {
 
         for (const c of clusters) {
           // Get distance from cell center to cluster boundary
-          const radius = clusterScale(c[2].length);
+          const radius = this.radiusMultiplier * c[2].length;
           const distance = radius - Math.hypot(px - c[0], py - c[1]);
 
           if (distance > value) value = distance;
@@ -347,8 +342,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawPath(key, data, path, color = "red", width = 2) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("path." + key)
       .data(data)
       .join("path")
@@ -360,8 +354,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawLines(key, edges, x1, y1, x2, y2, color = "lightgray", width = 1) {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("line." + key)
       .data(edges)
       .join("line")
@@ -375,8 +368,7 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   drawCircles(key, points, fill = "red", radius = 2, stroke = "none") {
-    return this.svg
-      .select("g")
+    return this.plotArea
       .selectAll("circle." + key)
       .data(points)
       .join("circle")

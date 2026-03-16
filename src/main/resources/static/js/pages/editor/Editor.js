@@ -1,11 +1,14 @@
 import accordions from "../../shared/modules/accordions.js";
-import { identifierValid, widgetsValid } from "./utils/editorValidations.js";
+import {
+  identifierValid,
+  widgetsValid,
+  sourcesValid,
+} from "./utils/editorValidations.js";
 import state from "./utils/editorState.js";
 import {
   createSource,
   createWidget,
   loadSources,
-  saveSources,
 } from "./utils/editorActions.js";
 import { debounce } from "../../shared/modules/utils.js";
 import {
@@ -30,7 +33,7 @@ export default class Editor {
     this.initGrid();
 
     // Load existing data
-    loadSources(config.sources || []);
+    loadSources(config.sources || [], config.generators || []);
     state.grid.load(config.widgets || []);
 
     // Replace whitespaces in the id with dashes
@@ -133,11 +136,13 @@ export default class Editor {
     const pipelines = await getPipelines();
     const config = {
       id: id,
-      sources: saveSources(),
+      sources: state.sources,
+      generators: state.generators,
       widgets: state.grid.save(false),
     };
 
-    const ok = identifierValid(config) && widgetsValid(config);
+    const ok =
+      identifierValid(config) && widgetsValid(config) && sourcesValid(config);
 
     if (ok && pipelines.includes(config.id)) {
       state.modal.confirm(

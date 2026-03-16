@@ -1,0 +1,200 @@
+[
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "London - New York",
+      "color": "#00618f"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [0.1278, 51.5074],
+        [-74.0059, 40.7128]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Tokyo - Los Angeles",
+      "color": "#e63946"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [139.6917, 35.6895],
+        [-118.2437, 34.0522]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Sydney - Singapore",
+      "color": "#2a9d8f"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [151.2093, -33.8688],
+        [103.8198, 1.3521]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "São Paulo - Johannesburg",
+      "color": "#8338ec"
+    },
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [-46.6333, -23.5505],
+        [28.0473, -26.2041]
+      ]
+    }
+  },
+
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Eiffel Tower",
+      "color": "#f4a261",
+      "icon": "monument"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [2.2945, 48.8584]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Colosseum",
+      "color": "#e9c46a",
+      "icon": "monument"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [12.4922, 41.8902]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Burj Khalifa",
+      "color": "#ff006e",
+      "icon": "building"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [55.2744, 25.1972]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Machu Picchu",
+      "color": "#06d6a0",
+      "icon": "ruins"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-72.545, -13.1631]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Mount Fuji",
+      "color": "#eb5e28",
+      "icon": "mountain"
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [138.7274, 35.3606]
+    }
+  },
+
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Central Park",
+      "color": "#52b788",
+      "fillOpacity": 0.4
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-73.9581, 40.8005],
+          [-73.9493, 40.8005],
+          [-73.9737, 40.7644],
+          [-73.9818, 40.7644],
+          [-73.9581, 40.8005]
+        ]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Hyde Park",
+      "color": "#74c69d",
+      "fillOpacity": 0.4
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-0.1755, 51.5136],
+          [-0.1513, 51.5136],
+          [-0.1513, 51.5025],
+          [-0.1755, 51.5025],
+          [-0.1755, 51.5136]
+        ]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Sahara Desert Region",
+      "color": "#e9c46a",
+      "fillOpacity": 0.2
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-5.0, 35.0],
+          [25.0, 35.0],
+          [25.0, 15.0],
+          [-5.0, 15.0],
+          [-5.0, 35.0]
+        ]
+      ]
+    }
+  },
+  {
+    "type": "Feature",
+    "properties": {
+      "label": "Amazon Rainforest Region",
+      "color": "#1b4332",
+      "fillOpacity": 0.3
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [-73.0, 5.0],
+          [-49.0, 5.0],
+          [-49.0, -15.0],
+          [-73.0, -15.0],
+          [-73.0, 5.0]
+        ]
+      ]
+    }
+  }
+]

@@ -347,3 +347,14 @@ output {
     text-align: end;
   }
 }
+
+.dv-color-input {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  cursor: pointer;
+
+  &:focus {
+    outline: 1px solid var(--primary);
+  }
+}

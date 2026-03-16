@@ -14,7 +14,7 @@ export default class SourceController {
     this.item = item;
   }
 
-  init() {
+  init(generators = []) {
     const buttons = this.root.querySelectorAll("button");
     const options = this.root.querySelector(".dv-dropdown-menu");
     const body = this.root.querySelector(".dv-source-card-body");
@@ -26,30 +26,43 @@ export default class SourceController {
     );
 
     // Load existing generators
-    for (const config of this.item.createsGenerators) {
+    for (const config of [
+      ...(this.item.createsGenerators || []),
+      ...generators,
+    ]) {
       this.appendGenerator(body, config);
     }
-    this.item.createsGenerators = [];
+    delete this.item.createsGenerators;
 
     // Append available generator options
     Object.values(configs).forEach((Generator) => {
       const config = Generator.defaultConfig;
 
+      const icon = createElement("i", { className: "bi bi-question-circle" });
+      new bootstrap.Popover(icon, {
+        trigger: "hover",
+        customClass: "dv-popover",
+        title: `<strong>${config.type}</strong>`,
+        content: Generator.description,
+        html: true,
+        offset: [0, 20],
+      });
+
       const option = createElement(
         "button",
-        {
-          className: "dv-btn dv-generator-option",
-          title: config.type,
-        },
+        { className: "dv-btn dv-generator-option" },
         [
-          createElement("div", {
-            className: "dv-generator-card-token",
-            textContent: Generator.token,
-          }),
-          createElement("span", {
-            className: "dv-text-truncate",
-            textContent: config.type,
-          }),
+          createElement("span", { className: "dv-generator-card-title" }, [
+            createElement("div", {
+              className: "dv-generator-card-token",
+              textContent: Generator.token,
+            }),
+            createElement("span", {
+              className: "dv-text-truncate",
+              textContent: config.type,
+            }),
+          ]),
+          icon,
         ],
       );
 

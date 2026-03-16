@@ -7,6 +7,7 @@ import org.texttechnologylab.udav.generators.sources.Source;
 import org.texttechnologylab.udav.pipeline.JSONView;
 import org.texttechnologylab.udav.sources.DBAccess;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Map;
@@ -133,5 +134,14 @@ public abstract class Generator {
             for (String suffix : suffixes) outputSet.add(k + suffix);
         }
         return outputSet;
+    }
+
+    public static Generator constructGenerator(String id, String className, JSONView config, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+        if (className.contains(".")) {
+            throw new IllegalArgumentException("Class name can't contain \".\".");
+        }
+        Class<?> generatorClass = Class.forName(GENERATORS_PACKAGE_PATH + "." + className);
+        return (Generator) generatorClass.getDeclaredConstructor(String.class, JSONView.class, JSONView.class, GeneratorSettings.class, DBAccess.class)
+                .newInstance(id, config, configBundle, settingsBundle, dbAccess);
     }
 }

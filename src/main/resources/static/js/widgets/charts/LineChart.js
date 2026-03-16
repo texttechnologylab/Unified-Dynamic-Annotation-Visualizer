@@ -9,6 +9,7 @@ export default class LineChart extends D3Visualization {
     generator: { id: "" },
     options: {
       points: true,
+      curve: "curveCatmullRom",
     },
     icon: "bi bi-graph-up",
     w: 8,
@@ -27,6 +28,16 @@ export default class LineChart extends D3Visualization {
     "options.points": {
       type: "switch",
       label: "Draw points",
+    },
+    "options.curve": {
+      type: "select",
+      label: "Interpolation",
+      options: [
+        { label: "Linear", value: "curveLinear" },
+        { label: "Basis spline", value: "curveBasis" },
+        { label: "Cardinal spline", value: "curveCardinal" },
+        { label: "Catmull-Rom spline", value: "curveCatmullRom" },
+      ],
     },
   };
   static previewData = [
@@ -63,32 +74,36 @@ export default class LineChart extends D3Visualization {
   ];
 
   constructor(root, config) {
-    super(root, config, { top: 10, right: 30, bottom: 30, left: 60 });
+    super(root, config, { top: 20, right: 30, bottom: 30, left: 40 });
 
     this.points = config.options.points || true;
-  }
-
-  async fetch() {
-    return await fetch("/lines.json").then((response) => response.json());
+    this.curve = config.options.curve || "curveCatmullRom";
   }
 
   async init() {
     const data = await this.fetch();
     this.render(data);
 
-    for (const item of data) {
-      this.controls.append([
-        {
+    this.filter = {
+      hide: [],
+    };
+    this.controls.append(
+      data.map(({ name }) => {
+        return {
           type: "switch",
-          label: item.name,
+          label: name,
           value: true,
           onchange: (event) => {
-            console.log(event.target.value);
+            if (event.target.checked) {
+              this.filter.hide = this.filter.hide.filter((n) => n !== name);
+            } else {
+              this.filter.hide.push(name);
+            }
             this.fetch().then((data) => this.render(data));
           },
-        },
-      ]);
-    }
+        };
+      }),
+    );
   }
 
   render(data) {
@@ -97,52 +112,55 @@ export default class LineChart extends D3Visualization {
     const coordinates = flatData(data, "coordinates");
 
     // Add x axis
-    const xAxis = d3
+    const xScale = d3
       .scaleLinear()
       .range([0, this.width])
-      .domain(d3.extent(coordinates, (item) => item.x));
-    this.svg
-      .select("g")
-      .append("g")
-      .attr("transform", `translate(0, ${this.height})`)
-      .call(d3.axisBottom(xAxis));
+      .domain(this.domain(coordinates, (item) => item.x));
 
     // Add y axis
-    const yAxis = d3
+    const yScale = d3
       .scaleLinear()
       .range([this.height, 0])
-      .domain(d3.extent(coordinates, (item) => item.y));
-    this.svg.select("g").append("g").call(d3.axisLeft(yAxis));
+      .domain(this.domain(coordinates, (item) => item.y));
+
+    const { area, zoom } = this.createAxisZoom([1, 40], {
+      bottom: xScale,
+      left: yScale,
+    });
 
     const line = d3
       .line()
-      .x((item) => xAxis(item.x))
-      .y((item) => yAxis(item.y));
+      .x((item) => xScale(item.x))
+      .y((item) => yScale(item.y))
+      .curve(d3[this.curve]);
 
     // Add the line
-    this.svg
-      .select("g")
-      .selectAll(".line")
+    area
+      .selectAll("path")
       .data(data)
       .join("path")
       .attr("d", (item) => line(item.coordinates))
       .attr("fill", "none")
       .attr("stroke", (item) => item.color)
-      .attr("stroke-width", 2.5);
+      .attr("stroke-width", 2);
 
     // Add the points
-    this.svg
-      .select("g")
-      .selectAll(".circle")
+    area
+      .selectAll("circle")
       .data(coordinates)
       .join("circle")
-      .attr("cx", (item) => xAxis(item.x))
-      .attr("cy", (item) => yAxis(item.y))
-      .attr("r", 4)
+      .attr("cx", (item) => xScale(item.x))
+      .attr("cy", (item) => yScale(item.y))
+      .attr("r", 3)
       .attr("fill", this.points ? (item) => item.color : "transparent");
 
     if (!this.tooltip.empty()) {
-      this.enableTooltip("circle", (d) => `(${d.x}, ${d.y})`);
+      this.svg.call(zoom);
+      this.enableTooltip(
+        "circle",
+        (d) => `<strong>${d.name}</strong><br>x: ${d.x}, y: ${d.y}`,
+      );
+      this.enableTooltip("path", (d) => `<strong>${d.name}</strong>`);
     }
 
     // Cache rendered data

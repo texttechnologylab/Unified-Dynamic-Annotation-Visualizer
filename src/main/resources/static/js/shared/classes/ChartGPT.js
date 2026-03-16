@@ -1,15 +1,21 @@
 import { getCompletion, getModels } from "../../api/chat.api.js";
+import state from "../../pages/view/utils/viewState.js";
+import { svgToBase64 } from "../modules/convert.js";
 import { createElement } from "../modules/utils.js";
 
 export default class ChartGPT {
   constructor(instruction) {
     const root = document.querySelector(".dv-chat-bot");
-    this.chat = root.querySelector(".dv-chat");
-    this.input = root.querySelector(".dv-text-input");
+    this.chat = root.querySelector(".dv-chat-messages");
+    this.textarea = root.querySelector("textarea");
     this.send = root.querySelector(".dv-chat-send");
-    this.select = root.querySelector("#model-select");
+    this.modelSelect = root.querySelector("#model-select");
+    this.contextSelect = root.querySelector("#context-select");
 
-    this.model = null;
+    root
+      .querySelector(".dv-chat-header")
+      .addEventListener("click", () => root.classList.toggle("collapsed"));
+
     this.messages = [{ role: "system", content: instruction }];
   }
 
@@ -17,8 +23,8 @@ export default class ChartGPT {
     this.addMessage({ role: "assistant", content: "How can I help you?" });
 
     // Enable/disable send button
-    this.input.addEventListener("input", () => {
-      if (this.input.value.trim() !== "") {
+    this.textarea.addEventListener("input", () => {
+      if (this.textarea.value.trim() !== "") {
         this.send.removeAttribute("disabled");
       } else {
         this.send.setAttribute("disabled", "true");
@@ -26,8 +32,9 @@ export default class ChartGPT {
     });
 
     // Send message
-    this.input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && this.input.value.trim() !== "") {
+    this.textarea.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && this.textarea.value.trim() !== "") {
+        event.preventDefault();
         this.completeMessages();
       }
     });
@@ -35,27 +42,66 @@ export default class ChartGPT {
 
     // Load available models
     const models = await getModels();
-    this.model = models.data[0].id;
 
+    this.modelSelect.append(
+      createElement("option", {
+        value: models.data[0].id,
+        textContent: "Model",
+      }),
+    );
     models.data.forEach((model) => {
-      this.select.append(
+      this.modelSelect.append(
         createElement("option", { value: model.id, textContent: model.name }),
       );
     });
-    this.select.addEventListener(
-      "change",
-      (event) => (this.model = event.target.value),
+
+    // Get available charts
+    const charts = state.charts.filter((chart) => chart.svg);
+
+    this.contextSelect.append(
+      createElement("option", { value: "", textContent: "Context" }),
     );
+    charts.forEach((chart) => {
+      this.contextSelect.append(
+        createElement("option", {
+          value: chart.config.id,
+          textContent: chart.config.title,
+        }),
+      );
+    });
   }
 
   async completeMessages() {
     this.setLoading(true);
-    this.addMessage({ role: "user", content: this.input.value });
-    this.input.value = "";
 
-    const completion = await getCompletion(this.model, this.messages);
+    const chart = state.charts.find(
+      (chart) => chart.config.id === this.contextSelect.value,
+    );
 
-    this.addMessage(completion.choices[0]?.message);
+    // Create message
+    const content = [{ type: "text", text: this.textarea.value }];
+    if (chart) {
+      content.push({
+        type: "image_url",
+        image_url: { url: svgToBase64(chart.svg.node()) },
+        widget: chart.config.title,
+      });
+    }
+
+    this.addMessage({ role: "user", content });
+    this.textarea.value = "";
+
+    // Get answer
+    const completion = await getCompletion(
+      this.modelSelect.value,
+      this.messages,
+    );
+    const answer = completion?.choices[0]?.message;
+
+    this.addMessage(
+      answer || { role: "assistant", content: "Error: no completion message" },
+    );
+
     this.setLoading(false);
   }
 
@@ -77,7 +123,7 @@ export default class ChartGPT {
       [
         createElement("div", {
           className: "dv-chat-message",
-          textContent: message.content,
+          innerHTML: this.parseContent(message.content),
         }),
       ],
     );
@@ -91,5 +137,26 @@ export default class ChartGPT {
       inline: "nearest",
       behavior: "smooth",
     });
+  }
+
+  parseContent(content) {
+    let string = "";
+
+    if (Array.isArray(content)) {
+      content.forEach((item) => {
+        if (item.type === "text") {
+          string += item.text;
+        } else if (item.type === "image_url") {
+          string += ` (+${item.widget})`;
+        }
+      });
+    } else {
+      string = content;
+    }
+
+    // string.replace("<think>", "<small>");
+    // string.replace("</think>", "</small>");
+
+    return DOMPurify.sanitize(marked.parse(string));
   }
 }

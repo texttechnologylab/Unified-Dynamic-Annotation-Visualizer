@@ -1,0 +1,109 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "A",
+      "color": "#00618f"
+    },
+    {
+      "id": 2,
+      "name": "B",
+      "color": "#00618f"
+    },
+    {
+      "id": 3,
+      "name": "C",
+      "color": "#00618f"
+    },
+    {
+      "id": 4,
+      "name": "D",
+      "color": "#00618f"
+    },
+    {
+      "id": 5,
+      "name": "E",
+      "color": "#00618f"
+    },
+    {
+      "id": 6,
+      "name": "F",
+      "color": "#00618f"
+    },
+    {
+      "id": 7,
+      "name": "G",
+      "color": "#00618f"
+    },
+    {
+      "id": 8,
+      "name": "H",
+      "color": "#00618f"
+    },
+    {
+      "id": 9,
+      "name": "I",
+      "color": "#00618f"
+    },
+    {
+      "id": 10,
+      "name": "J",
+      "color": "#00618f"
+    }
+  ],
+  "links": [
+    {
+      "source": 1,
+      "target": 2,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 1,
+      "target": 5,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 1,
+      "target": 6,
+      "color": "#9eadbd"
+    },
+
+    {
+      "source": 2,
+      "target": 3,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 2,
+      "target": 7,
+      "color": "#9eadbd"
+    },
+
+    {
+      "source": 3,
+      "target": 4,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 8,
+      "target": 3,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 4,
+      "target": 5,
+      "color": "#9eadbd"
+    },
+
+    {
+      "source": 4,
+      "target": 9,
+      "color": "#9eadbd"
+    },
+    {
+      "source": 5,
+      "target": 10,
+      "color": "#9eadbd"
+    }
+  ]
+}

@@ -42,3 +42,21 @@ export function widgetsValid(config) {
     return false;
   }
 }
+
+export function sourcesValid(config) {
+  const empty = config.sources.filter((source) => source.uri === "");
+
+  if (empty.length === 1) {
+    state.modal.alert(
+      "Empty Sources",
+      `There is one source with no annotation type selected.`,
+    );
+  } else if (empty.length > 1) {
+    state.modal.alert(
+      "Empty Sources",
+      `There are ${empty.length} sources with no annotation type selected.`,
+    );
+  }
+
+  return empty.length === 0;
+}

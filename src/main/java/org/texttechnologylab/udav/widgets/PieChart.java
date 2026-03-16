@@ -1,9 +1,8 @@
-package org.texttechnologylab.udav.api.charts.impl;
+package org.texttechnologylab.udav.widgets;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
@@ -14,12 +13,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component("PieChart")
-@RequiredArgsConstructor
-public class PieChartHandler implements ChartHandler {
+public class PieChart extends Widget {
 
-    private final GeneratorDataRepository repo;
-    private final ObjectMapper mapper;
-
+    public PieChart(GeneratorDataRepository repo, ObjectMapper mapper) {
+        super(repo, mapper);
+    }
 
     @Override
     public JsonNode render(String generatorId,

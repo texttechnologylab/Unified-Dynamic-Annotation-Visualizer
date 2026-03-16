@@ -5,6 +5,6 @@ export default class DateRange {
   }
 
   getValues() {
-    return { min: this.inputs[0].value, max: this.inputs[1].value };
+    return { dateFrom: this.inputs[0].value, dateTo: this.inputs[1].value };
   }
 }

@@ -21,9 +21,7 @@ export default class View {
     accordions.init();
     dropdowns.init();
 
-    const chatBot = new ChartGPT(
-      "You are an assistant called ChartGPT. Do NOT use markdown in your answers.",
-    );
+    const chatBot = new ChartGPT("You are an assistant called ChartGPT.");
     chatBot.init();
   }
 

@@ -51,6 +51,11 @@ public class MissingSchemaScanner implements ApplicationRunner {
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
 
+            // Check if pipeline table exists before attempting to query it
+            if (!tableExists(dsl, schema, PIPELINE_TABLE)) {
+                return;
+            }
+
             // app data table (in your app's schema)
             Table<?> P = DSL.table(DSL.name(schema, PIPELINE_TABLE));
             Field<String> P_ID = DSL.field(DSL.name(schema, PIPELINE_TABLE, COL_PIPELINE_ID), String.class);
@@ -88,6 +93,19 @@ public class MissingSchemaScanner implements ApplicationRunner {
                     releaseLock(dsl, pid);
                 }
             }
+        }
+    }
+
+    private boolean tableExists(DSLContext dsl, String schemaName, String tableName) {
+        try {
+            Integer count = dsl.selectCount()
+                    .from(DSL.table(DSL.name("information_schema", "tables")))
+                    .where(DSL.field(DSL.name("table_schema")).eq(schemaName)
+                            .and(DSL.field(DSL.name("table_name")).eq(tableName)))
+                    .fetchOne(0, Integer.class);
+            return count != null && count > 0;
+        } catch (DataAccessException e) {
+            return false;
         }
     }
 

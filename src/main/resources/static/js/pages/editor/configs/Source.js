@@ -3,7 +3,7 @@ import { getAnnotations } from "../../../api/annotations.api.js";
 export default class Source {
   static defaultConfig = {
     uri: "",
-    createsGenerators: [],
+    settings: {},
   };
   static formConfig = {
     uri: {
