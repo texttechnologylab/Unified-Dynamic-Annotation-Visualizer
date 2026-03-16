@@ -31,13 +31,13 @@ spec:
                 name: udav-secrets
           readinessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/readiness
               port: http
             initialDelaySeconds: 30
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /actuator/health
+              path: /actuator/health/liveness
               port: http
             initialDelaySeconds: 60
             periodSeconds: 20
@@ -89,4 +89,3 @@ spec:
                 name: udav
                 port:
                   name: http
-
