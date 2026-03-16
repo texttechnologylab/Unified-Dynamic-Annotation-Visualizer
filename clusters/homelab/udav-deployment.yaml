@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name: app
-          image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer:latest # {"$imagepolicy": "flux-system:udav"}
+          image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer:20260316143936-b005f15c744e57cfaaaf521eb0a5d056f828674d # {"$imagepolicy": "flux-system:udav"}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -76,10 +76,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - udav.example.com   # TODO: replace with your actual hostname
+        - udav.example.com # TODO: replace with your actual hostname
       secretName: udav-tls
   rules:
-    - host: udav.example.com   # TODO: replace with your actual hostname
+    - host: udav.example.com # TODO: replace with your actual hostname
       http:
         paths:
           - path: /
@@ -89,4 +89,3 @@ spec:
                 name: udav
                 port:
                   name: http
-
