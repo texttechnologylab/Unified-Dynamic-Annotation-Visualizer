@@ -5,7 +5,7 @@ metadata:
   namespace: uni
 data:
   # Database configuration (non-sensitive)
-  DB_URL: "jdbc:postgresql://pg-postgresql.dlti.svc.cluster.local:5432/udav"
+  # DB_URL is intentionally provided by Secret `udav-secrets`
   DB_SCHEMA: "public"
   DB_BATCH_SIZE: "5000"
   DB_MAX_IDENT: "255"
