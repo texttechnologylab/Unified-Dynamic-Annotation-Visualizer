@@ -12,9 +12,14 @@ export default class ChartGPT {
     this.modelSelect = root.querySelector("#model-select");
     this.contextSelect = root.querySelector("#context-select");
 
+    root.addEventListener("click", () => root.classList.remove("collapsed"));
     root
-      .querySelector(".dv-chat-header")
-      .addEventListener("click", () => root.classList.toggle("collapsed"));
+      .querySelector("#btn-toggle")
+      .addEventListener("click", () => root.classList.toggle("large"));
+    root.querySelector("#btn-collapse").addEventListener("click", (event) => {
+      event.stopPropagation();
+      root.classList.add("collapsed");
+    });
 
     this.messages = [{ role: "system", content: instruction }];
   }
@@ -33,7 +38,11 @@ export default class ChartGPT {
 
     // Send message
     this.textarea.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && this.textarea.value.trim() !== "") {
+      if (
+        event.key === "Enter" &&
+        !event.shiftKey &&
+        this.textarea.value.trim() !== ""
+      ) {
         event.preventDefault();
         this.completeMessages();
       }
@@ -43,12 +52,6 @@ export default class ChartGPT {
     // Load available models
     const models = await getModels();
 
-    this.modelSelect.append(
-      createElement("option", {
-        value: models.data[0].id,
-        textContent: "Model",
-      }),
-    );
     models.data.forEach((model) => {
       this.modelSelect.append(
         createElement("option", { value: model.id, textContent: model.name }),
@@ -59,7 +62,7 @@ export default class ChartGPT {
     const charts = state.charts.filter((chart) => chart.svg);
 
     this.contextSelect.append(
-      createElement("option", { value: "", textContent: "Context" }),
+      createElement("option", { value: "", textContent: "Add Context" }),
     );
     charts.forEach((chart) => {
       this.contextSelect.append(
@@ -147,15 +150,15 @@ export default class ChartGPT {
         if (item.type === "text") {
           string += item.text;
         } else if (item.type === "image_url") {
-          string += ` (+${item.widget})`;
+          string += `<br> <small>[Context: ${item.widget}]</small>`;
         }
       });
     } else {
       string = content;
     }
 
-    // string.replace("<think>", "<small>");
-    // string.replace("</think>", "</small>");
+    string.replace("<think>", "<small>");
+    string.replace("</think>", "</small>");
 
     return DOMPurify.sanitize(marked.parse(string));
   }

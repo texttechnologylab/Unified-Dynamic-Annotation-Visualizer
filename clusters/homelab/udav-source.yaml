@@ -1,0 +1,13 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: udav-repo
+  namespace: flux-system
+spec:
+  interval: 1m
+  ref:
+    branch: main
+  secretRef:
+    name: udav-repo-auth
+  url: https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
+

@@ -1,0 +1,50 @@
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: udav
+  namespace: flux-system
+spec:
+  image: ghcr.io/texttechnologylab/unified-dynamic-annotation-visualizer
+  interval: 1m
+  secretRef:
+    name: ghcr-credentials
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: udav
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: udav
+  filterTags:
+    # Match tags like: 20260226205739-ccfd3df13de72a194bb4be9bc34465dd4939ab6b
+    pattern: '^[0-9]{14}-[0-9a-z]{40}$'
+  policy:
+    alphabetical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageUpdateAutomation
+metadata:
+  name: udav
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: udav-repo
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: fluxcdbot
+        email: fluxcdbot@users.noreply.github.com
+      messageTemplate: "chore(udav): update image"
+    push:
+      branch: main
+  update:
+    path: ./clusters/homelab
+    strategy: Setters

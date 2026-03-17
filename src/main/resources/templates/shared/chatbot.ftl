@@ -1,13 +1,19 @@
-<#macro chatBot>
+<#macro chatbot>
   <div class="dv-chat-bot collapsed">
     <div class="dv-chat-header">
       <div class="dv-chat-title">
         <i class="bi bi-robot"></i>
         <span>Cha<span class="dv-bold">r</span>tGPT</span>
       </div>
-      <button class="dv-btn" title="Collapse">
-        <i class="bi bi-chevron-down"></i>
-      </button>
+      <div class="dv-chat-toolbar">
+        <button id="btn-toggle" class="dv-btn" title="Expand/Contract">
+          <i class="bi bi-arrows-angle-expand"></i>
+          <i class="bi bi-arrows-angle-contract"></i>
+        </button>
+        <button id="btn-collapse" class="dv-btn" title="Collapse">
+          <i class="bi bi-chevron-down"></i>
+        </button>
+      </div>
     </div>
 
     <div class="dv-chat">
