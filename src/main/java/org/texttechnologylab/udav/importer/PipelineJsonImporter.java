@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.service.SourceBuildService;
 
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 
 import static org.jooq.impl.DSL.*;
 
+@Order(2)
 @Component
 @ConditionalOnProperty(name = "app.pipeline-json-import.enabled", havingValue = "true")
 public class PipelineJsonImporter implements ApplicationRunner {
