@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.widgets.Widget;
-import org.texttechnologylab.udav.widgets.tools.SvgToLaTeXConverter;
+import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
 
 @RestController
 @RequestMapping("/api/convertions")

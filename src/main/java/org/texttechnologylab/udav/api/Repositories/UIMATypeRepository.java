@@ -10,6 +10,7 @@ import java.util.List;
 
 @Repository
 public class UIMATypeRepository {
+
     private final DSLContext dsl;
 
     public UIMATypeRepository(DSLContext dsl) {
@@ -18,23 +19,55 @@ public class UIMATypeRepository {
 
     @Transactional(readOnly = true)
     public List<UimaTypeRow> list(int page, int size, String q) {
+
         int p = Math.max(0, page);
         int s = Math.max(1, size);
 
         var REG = DSL.table("uima_type_registry");
-        var F_URI = DSL.field("uima_type_uri", String.class).as("uimaTypeUri");
-        var F_CNT = DSL.field("row_count", Long.class).as("rowCount");
+        var JSON = DSL.table("json_data");
 
-        var cond = (q == null || q.isBlank())
+        var F_URI = DSL.field("uima_type_uri", String.class);
+        var F_SRC = DSL.field("sourcefile_name", String.class);
+        var F_CNT = DSL.field("row_count", Long.class);
+
+        var condRegistry = (q == null || q.isBlank())
                 ? DSL.noCondition()
-                : DSL.field("uima_type_uri", String.class).likeIgnoreCase("%" + q + "%");
+                : F_URI.likeIgnoreCase("%" + q + "%");
 
-        return dsl.select(F_URI, F_CNT)
+        var condJson = (q == null || q.isBlank())
+                ? DSL.noCondition()
+                : F_SRC.likeIgnoreCase("%" + q + "%");
+
+        var registryQuery = dsl
+                .select(
+                        F_URI.as("uimaTypeUri"),
+                        F_CNT.as("rowCount")
+                )
                 .from(REG)
-                .where(cond).and(DSL.field(("row_count")).greaterThan(0))
-                .orderBy(F_CNT.desc().nullsLast())      // numeric sort, NULLS LAST
+                .where(condRegistry)
+                .and(F_CNT.greaterThan(0L));
+
+        var jsonQuery = dsl
+                .select(
+                        F_SRC.as("uimaTypeUri"),
+                        DSL.val(-1L).as("rowCount")
+                )
+                .from(JSON)
+                .where(condJson);
+
+        var combined = registryQuery
+                .unionAll(jsonQuery)
+                .asTable("combined");
+
+        var uri = combined.field("uimaTypeUri", String.class);
+        var count = combined.field("rowCount", Long.class);
+
+        return dsl
+                .select(uri, count)
+                .from(combined)
+                .orderBy(count.desc().nullsLast())
                 .offset(p * s)
                 .limit(s)
-                .fetchInto(UimaTypeRow.class);          // ✅ maps by aliased field names
+                .fetchInto(UimaTypeRow.class);
     }
 }

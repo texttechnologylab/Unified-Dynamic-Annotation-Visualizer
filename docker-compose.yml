@@ -1,0 +1,64 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: udav-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-udav}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${POSTGRES_DB:-udav}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  udav:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: udav-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-udav}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+      DB_DIALECT: ${DB_DIALECT:-POSTGRES}
+      DB_BATCH_SIZE: ${DB_BATCH_SIZE:-5000}
+      DB_MAX_IDENT: ${DB_MAX_IDENT:-255}
+      DUUI_IMPORTER: ${DUUI_IMPORTER:-false}
+      DUUI_IMPORTER_PATH: /app/data/input
+      DUUI_IMPORTER_FILE_ENDING: ${DUUI_IMPORTER_FILE_ENDING:-.xmi}
+      DUUI_IMPORTER_WORKERS: ${DUUI_IMPORTER_WORKERS:-4}
+      DUUI_IMPORTER_CAS_POOL_SIZE: ${DUUI_IMPORTER_CAS_POOL_SIZE:-8}
+      DUUI_IMPORTER_TYPE_SYSTEM_PATH: ${DUUI_IMPORTER_TYPE_SYSTEM_PATH:-}
+      APP_INPUT_DIR: ${APP_INPUT_DIR:-/app/data/input}
+      PIPELINE_IMPORTER: ${PIPELINE_IMPORTER:-true}
+      PIPELINE_IMPORTER_FOLDER: ${PIPELINE_IMPORTER_FOLDER:-/app/pipelines}
+      PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT: ${PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT:-false}
+      SROUCE_BUILDER: ${SROUCE_BUILDER:-false}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_TOKEN: ${LLM_API_TOKEN:-}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx20G -Xms512m}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ${DUUI_IMPORTER_PATH}:/app/data/input:ro
+
+volumes:
+  postgres_data:
+

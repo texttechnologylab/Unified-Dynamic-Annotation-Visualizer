@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -28,6 +31,9 @@ public class PipelineService {
     private final DataSource dataSource;
     private final ObjectMapper objectMapper;
 
+    @Value("${app.db.schema:public}")
+    private String schema;
+
     Logger LOGGER = LoggerFactory.getLogger(PipelineService.class);
 
     public PipelineService(SourceBuildService sourceBuildService, DataSource dataSource, ObjectMapper objectMapper) {
@@ -36,17 +42,19 @@ public class PipelineService {
         this.objectMapper = objectMapper;
     }
 
-//    @PostConstruct
-//    void ensureTable() throws Exception {
-//        try (Connection c = dataSource.getConnection()) {
-//            DSLContext dsl = DSL.using(c);
-//            dsl.createTableIfNotExists(TABLE)
-//                    .column(COL_NAME, SQLDataType.VARCHAR(255).nullable(false))
-//                    .column(COL_JSON, SQLDataType.CLOB.nullable(false)) // switch to JSONB if on Postgres
-//                    .constraints(DSL.constraint("PK_" + TABLE).primaryKey(COL_NAME))
-//                    .execute();
-//        }
-//    }
+    @PostConstruct
+    void ensureTable() throws Exception {
+        try (Connection c = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(c);
+            dsl.createSchemaIfNotExists(DSL.name(schema)).execute();
+            dsl.createTableIfNotExists(DSL.name(schema, TABLE))
+                    .column(DSL.name(COL_ID), SQLDataType.VARCHAR(255).nullable(false))
+                    .column(DSL.name(COL_NAME), SQLDataType.VARCHAR(255).nullable(false))
+                    .column(DSL.name(COL_JSON), SQLDataType.CLOB.nullable(false))
+                    .constraints(DSL.constraint("PK_" + TABLE).primaryKey(DSL.name(COL_ID)))
+                    .execute();
+        }
+    }
 
     @Transactional(readOnly = true)
     public List<String> listIds(int page, int size, String q) throws Exception {
