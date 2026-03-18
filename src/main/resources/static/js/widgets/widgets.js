@@ -3,6 +3,7 @@ import StaticText from "./static/StaticText.js";
 import StaticVideo from "./static/StaticVideo.js";
 import StaticIFrame from "./static/StaticIFrame.js";
 
+import ScrollTable from "./charts/ScrollTable.js";
 import BarChart from "./charts/BarChart.js";
 import LineChart from "./charts/LineChart.js";
 import PieChart from "./charts/PieChart.js";
@@ -19,6 +20,7 @@ export default {
   StaticVideo,
   StaticIFrame,
 
+  ScrollTable,
   BarChart,
   PieChart,
   LineChart,

@@ -37,11 +37,16 @@ export default class StaticIFrame {
   render(data) {
     this.clear();
 
-    this.root
+    const frame = this.root
       .append("iframe")
       .attr("src", data)
       .attr("width", "100%")
       .attr("height", "100%");
+
+    // Disable pointer events for dragging in editor
+    if (d3.select(".dv-chart-tooltip").empty()) {
+      frame.style("pointer-events", "none");
+    }
 
     this.root.classed("overflow-hidden", true);
   }

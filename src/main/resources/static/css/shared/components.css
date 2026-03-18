@@ -190,3 +190,47 @@ body.modal-open {
 .dv-dropdown.show {
   display: block;
 }
+
+.dv-scroll-table {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+
+.dv-scroll-table > tbody tr:hover {
+  background-color: var(--hover-color) !important;
+}
+
+.dv-scroll-table > tbody tr:nth-of-type(2n + 1) {
+  background-color: var(--bg-color-emphasis);
+}
+
+.dv-scroll-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-color);
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.2);
+}
+
+.dv-scroll-table th,
+.dv-scroll-table td {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+/* Remove top border */
+.dv-scroll-table tr:first-child th {
+  border-top: none;
+}
+
+/* Remove left border */
+.dv-scroll-table tr td:first-child,
+.dv-scroll-table tr th:first-child {
+  border-left: none;
+}
+
+/* Remove right border */
+.dv-scroll-table tr td:last-child,
+.dv-scroll-table tr th:last-child {
+  border-right: none;
+}
