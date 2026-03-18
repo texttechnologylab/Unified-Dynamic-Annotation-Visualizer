@@ -41,7 +41,7 @@ services:
       DUUI_IMPORTER_FILE_ENDING: ${DUUI_IMPORTER_FILE_ENDING:-.xmi}
       DUUI_IMPORTER_WORKERS: ${DUUI_IMPORTER_WORKERS:-4}
       DUUI_IMPORTER_CAS_POOL_SIZE: ${DUUI_IMPORTER_CAS_POOL_SIZE:-8}
-      DUUI_IMPORTER_TYPE_SYSTEM_PATH: ${DUUI_IMPORTER_TYPE_SYSTEM_PATH:-}
+      DUUI_IMPORTER_TYPE_SYSTEM_PATH: /app/data/types
       APP_INPUT_DIR: ${APP_INPUT_DIR:-/app/data/input}
       PIPELINE_IMPORTER: ${PIPELINE_IMPORTER:-true}
       PIPELINE_IMPORTER_FOLDER: ${PIPELINE_IMPORTER_FOLDER:-/app/pipelines}
@@ -58,6 +58,7 @@ services:
       start_period: 40s
     volumes:
       - ${DUUI_IMPORTER_PATH}:/app/data/input:ro
+      - ${DUUI_IMPORTER_TYPE_SYSTEM_PATH}:/app/data/types:ro
 
 volumes:
   postgres_data:
