@@ -179,27 +179,44 @@ output {
   background-color: transparent;
   width: 100%;
   cursor: grab;
+  top: 0.4rem;
 
   &:active {
     cursor: grabbing;
   }
+}
 
-  &::-webkit-slider-thumb,
-  &::-moz-range-thumb {
-    width: 1rem;
-    height: 1rem;
-    border: 0;
-    border-radius: 50%;
-    background-color: var(--primary);
-    box-shadow: var(--shadow-sm);
-  }
+.dv-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.3rem;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.dv-slider::-moz-range-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
 
-  &::-webkit-slider-runnable-track,
-  &::-moz-range-track {
-    height: 0.5rem;
-    background-color: var(--border-color);
-    border-radius: 1rem;
-  }
+.dv-slider::-webkit-slider-runnable-track {
+  appearance: none;
+  height: 0.5rem;
+  background-color: var(--border-color);
+  border-radius: 1rem;
+}
+.dv-slider::-moz-range-track {
+  appearance: none;
+  height: 0.5rem;
+  background-color: var(--border-color);
+  border-radius: 1rem;
 }
 
 .dv-slider-double {
@@ -209,34 +226,55 @@ output {
   background-color: transparent;
   width: 100%;
   cursor: grab;
+  top: 0.4rem;
 
   &:active {
     cursor: grabbing;
   }
+}
 
-  &::-webkit-slider-thumb,
-  &::-moz-range-thumb {
-    width: 1rem;
-    height: 1rem;
-    border: 0;
-    border-radius: 50%;
-    background-color: var(--primary);
-    pointer-events: auto;
-    box-shadow: var(--shadow-sm);
-  }
+.dv-slider-double::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: auto;
+  margin-top: -0.3rem;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+.dv-slider-double::-moz-range-thumb {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: auto;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
 
-  &::-webkit-slider-runnable-track,
-  &::-moz-range-track {
-    height: 0.5rem;
-    background-color: var(--border-color);
-    border-radius: 1rem;
-    border-color: transparent;
-  }
+.dv-slider-double::-webkit-slider-runnable-track {
+  appearance: none;
+  height: 0.5rem;
+  background-color: var(--border-color);
+  border-radius: 1rem;
+  border-color: transparent;
+}
+.dv-slider-double::-moz-range-track {
+  appearance: none;
+  height: 0.5rem;
+  background-color: var(--border-color);
+  border-radius: 1rem;
+  border-color: transparent;
+}
 
-  &:last-of-type::-webkit-slider-runnable-track,
-  &:last-of-type::-moz-range-track {
-    background-color: transparent;
-  }
+.dv-slider-double:last-of-type::-webkit-slider-runnable-track {
+  background-color: transparent;
+}
+.dv-slider-double:last-of-type::-moz-range-track {
+  background-color: transparent;
 }
 
 .dv-date-input {
