@@ -1,6 +1,7 @@
 import StaticImage from "./static/StaticImage.js";
 import StaticText from "./static/StaticText.js";
 import StaticVideo from "./static/StaticVideo.js";
+import StaticIFrame from "./static/StaticIFrame.js";
 
 import BarChart from "./charts/BarChart.js";
 import LineChart from "./charts/LineChart.js";
@@ -16,6 +17,7 @@ export default {
   StaticText,
   StaticImage,
   StaticVideo,
+  StaticIFrame,
 
   BarChart,
   PieChart,
