@@ -124,7 +124,7 @@ export default class Editor {
       const element = template.content.cloneNode(true);
 
       element.querySelector("i").className = widget.icon;
-      element.querySelector("span").title = widget.title;
+      element.querySelector(".dv-available-widget").title = widget.title;
       element.querySelector("span").textContent = widget.title;
       delete widget.icon;
 

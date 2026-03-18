@@ -7,9 +7,16 @@ export default class BoundaryApproximation extends D3Visualization {
     title: "Boundary Approximation",
     generator: { id: "" },
     options: {
-      gridRows: 8,
+      interpolate: false,
+      spacing: 5,
+      clustering: "quadtree",
       radiusMultiplier: 1.0,
+      gridRows: 8,
       threshold: 0,
+      epsilon: 10,
+      minPts: 2,
+      bandwidth: 20,
+      thresholds: 5,
     },
     icon: "bi bi-bounding-box-circles",
     w: 8,
@@ -25,91 +32,111 @@ export default class BoundaryApproximation extends D3Visualization {
       label: "Generator",
       options: () => getGeneratorOptions("MapCoordinates"),
     },
-    "options.gridRows": {
+    "options.interpolate": {
+      type: "switch",
+      label: "Interpolate edges",
+    },
+    "options.spacing": {
       type: "range",
-      label: "Initial grid rows",
+      label: "Interpolation spacing",
       options: { min: 1, max: 100 },
+    },
+    "options.clustering": {
+      type: "select",
+      label: "Clustering method",
+      options: ["quadtree", "dbscan", "density"],
     },
     "options.radiusMultiplier": {
       type: "range",
-      label: "Initial radius multiplier",
-      options: { min: 1.0, max: 10.0, step: 0.1 },
+      label: "Cluster radius multiplier",
+      options: { min: 0.1, max: 10.0, step: 0.1 },
+    },
+    "options.gridRows": {
+      type: "range",
+      label: "Grid rows",
+      options: { min: 1, max: 100 },
     },
     "options.threshold": {
       type: "range",
-      label: "Initial threshold",
+      label: "Contour threshold",
       options: { min: 0, max: 50 },
+    },
+    "options.epsilon": {
+      type: "range",
+      label: "DBSCAN epsilon",
+      options: { min: 1, max: 100 },
+    },
+    "options.minPts": {
+      type: "range",
+      label: "DBSCAN minimum points",
+      options: { min: 1, max: 100 },
+    },
+    "options.bandwidth": {
+      type: "range",
+      label: "Contour density bandwidth",
+      options: { min: 0, max: 100 },
+    },
+    "options.thresholds": {
+      type: "range",
+      label: "Contour density thresholds",
+      options: { min: 1, max: 50 },
     },
   };
   static previewData = [
-    { x: 312.3333435058595, y: 75.49191839044741 },
-    { x: 274.4747564142397, y: 75.49191839044738 },
-    { x: 350.19193059747863, y: 75.49191839044742 },
-    { x: 274.47475641423995, y: 75.49191839044738 },
-    { x: 236.616169322621, y: 75.49191839044745 },
-    { x: 388.0505176890978, y: 75.49191839044737 },
-    { x: 388.050517689098, y: 75.49191839044747 },
-    { x: 425.90910478071754, y: 75.49191839044732 },
-    { x: 236.6161693226209, y: 75.49191839044742 },
-    { x: 198.75758223100144, y: 75.49191839044742 },
-    { x: 160.8989951393821, y: 87.83267248222326 },
-    { x: 123.04040804776277, y: 145.176766135476 },
-    { x: 123.0404080477628, y: 121.94848355379966 },
-    { x: 123.04040804776277, y: 145.1767661354759 },
-    { x: 123.0404080477628, y: 168.40504871715174 },
-    { x: 123.0404080477628, y: 168.40504871715186 },
-    { x: 425.90910478071714, y: 75.49191839044742 },
-    { x: 463.7676918723364, y: 75.49191839044745 },
-    { x: 123.0404080477628, y: 191.63333129882812 },
-    { x: 123.04040804776277, y: 191.63333129882824 },
-    { x: 123.04040804776274, y: 214.86161388050422 },
-    { x: 123.04040804776272, y: 214.86161388050422 },
-    { x: 463.7676918723368, y: 75.49191839044745 },
-    { x: 501.6262789639562, y: 75.49191839044745 },
-    { x: 124.29876740373084, y: 111.69380650159887 },
-    { x: 123.04040804776277, y: 238.0898964621807 },
-    { x: 123.0404080477628, y: 238.08989646218026 },
-    { x: 501.6262789639567, y: 75.49191839044745 },
-    { x: 537.0364556320666, y: 75.49191839044742 },
-    { x: 123.04040804776272, y: 110.15560494376868 },
-    { x: 123.04040804776277, y: 261.3181790438565 },
-    { x: 123.04040804776282, y: 261.3181790438565 },
-    { x: 158.4505847158732, y: 307.7747442072087 },
-    { x: 137.07288074655511, y: 284.54646162553297 },
-    { x: 160.8989951393821, y: 311.7652828502836 },
-    { x: 539.4848660555756, y: 71.50137974737332 },
-    { x: 563.0916505009823, y: 52.26363580877077 },
-    { x: 537.0364556320661, y: 75.49191839044819 },
-    { x: 539.4848660555756, y: 79.48245703352057 },
-    { x: 109.0079353489707, y: 98.72020097212364 },
-    { x: 184.5057795847885, y: 331.0030267888842 },
-    { x: 198.7575822310012, y: 354.231309370561 },
-    { x: 87.63023137965229, y: 75.49191839044745 },
-    { x: 85.1818209561435, y: 71.50137974737284 },
-    { x: 563.0916505009834, y: 98.72020097212304 },
-    { x: 61.57503651073645, y: 52.263635808771305 },
-    { x: 47.323233864524155, y: 29.035353227095175 },
-    { x: 577.3434531471944, y: 121.94848355380023 },
-    { x: 577.343453147195, y: 29.035353227094635 },
-    { x: 123.04040804776282, y: 273.1110576538875 },
-    { x: 123.04040804776268, y: 273.11105765388714 },
-    { x: 109.00793534897026, y: 284.5464616255329 },
-    { x: 87.63023137965234, y: 307.7747442072088 },
-    { x: 85.18182095614341, y: 311.76528285028303 },
-    { x: 61.57503651073611, y: 331.00302678888494 },
-    { x: 47.323233864524155, y: 354.2313093705608 },
+    [
+      [276.4694937085933, 210.96513455773257],
+      [231.44104269965737, 212.1801872596352],
+    ],
+    [
+      [279.8532649869678, 233.57060329542853],
+      [258.5205158524833, 232.82647918776243],
+    ],
+    [
+      [258.5205158524833, 232.82647918776243],
+      [241.73193780364903, 233.5652548110095],
+    ],
+    [
+      [354.0914634285864, 159.91399739642264],
+      [344.64352898661446, 156.26693179627298],
+    ],
+    [
+      [354.0914634285864, 159.91399739642264],
+      [355.3915585448194, 160.5893335465575],
+    ],
+    [
+      [298.0951585828476, 253.41146322242082],
+      [296.1249795167421, 253.9237691377335],
+    ],
   ];
 
   constructor(root, config) {
     super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });
 
     this.draw = {
-      grid: false,
-      clusters: false,
+      grid: true,
+      clusters: true,
     };
-    this.gridRows = config.options.gridRows || 8;
+    this.interpolate = config.options.interpolate || false;
+    this.spacing = config.options.spacing || 5;
+
+    this.clustering = config.options.clustering || "quadtree";
     this.radiusMultiplier = config.options.radiusMultiplier || 1.0;
+
+    // contour
+    this.gridRows = config.options.gridRows || 8;
     this.threshold = config.options.threshold || 0;
+
+    // dbscan
+    this.epsilon = config.options.epsilon || 10;
+    this.minPts = config.options.minPts || 2;
+
+    // densitiy estimation
+    this.bandwidth = config.options.bandwidth || 10;
+    this.thresholds = config.options.thresholds || 5;
+  }
+
+  async fetch() {
+    return await d3.json("/data/edges.json");
   }
 
   async init() {
@@ -135,52 +162,24 @@ export default class BoundaryApproximation extends D3Visualization {
           this.render(this.data);
         },
       },
-      {
-        type: "range",
-        label: "Grid rows",
-        value: this.gridRows,
-        options: { min: 1, max: 100 },
-        onchange: (event) => {
-          this.gridRows = event.target.value;
-          this.render(this.data);
-        },
-      },
-      {
-        type: "range",
-        label: "Cluster Radius",
-        value: this.radiusMultiplier,
-        options: { min: 1.0, max: 10.0, step: 0.1 },
-        onchange: (event) => {
-          this.radiusMultiplier = event.target.value;
-          this.render(this.data);
-        },
-      },
-      {
-        type: "range",
-        label: "Threshold",
-        value: this.threshold,
-        options: { min: 0, max: 50 },
-        onchange: (event) => {
-          this.threshold = event.target.value;
-          this.render(this.data);
-        },
-      },
     ]);
   }
 
   render(data) {
     this.clear();
 
+    const dataPoints = this.getDataPoints(data);
+
     // Create the horizontal and vertical scales
     const xScale = d3
       .scaleLinear()
       .range([0, this.width])
-      .domain(this.domain(data, (d) => d.x));
+      .domain(this.domain(dataPoints, (d) => d.x));
 
     const yScale = d3
       .scaleLinear()
       .range([this.height, 0])
-      .domain(this.domain(data, (d) => d.y));
+      .domain(this.domain(dataPoints, (d) => d.y));
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,
@@ -190,65 +189,77 @@ export default class BoundaryApproximation extends D3Visualization {
     });
     this.plotArea = area;
 
-    const points = data.map((d) => [xScale(d.x), yScale(d.y)]);
+    const points = dataPoints.map((d) => [xScale(d.x), yScale(d.y)]);
 
-    // Calculate grid
-    const cellSize = this.height / this.gridRows;
-    const rows = Math.ceil(this.height / cellSize);
-    const cols = Math.ceil(this.width / cellSize);
+    if (this.clustering === "density") {
+      const densityEstimator = d3
+        .contourDensity()
+        .bandwidth(this.bandwidth)
+        .thresholds(this.thresholds);
 
-    // Calculate clusters
-    const clusters = this.getClusters(points, rows, cols, cellSize);
+      const contours = densityEstimator(points);
 
-    // Get a value for each grid cell. The values are the distance
-    // from the cell center to the nearest cluster boundary.
-    const values = this.getCellValues(clusters, rows, cols, cellSize);
+      this.drawPath("boundary", [contours[0]], d3.geoPath());
+    } else {
+      // Calculate grid
+      const cellSize = this.height / this.gridRows;
+      const rows = Math.ceil(this.height / cellSize);
+      const cols = Math.ceil(this.width / cellSize);
 
-    // Calculate boundary
-    const contour = d3
-      .contours()
-      .size([cols, rows])
-      .thresholds([-this.threshold]);
-    const boundary = contour(values);
+      // Draw the grid
+      if (this.draw.grid) {
+        this.drawLines(
+          "grid-vertical",
+          d3.range(0, this.width + 1, cellSize),
+          (d) => d,
+          0,
+          (d) => d,
+          this.height,
+        );
+        this.drawLines(
+          "grid-horizontal",
+          d3.range(0, this.height + 1, cellSize),
+          0,
+          (d) => d,
+          this.width,
+          (d) => d,
+        );
+      }
 
-    // Draw the grid
-    if (this.draw.grid) {
-      this.drawLines(
-        "grid-vertical",
-        d3.range(0, this.width + 1, cellSize),
-        (d) => d,
-        0,
-        (d) => d,
-        this.height,
-      );
-      this.drawLines(
-        "grid-horizontal",
-        d3.range(0, this.height + 1, cellSize),
-        0,
-        (d) => d,
-        this.width,
-        (d) => d,
-      );
+      // Calculate clusters
+      const clusters =
+        this.clustering === "quadtree"
+          ? this.quadtreeClustering(points, rows, cols, cellSize)
+          : this.dbscanClustering(dataPoints, points);
+
+      // Get a value for each grid cell. The values are the distance
+      // from the cell center to the nearest cluster boundary.
+      const values = this.getCellValues(clusters, rows, cols, cellSize);
+
+      const contours = d3
+        .contours()
+        .size([cols, rows])
+        .thresholds([-this.threshold]);
+
+      // Draw boundary
+      const projection = d3.geoIdentity().scale(cellSize);
+      const path = d3.geoPath(projection);
+      this.drawPath("boundary", contours(values), path);
+
+      // Draw clusters
+      if (this.draw.clusters) {
+        this.drawCircles(
+          "cluster",
+          clusters,
+          "none",
+          (d) => this.radiusMultiplier * d[2].length,
+          "teal",
+        ).attr("opacity", 0.4);
+      }
     }
 
     // Draw medial axis points
     this.drawCircles("point", points, "black");
-
-    // Draw boundary
-    const projection = d3.geoIdentity().scale(cellSize);
-    const path = d3.geoPath(projection);
-    this.drawPath("boundary", boundary, path);
-
-    // Draw clusters
-    if (this.draw.clusters) {
-      this.drawCircles(
-        "cluster",
-        clusters,
-        "none",
-        (d) => this.radiusMultiplier * d[2].length,
-        "teal",
-      ).attr("opacity", 0.4);
-    }
 
     if (!this.tooltip.empty()) {
       this.svg.call(zoom);
@@ -258,7 +269,37 @@ export default class BoundaryApproximation extends D3Visualization {
     this.data = data;
   }
 
-  search(quadtree, xmin, ymin, xmax, ymax) {
+  getDataPoints(edges) {
+    const points = [];
+
+    if (this.interpolate) {
+      for (const edge of edges) {
+        const dx = edge[1][0] - edge[0][0];
+        const dy = edge[1][1] - edge[0][1];
+        const length = Math.sqrt(dx * dx + dy * dy);
+
+        // Number of segments based on spacing
+        const steps = Math.max(1, Math.floor(length / this.spacing));
+
+        for (let i = 0; i <= steps; i++) {
+          const t = i / steps;
+          points.push({
+            x: edge[0][0] + t * dx,
+            y: edge[0][1] + t * dy,
+          });
+        }
+      }
+    } else {
+      for (const edge of edges) {
+        points.push({ x: edge[0][0], y: edge[0][1] });
+        points.push({ x: edge[1][0], y: edge[1][1] });
+      }
+    }
+
+    return points;
+  }
+
+  searchInTree(quadtree, xmin, ymin, xmax, ymax) {
     const results = [];
 
     quadtree.visit((node, x1, y1, x2, y2) => {
@@ -276,13 +317,13 @@ export default class BoundaryApproximation extends D3Visualization {
     return results;
   }
 
-  getClusters(points, rows, cols, cellSize) {
+  quadtreeClustering(points, rows, cols, cellSize) {
     const tree = d3.quadtree(points);
     const clusters = [];
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        const found = this.search(
+        const found = this.searchInTree(
           tree,
           x * cellSize,
           y * cellSize,
@@ -290,27 +331,81 @@ export default class BoundaryApproximation extends D3Visualization {
           y * cellSize + cellSize,
         );
 
-        // // Get the center of all found points
-        // const center = found.reduce(
-        //   (prev, curr) => [prev[0] + curr[0], prev[1] + curr[1]],
-        //   [0, 0],
-        // );
-
-        // center[0] = center[0] / found.length;
-        // center[1] = center[1] / found.length;
-        // center.push(found);
-
-        // // center: [x, y, r]
-        // if (center[0] && center[1]) {
-        //   clusters.push(center);
-        // }
-
         for (const f of found) {
           f.push(found);
           clusters.push(f);
         }
       }
     }
+
+    return clusters;
+  }
+
+  dbscan(points, epsilon, minPts) {
+    const labels = new Array(points.length).fill(undefined);
+    let clusterId = 0;
+
+    function euclideanDist(a, b) {
+      const dx = a[0] - b[0];
+      const dy = a[1] - b[1];
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function rangeQuery(idx) {
+      return points.reduce((neighbors, point, i) => {
+        if (euclideanDist(points[idx], point) <= epsilon) neighbors.push(i);
+        return neighbors;
+      }, []);
+    }
+
+    for (let i = 0; i < points.length; i++) {
+      if (labels[i] !== undefined) continue;
+
+      const neighbors = rangeQuery(i);
+
+      if (neighbors.length < minPts) {
+        labels[i] = -1; // noise
+        continue;
+      }
+
+      labels[i] = clusterId;
+
+      const seeds = neighbors.filter((n) => n !== i);
+
+      for (let j = 0; j < seeds.length; j++) {
+        const s = seeds[j];
+
+        if (labels[s] === -1) labels[s] = clusterId;
+        if (labels[s] !== undefined) continue;
+
+        labels[s] = clusterId;
+
+        const newNeighbors = rangeQuery(s);
+        if (newNeighbors.length >= minPts) {
+          seeds.push(
+            ...newNeighbors.filter((n) => !seeds.includes(n) && n !== s),
+          );
+        }
+      }
+
+      clusterId++;
+    }
+
+    return labels;
+  }
+
+  dbscanClustering(data, points) {
+    const labels = this.dbscan(points, this.epsilon, this.minPts);
+    const groups = d3.group(data, (_, i) => labels[i]);
+    groups.delete(-1);
+
+    const clusters = [];
+
+    points.forEach((p, i) => {
+      const found = groups.get(labels[i]);
+      p.push(found || p);
+      clusters.push(p);
+    });
 
     return clusters;
   }
@@ -341,7 +436,7 @@ export default class BoundaryApproximation extends D3Visualization {
     return values;
   }
 
-  drawPath(key, data, path, color = "red", width = 2) {
+  drawPath(key, data, path, color = "red", width = 1.5) {
     return this.plotArea
       .selectAll("path." + key)
       .data(data)

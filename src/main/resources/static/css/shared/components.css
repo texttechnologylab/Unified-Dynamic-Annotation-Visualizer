@@ -151,7 +151,9 @@ body.modal-open {
 .dv-modal-body {
   display: flex;
   flex-direction: column;
+  max-height: 60vh;
   margin-bottom: 1rem;
+  overflow: auto;
 }
 
 .dv-modal-body-spinner {
