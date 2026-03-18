@@ -41,7 +41,7 @@ services:
       DUUI_IMPORTER_FILE_ENDING: ${DUUI_IMPORTER_FILE_ENDING:-.xmi}
       DUUI_IMPORTER_WORKERS: ${DUUI_IMPORTER_WORKERS:-4}
       DUUI_IMPORTER_CAS_POOL_SIZE: ${DUUI_IMPORTER_CAS_POOL_SIZE:-8}
-      DUUI_IMPORTER_TYPE_SYSTEM_PATH: ${DUUI_IMPORTER_TYPE_SYSTEM_PATH:-}
+      DUUI_IMPORTER_TYPE_SYSTEM_PATH: /app/data/types
       APP_INPUT_DIR: ${APP_INPUT_DIR:-/app/data/input}
       PIPELINE_IMPORTER: ${PIPELINE_IMPORTER:-true}
       PIPELINE_IMPORTER_FOLDER: ${PIPELINE_IMPORTER_FOLDER:-/app/pipelines}
@@ -49,7 +49,7 @@ services:
       SROUCE_BUILDER: ${SROUCE_BUILDER:-false}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_TOKEN: ${LLM_API_TOKEN:-}
-      JAVA_OPTS: ${JAVA_OPTS:--Xmx20G -Xms512m}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx10G -Xms512m}
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 30s
@@ -58,6 +58,7 @@ services:
       start_period: 40s
     volumes:
       - ${DUUI_IMPORTER_PATH}:/app/data/input:ro
+      - ${DUUI_IMPORTER_TYPE_SYSTEM_PATH}:/app/data/types:ro
 
 volumes:
   postgres_data:
