@@ -21,8 +21,10 @@ export default class View {
     accordions.init();
     dropdowns.init();
 
-    const chatBot = new ChartGPT("You are an assistant called ChartGPT.");
-    chatBot.init();
+    if (document.querySelector(".dv-chat-bot")) {
+      const chartgpt = new ChartGPT("You are an assistant called ChartGPT.");
+      chartgpt.init();
+    }
   }
 
   initSwitcher() {
