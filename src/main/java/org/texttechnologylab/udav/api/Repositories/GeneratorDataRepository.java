@@ -69,6 +69,25 @@ public class GeneratorDataRepository {
         return field(name(schema, table, DBConstants.TABLEATTR_GENERATORDATA_TYPE), String.class);
     }
 
+    private Table<?> T_GENERATOR_TYPE(String schema) {
+        return table(name(schema, DBConstants.TABLENAME_GENERATORTYPE));
+    }
+
+    /**
+     * Resolve generator implementation type (simple class name) from GENERATORTYPE table.
+     */
+    public Optional<String> loadGeneratorType(String schema, String generatorId) {
+        var T = T_GENERATOR_TYPE(schema);
+        var GEN = field(name(schema, DBConstants.TABLENAME_GENERATORTYPE, DBConstants.TABLEATTR_GENERATORID), String.class);
+        var TYPE = field(name(schema, DBConstants.TABLENAME_GENERATORTYPE, DBConstants.TABLEATTR_GENERATORTYPE), String.class);
+
+        return dsl.select(TYPE)
+                .from(T)
+                .where(GEN.eq(generatorId))
+                .limit(1)
+                .fetchOptional(TYPE);
+    }
+
     // ---------- CategoryNumber data ----------
 
     /**
