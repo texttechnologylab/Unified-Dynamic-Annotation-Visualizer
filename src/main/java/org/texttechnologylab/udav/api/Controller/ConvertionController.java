@@ -13,11 +13,29 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.widgets.Widget;
+import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
 
 @RestController
 @RequestMapping("/api/convertions")
 public class ConvertionController {
+
+    @PostMapping("/csv")
+    public ResponseEntity<Map<String, String>> widgetToCsv(@RequestBody String body) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(body);
+        JsonNode jsonNodeJson = node.get("data");
+
+        JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
+        String csv = converter.convert(jsonNodeJson);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("content", csv);
+
+        // TODO: Add metadata
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/tikz")
     public ResponseEntity<Map<String, String>> widgetToTikz(@RequestBody String body) throws Exception {
