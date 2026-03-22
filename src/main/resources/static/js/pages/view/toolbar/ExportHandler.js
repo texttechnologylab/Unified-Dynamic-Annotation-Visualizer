@@ -13,7 +13,6 @@ export default class ExportHandler {
     this.filename = widget.config.id.toLowerCase();
 
     const formats = {
-      tex: "bi bi-file-earmark-font",
       csv: "bi bi-table",
       json: "bi bi-braces",
     };

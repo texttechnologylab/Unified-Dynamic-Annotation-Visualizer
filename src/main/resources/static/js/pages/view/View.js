@@ -2,7 +2,6 @@ import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
 import dropdowns from "../../shared/modules/dropdowns.js";
-import ChartGPT from "../../shared/classes/ChartGPT.js";
 import state from "./utils/viewState.js";
 import { createTemplateElement } from "../../shared/modules/utils.js";
 
@@ -20,11 +19,6 @@ export default class View {
     sidepanels.init();
     accordions.init();
     dropdowns.init();
-
-    if (document.querySelector(".dv-chat-bot")) {
-      const chartgpt = new ChartGPT("You are an assistant called ChartGPT.");
-      chartgpt.init();
-    }
   }
 
   initSwitcher() {

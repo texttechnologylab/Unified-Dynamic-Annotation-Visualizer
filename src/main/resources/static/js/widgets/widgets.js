@@ -10,9 +10,6 @@ import PieChart from "./charts/PieChart.js";
 import HighlightText from "./charts/HighlightText.js";
 import SimpleMap from "./charts/SimpleMap.js";
 import NetworkGraph from "./charts/NetworkGraph.js";
-import VoronoiDiagram from "./charts/VoronoiDiagram.js";
-import MedialAxis from "./charts/MedialAxis.js";
-import BoundaryApproximation from "./charts/BoundaryApproximation.js";
 
 export default {
   StaticText,
@@ -26,8 +23,5 @@ export default {
   LineChart,
   HighlightText,
   SimpleMap,
-  NetworkGraph,
-  VoronoiDiagram,
-  MedialAxis,
-  BoundaryApproximation,
+  NetworkGraph
 };
