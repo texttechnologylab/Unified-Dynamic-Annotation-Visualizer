@@ -8,6 +8,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
+import org.texttechnologylab.udav.database.DBConstants;
 import org.texttechnologylab.udav.generators.*;
 import org.texttechnologylab.udav.generators.common_properties.CommonProperties;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
@@ -305,8 +306,62 @@ public class Pipeline {
 
     public void saveGeneratorsToDB() throws SQLException {
         if (currentState != PipelineState.SETUP_GENERATORS) throw new IllegalStateException("Pipeline not in correct state for saving generators to database.");
-        for (Generator g : visualizedGenerators.values()) g.writeToDB();
+
+        ensureGeneratorTypeTableExists();
+
+        for (Generator g : visualizedGenerators.values()) {
+            try {
+                g.writeToDB();
+                replaceGeneratorTypeRow(g.getId(), g.getClass().getSimpleName());
+            } catch (SQLException e) {
+                throw new SQLException(
+                        "Failed to persist generator \"" + g.getId() + "\" ("
+                                + g.getClass().getName() + ") to database.",
+                        e
+                );
+            }
+        }
+
         currentState = PipelineState.SAVED_GENERATORS_TO_DB;
+    }
+
+    private void ensureGeneratorTypeTableExists() throws SQLException {
+        final String schema = dbAccess.getSchema();
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+            dsl.createTableIfNotExists(DSL.name(schema, DBConstants.TABLENAME_GENERATORTYPE))
+                    .column(DBConstants.TABLEATTR_GENERATORID, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORTYPE, org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .execute();
+        }
+    }
+
+    private void replaceGeneratorTypeRow(String generatorId, String generatorType) throws SQLException {
+        final String schema = dbAccess.getSchema();
+
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+
+            Table<?> table = DSL.table(DSL.name(schema, DBConstants.TABLENAME_GENERATORTYPE));
+            Field<String> fieldGeneratorId = DSL.field(
+                    DSL.name(schema, DBConstants.TABLENAME_GENERATORTYPE, DBConstants.TABLEATTR_GENERATORID),
+                    String.class
+            );
+            Field<String> fieldGeneratorType = DSL.field(
+                    DSL.name(schema, DBConstants.TABLENAME_GENERATORTYPE, DBConstants.TABLEATTR_GENERATORTYPE),
+                    String.class
+            );
+
+            // Keep one authoritative row per generator id even if the table already contains duplicates.
+            dsl.deleteFrom(table)
+                    .where(fieldGeneratorId.eq(generatorId))
+                    .execute();
+
+            dsl.insertInto(table)
+                    .columns(fieldGeneratorId, fieldGeneratorType)
+                    .values(generatorId, generatorType)
+                    .execute();
+        }
     }
 
     public void saveToDB() throws SQLException {

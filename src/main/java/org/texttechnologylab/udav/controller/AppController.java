@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,12 @@ import java.nio.charset.StandardCharsets;
 public class AppController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final PipelineService service;
+
+	@Value("${app.llm.base-url}")
+	private String llmUrl;
+
+	@Value("${app.llm.api-token}")
+	private String llmToken;
 
 	public AppController(PipelineService service) {
 		this.service = service;
@@ -47,6 +54,7 @@ public class AppController {
 		model.addAttribute("id", id);
 		model.addAttribute("pipelines", getPipelines());
 		model.addAttribute("widgets", getWidgetsById(id));
+		model.addAttribute("chatbot", !llmUrl.isEmpty() && !llmToken.isEmpty());
 
 		return "/pages/view/view";
 	}

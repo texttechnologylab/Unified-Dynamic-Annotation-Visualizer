@@ -54,7 +54,9 @@ export function createWidget(item) {
 }
 
 export function getGeneratorOptions(type) {
-  const configs = state.generators.filter((config) => config.type === type);
+  const configs = type
+    ? state.generators.filter((config) => config.type === type)
+    : state.generators;
 
   return configs.map((generator) => {
     return { label: generator.name, value: generator.id };

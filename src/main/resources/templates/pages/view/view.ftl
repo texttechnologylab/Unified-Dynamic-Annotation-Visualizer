@@ -19,7 +19,7 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
-    <#include "/shared/chatbot.ftl"> 
+    <#include "/shared/chat.ftl"> 
     <#include "/pages/view/viewSidebar.ftl"> 
     <#include "/pages/view/viewGrid.ftl">
 
@@ -30,7 +30,10 @@
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
-        <@chatbot />
+
+        <#if chatbot>
+          <@chat />
+        </#if>
       </main>
 
       <@modal />

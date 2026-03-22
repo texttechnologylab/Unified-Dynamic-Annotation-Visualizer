@@ -25,6 +25,7 @@ public final class DBConstants {
     public static final String TABLEATTR_PIPELINEID = "PIPELINEID";
     public static final String TABLEATTR_JSONSTR = "JSONSTR";
     public static final String TABLEATTR_GENERATORID = "GENERATORID";
+    public static final String TABLEATTR_GENERATORTYPE = "GENERATORTYPE";
     public static final String TABLEATTR_FILENAME = "FILENAME";
     public static final String TABLEATTR_SOFA = "SOFA";
 

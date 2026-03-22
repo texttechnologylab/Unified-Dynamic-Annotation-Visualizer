@@ -7,6 +7,7 @@ import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.charts.ChartHandler;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 
 @RequiredArgsConstructor
 public abstract class Widget implements ChartHandler {
@@ -14,6 +15,12 @@ public abstract class Widget implements ChartHandler {
 
     protected final GeneratorDataRepository repo;
     protected final ObjectMapper mapper;
+
+
+    protected String resolveGeneratorType(String schema, String generatorId) {
+        if (repo == null) return null;
+        return repo.loadGeneratorType(schema, generatorId).orElse(null);
+    }
 
     // Overwrite if diagram should have a custom tex definition
     public String toTex(JsonNode jsonNode) { return null; }

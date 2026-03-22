@@ -3,7 +3,9 @@ export default class StaticIFrame {
     type: "StaticIFrame",
     title: "Inline Frame",
     src: "https://example.com/",
-    options: {},
+    options: {
+      border: true,
+    },
     icon: "bi bi-window",
     w: 8,
     h: 6,
@@ -17,6 +19,10 @@ export default class StaticIFrame {
       type: "text",
       label: "URL",
     },
+    "options.border": {
+      type: "switch",
+      label: "Border",
+    },
   };
 
   constructor(root, config) {
@@ -24,6 +30,7 @@ export default class StaticIFrame {
     this.config = config;
 
     this.src = config.src || "";
+    this.border = config.options.border || true;
   }
 
   clear() {
@@ -41,7 +48,8 @@ export default class StaticIFrame {
       .append("iframe")
       .attr("src", data)
       .attr("width", "100%")
-      .attr("height", "100%");
+      .attr("height", "100%")
+      .classed("dv-bordered", this.border);
 
     // Disable pointer events for dragging in editor
     if (d3.select(".dv-chart-tooltip").empty()) {

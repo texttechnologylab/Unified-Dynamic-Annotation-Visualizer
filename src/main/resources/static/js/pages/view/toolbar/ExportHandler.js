@@ -1,4 +1,4 @@
-import { getTikz } from "../../../api/convertions.api.js";
+import { getCsv, getTikz } from "../../../api/convertions.api.js";
 import { applyStyles, createElement } from "../../../shared/modules/utils.js";
 import state from "../utils/viewState.js";
 
@@ -10,7 +10,7 @@ export default class ExportHandler {
     const root = widget.root.node ? widget.root.node() : widget.root;
     const dropdown = root.querySelector(".dv-dropdown-menu");
 
-    this.filename = "chart";
+    this.filename = widget.config.id.toLowerCase();
 
     const formats = {
       tex: "bi bi-file-earmark-font",
@@ -144,22 +144,13 @@ export default class ExportHandler {
     this.downloadURL(url, `${this.filename}.tex`);
   }
 
-  exportCSV() {
+  async exportCSV() {
+    const type = this.widget.constructor.defaultConfig.type;
     const json = this.getJSON();
-    const keys = Object.keys(json[0]);
-    const entries = Object.entries(this.getMetadata());
+    const meta = this.getMetadata();
 
-    const escape = (value) => {
-      const str = String(value);
-      return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
-    };
-
-    const metadata = entries.map(([k, v]) => `# ${k}: ${v}`);
-    const header = keys.join(",");
-    const rows = json.map((o) => keys.map((k) => escape(o[k])).join(","));
-
-    const str = [...metadata, header, ...rows].join("\r\n");
-    const url = this.createURL(str, "text/csv");
+    const data = await getCsv(type, json, meta);
+    const url = this.createURL(data.content, "text/csv");
 
     this.downloadURL(url, `${this.filename}.csv`);
   }

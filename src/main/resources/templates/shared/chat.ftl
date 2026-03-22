@@ -1,4 +1,4 @@
-<#macro chatbot>
+<#macro chat>
   <div class="dv-chat-bot collapsed">
     <div class="dv-chat-header">
       <div class="dv-chat-title">

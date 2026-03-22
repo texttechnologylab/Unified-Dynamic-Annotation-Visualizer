@@ -1,13 +1,31 @@
 const serializer = new XMLSerializer();
 
-export function svgToUrl(svg) {
-  const string = serializer.serializeToString(svg);
-  const encoded = encodeURIComponent(string);
-  return `data:image/svg+xml,${encoded}`;
-}
+export async function svgToBase64(svg) {
+  const str = serializer.serializeToString(svg);
 
-export function svgToBase64(svg) {
-  const string = serializer.serializeToString(svg);
-  const encoded = btoa(encodeURIComponent(string));
-  return `data:image/svg+xml;base64,${encoded}`;
+  const blob = new Blob([str], {
+    type: "image/svg+xml",
+  });
+  const url = URL.createObjectURL(blob);
+
+  const img = new Image();
+
+  return new Promise((resolve) => {
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const bbox = svg.getBBox();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = bbox.width;
+      canvas.height = bbox.height;
+
+      const context = canvas.getContext("2d");
+      context.drawImage(img, 0, 0, bbox.width, bbox.height);
+
+      resolve(canvas.toDataURL("image/png"));
+    };
+
+    img.src = url;
+  });
 }

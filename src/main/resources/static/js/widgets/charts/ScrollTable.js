@@ -1,6 +1,8 @@
 import ControlsHandler from "../../pages/view/toolbar/ControlsHandler.js";
 import ExportHandler from "../../pages/view/toolbar/ExportHandler.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
+import { getData } from "../../api/data.api.js";
+import state from "../../pages/view/utils/viewState.js";
 
 export default class ScrollTable {
   static defaultConfig = {
@@ -22,7 +24,7 @@ export default class ScrollTable {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("CategoryNumber"),
+      options: () => getGeneratorOptions(),
     },
     "options.numbers": {
       type: "switch",
@@ -64,7 +66,12 @@ export default class ScrollTable {
   }
 
   async fetch() {
-    return await d3.json("/data/table.json");
+    const { pipeline, generator, type } = this.config;
+
+    return await getData(pipeline, generator.id, type, {
+      corpus: state.corpusFilter.filter,
+      chart: this.filter,
+    });
   }
 
   clear() {
@@ -109,9 +116,11 @@ export default class ScrollTable {
   render(data) {
     this.clear();
 
-    let rows = data;
+    const keys = Object.keys(data[0]);
+
+    let rows = data.map((row) => keys.map((k) => row[k] || ""));
     if (this.numbers) {
-      rows = data.map((row, i) => [i, ...row]);
+      rows = rows.map((row, i) => [i, ...row]);
       rows[0][0] = "#";
     }
 
