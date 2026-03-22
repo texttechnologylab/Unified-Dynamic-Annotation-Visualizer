@@ -2,9 +2,11 @@ package org.texttechnologylab.udav.api.Repositories;
 
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.texttechnologylab.udav.api.dto.UimaTypeRow;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
 
 import java.util.List;
 
@@ -12,6 +14,9 @@ import java.util.List;
 public class UIMATypeRepository {
 
     private final DSLContext dsl;
+
+    @Value("${app.db.schema:public}")
+    private String schema;
 
     public UIMATypeRepository(DSLContext dsl) {
         this.dsl = dsl;
@@ -23,12 +28,12 @@ public class UIMATypeRepository {
         int p = Math.max(0, page);
         int s = Math.max(1, size);
 
-        var REG = DSL.table("uima_type_registry");
-        var JSON = DSL.table("json_data");
+        var REG = DSL.table(DSL.name(schema, "uima_type_registry"));
+        var JSON = DSL.table(DSL.name(schema, SchemaObjectNames.TABLE_JSON_DATA));
 
-        var F_URI = DSL.field("uima_type_uri", String.class);
-        var F_SRC = DSL.field("sourcefile_name", String.class);
-        var F_CNT = DSL.field("row_count", Long.class);
+        var F_URI = DSL.field(DSL.name("uima_type_uri"), String.class);
+        var F_SRC = DSL.field(DSL.name(SchemaObjectNames.COL_JSON_DATA_SOURCEFILE_NAME), String.class);
+        var F_CNT = DSL.field(DSL.name("row_count"), Long.class);
 
         var condRegistry = (q == null || q.isBlank())
                 ? DSL.noCondition()

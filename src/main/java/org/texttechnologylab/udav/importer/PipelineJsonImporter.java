@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.service.SourceBuildService;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
 
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
@@ -35,10 +36,10 @@ import static org.jooq.impl.DSL.*;
 @ConditionalOnProperty(name = "app.pipeline-json-import.enabled", havingValue = "true")
 public class PipelineJsonImporter implements ApplicationRunner {
 
-    private static final String TABLE = "pipeline";
-    private static final String COL_NAME = "pipeline_name";
-    private static final String COL_JSON = "json";
-    private static final String PIPELINE_ID = "pipeline_id";
+    private static final String TABLE = SchemaObjectNames.TABLE_PIPELINE;
+    private static final String COL_NAME = SchemaObjectNames.COL_PIPELINE_NAME;
+    private static final String COL_JSON = SchemaObjectNames.COL_PIPELINE_JSON;
+    private static final String PIPELINE_ID = SchemaObjectNames.COL_PIPELINE_ID;
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineJsonImporter.class);
     private final DataSource dataSource;
     private final Path folder;

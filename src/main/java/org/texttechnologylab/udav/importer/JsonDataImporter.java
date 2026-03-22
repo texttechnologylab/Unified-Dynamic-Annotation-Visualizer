@@ -14,10 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.texttechnologylab.udav.api.service.SourceBuildService;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
 
 import org.json.XML;
 
@@ -36,28 +35,25 @@ import static org.jooq.impl.DSL.*;
 @ConditionalOnProperty(name = "app.json-data-import.enabled", havingValue = "true")
 public class JsonDataImporter implements ApplicationRunner {
 
-    private static final String TABLE = "json_data";
-    private static final String COL_NAME = "sourcefile_name";
-    private static final String COL_JSON = "json";
+    private static final String TABLE = SchemaObjectNames.TABLE_JSON_DATA;
+    private static final String COL_NAME = SchemaObjectNames.COL_JSON_DATA_SOURCEFILE_NAME;
+    private static final String COL_JSON = SchemaObjectNames.COL_JSON_DATA_JSON;
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonDataImporter.class);
 
     private final DataSource dataSource;
     private final Path folder;
     private final boolean replaceIfDifferent;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final SourceBuildService sourceBuildService;
 
     @Value("${app.db.schema:public}")
     private String schema;
 
     public JsonDataImporter(
             DataSource dataSource,
-            SourceBuildService sourceBuildService,
             @Value("${app.json-data-import.folder:sourcefilesJSON}") String folderPath,
             @Value("${app.json-data-import.replace-if-different:false}") boolean replaceIfDifferent
     ) {
         this.dataSource = dataSource;
-        this.sourceBuildService = sourceBuildService;
         this.folder = Paths.get(folderPath);
         this.replaceIfDifferent = replaceIfDifferent;
     }
