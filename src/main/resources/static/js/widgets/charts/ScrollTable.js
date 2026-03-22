@@ -86,8 +86,10 @@ export default class ScrollTable {
     const data = await this.fetch();
     this.render(data);
 
+    const values = Object.values(data[0]);
+
     this.filter = {
-      sort: data[0][0],
+      sort: values[0],
       desc: true,
     };
     this.controls.append([
@@ -95,7 +97,7 @@ export default class ScrollTable {
         type: "select",
         label: "Sort by",
         value: this.filter.sort,
-        options: data[0],
+        options: values,
         onchange: (event) => {
           this.filter.sort = event.target.value;
           this.fetch().then((data) => this.render(data));
