@@ -7,11 +7,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.ValueMode;
-import org.texttechnologylab.udav.api.charts.ChartHandler;
 import org.texttechnologylab.udav.api.charts.ValueTransforms;
 import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,13 +129,12 @@ public class ScrollTable extends Widget {
                            String schema) {
 
         assert mapper != null;
+        assert repo != null;
         ArrayNode out = mapper.createArrayNode();
         String generatorType = resolveGeneratorType(schema, generatorId);
         if ("CategoryNumber".equalsIgnoreCase(generatorType)) {
             // Optional: chart-specific "type" (e.g., for type-specific colors)
             String typeForColors = filters.getOrDefault("type", null);
-
-            assert repo != null;
             var data = repo.loadCategoryNumber(schema, generatorId, files, typeForColors);
 
             // For PER_FILE_AVG only:
@@ -147,19 +146,9 @@ public class ScrollTable extends Widget {
             Map<String, Double> valuesTx =
                     ValueTransforms.apply(data.values(), valueMode, perFile, files);
 
-            // optional filtering/sorting/limit from filters:
-            var rows = ValueTransforms.sortLimitFilter(
-                    valuesTx,
-                    filters.getOrDefault("sort", "value"),
-                    Boolean.parseBoolean(filters.getOrDefault("desc", "true")),
-                    ChartHandler.parseDoubleOrNull(filters.get("min")),
-                    ChartHandler.parseDoubleOrNull(filters.get("max")),
-                    ChartHandler.parseIntOrNull(filters.get("limit"))
-            );
-
             // build a simple [{label, value, color}] array
             out = mapper.createArrayNode();
-            for (var entry : rows) {   // rows is the List<Map.Entry<String, Double>>
+            for (var entry : valuesTx.entrySet()) {
                 var obj = mapper.createObjectNode();
                 String label = entry.getKey();
                 Double value = entry.getValue();
@@ -173,13 +162,115 @@ public class ScrollTable extends Widget {
                 out.add(obj);
             }
         } else if ("MapCoordinates".equalsIgnoreCase(generatorType)) {
-
+            Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> result = repo.loadMapCoordinatesByFile(schema, generatorId);
+            out = mapper.createArrayNode();
+            for (Map.Entry<String, List<GeneratorDataRepository.MapCoordinatesRow>> entry : result.entrySet()) {
+                List<GeneratorDataRepository.MapCoordinatesRow> rows = entry.getValue();
+                for (GeneratorDataRepository.MapCoordinatesRow row : rows) {
+                    var obj = mapper.createObjectNode();
+                    obj.put("label", row.label());
+                    if (row.coordinates() != null && row.coordinates().size() > 1) {
+                        obj.put("x", row.coordinates().get(0));
+                        obj.put("y", row.coordinates().get(1));
+                    }
+                    obj.put("scale", row.scale());
+                    obj.put("fillColor", row.fillColor());
+                    obj.put("strokeColor", row.strokeColor());
+                    obj.put("outsideColor", row.outsideColor());
+                    out.add(obj);
+                }
+            }
         } else if ("HighlightText".equalsIgnoreCase(generatorType)) {
 
         }
 
         String csv = new JsonToCsvConverter(mapper).convert(out);
-        return csvToJsonNode(csv);
+
+        // Convert back to JSON, then apply sort / filter / limit on the table
+        ArrayNode tableOut = csvToJsonNode(csv);
+        tableOut = sortFilterLimit(tableOut, filters);
+        return tableOut;
+    }
+
+    /**
+     * Sorts, filters and limits an ArrayNode table produced by csvToJsonNode.
+     * Row 0 is always the header row and is kept in place.
+     * <ul>
+     *   <li>Sorting is numeric when the target column contains numbers, case-insensitive
+     *       alphabetic otherwise.</li>
+     *   <li>min / max filters are applied only to numeric columns.</li>
+     *   <li>limit truncates the data rows (header excluded).</li>
+     * </ul>
+     */
+    private ArrayNode sortFilterLimit(ArrayNode data, Map<String, String> filters) {
+        if (data == null || data.size() <= 1) return data;
+
+        String  sortCol = filters.getOrDefault("sort", "value");
+        boolean desc    = Boolean.parseBoolean(filters.getOrDefault("desc", "true"));
+        Double  min     = parseDoubleOrNull(filters.get("min"));
+        Double  max     = parseDoubleOrNull(filters.get("max"));
+        Integer limit   = parseIntOrNull(filters.get("limit"));
+
+        // Separate header (index 0) from data rows
+        JsonNode header = data.get(0);
+        List<JsonNode> rows = new ArrayList<>();
+        for (int i = 1; i < data.size(); i++) rows.add(data.get(i));
+
+        // Detect whether the sort column holds numeric values
+        boolean isNumeric = rows.stream()
+                .map(r -> r.get(sortCol))
+                .anyMatch(v -> v != null && v.isNumber());
+
+        // Apply min / max filter (numeric columns only)
+        if (isNumeric && (min != null || max != null)) {
+            double lo = (min == null) ? Double.NEGATIVE_INFINITY : min;
+            double hi = (max == null) ? Double.POSITIVE_INFINITY : max;
+            rows = rows.stream()
+                    .filter(r -> {
+                        JsonNode v = r.get(sortCol);
+                        if (v == null || !v.isNumber()) return true;
+                        double d = v.doubleValue();
+                        return d >= lo && d <= hi;
+                    })
+                    .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        }
+
+        // Build comparator — numeric or lexicographic
+        Comparator<JsonNode> cmp;
+        if (isNumeric) {
+            cmp = Comparator.comparingDouble(r -> {
+                JsonNode v = r.get(sortCol);
+                return (v != null && v.isNumber()) ? v.doubleValue() : 0.0;
+            });
+        } else {
+            cmp = Comparator.comparing(
+                    (JsonNode r) -> { JsonNode v = r.get(sortCol); return v != null ? v.asText() : ""; },
+                    String.CASE_INSENSITIVE_ORDER
+            );
+        }
+        if (desc) cmp = cmp.reversed();
+        rows.sort(cmp);
+
+        // Apply limit
+        if (limit != null && limit >= 0 && limit < rows.size()) {
+            rows = rows.subList(0, limit);
+        }
+
+        // Rebuild ArrayNode with header first
+        ArrayNode result = mapper.createArrayNode();
+        result.add(header);
+        rows.forEach(result::add);
+        return result;
+    }
+
+    private static Double parseDoubleOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return Double.parseDouble(s.trim()); } catch (NumberFormatException e) { return null; }
+    }
+
+    private static Integer parseIntOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return Integer.parseInt(s.trim()); } catch (NumberFormatException e) { return null; }
     }
 
     /**
