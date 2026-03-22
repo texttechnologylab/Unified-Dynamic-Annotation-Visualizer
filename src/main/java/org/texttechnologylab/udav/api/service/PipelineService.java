@@ -125,18 +125,13 @@ public class PipelineService {
         if (id == null || id.isBlank()) {
             throw new ResponseStatusException(BAD_REQUEST, "Missing or empty pipeline id");
         }
-        String jsonStr = toString(json);
-        try (Connection c = dataSource.getConnection()) {
-            DSLContext dsl = DSL.using(c);
-            int updated = dsl.update(DSL.table(DSL.name(schema, TABLE)))
-                    .set(DSL.field(DSL.name(COL_JSON)), jsonStr)
-                    .where(DSL.field(DSL.name(COL_ID)).eq(id))
-                    .execute();
-            if (updated == 0) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
-            sourceBuildService.startBuild(id, id);
 
-            LOGGER.info("Updated pipeline: {}", id);
-        }
+        // Replace strategy requested for demo behavior: drop old pipeline state first,
+        // then recreate the pipeline record and trigger a fresh build.
+        delete(id);
+        create(json);
+
+        LOGGER.info("Replaced pipeline via delete-and-create: {}", id);
     }
 
     @Transactional
