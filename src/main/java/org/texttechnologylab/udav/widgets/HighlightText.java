@@ -17,6 +17,72 @@ public class HighlightText extends Widget {
 
     public HighlightText(GeneratorDataRepository repo, ObjectMapper mapper) { super(repo, mapper); }
 
+    @Override
+    public String toCsv(JsonNode jsonNode) {
+        return toCsvLong(jsonNode);
+    }
+
+    private String toCsvLong(JsonNode jsonNode) {
+        JsonNode spans = resolveData(jsonNode).get("spans");
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("text,style,label_index,label,label_style\n");
+
+        for (JsonNode span : spans) {
+            String text = span.get("text").asText();
+            String style = getOptionalText(span, "style");
+            JsonNode labels = span.get("label");
+
+            if (labels == null || labels.isEmpty()) {
+                csv.append(escapeCsv(text)).append(',')
+                        .append(escapeCsv(style)).append(",,,\n");
+            } else {
+                int index = 0;
+                for (JsonNode label : labels) {
+                    String labelText = label.get("text").asText();
+                    String labelStyle = getOptionalText(label, "style");
+
+                    csv.append(escapeCsv(text)).append(',')
+                            .append(escapeCsv(style)).append(',')
+                            .append(index).append(',')
+                            .append(escapeCsv(labelText)).append(',')
+                            .append(escapeCsv(labelStyle)).append('\n');
+                    index++;
+                }
+            }
+        }
+
+        return csv.toString();
+    }
+
+    // ───────────────────────────────────────────────
+    //  Helper methods
+    // ───────────────────────────────────────────────
+
+    /** Navigate to the "data" node, supporting both root shapes. */
+    private JsonNode resolveData(JsonNode jsonNode) {
+        if (jsonNode.has("data")) {
+            return jsonNode.get("data");
+        }
+        return jsonNode;
+    }
+
+    /** Return the text value of a field, or empty string if absent. */
+    private String getOptionalText(JsonNode node, String field) {
+        return node.has(field) ? node.get(field).asText() : "";
+    }
+
+    /** Escape a value for CSV: wrap in quotes if it contains comma, quote, or newline. */
+    private String escapeCsv(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
     /**
      * Converts the given JsonNode (with a 'data' node containing 'spans') to a LaTeX string.
      * Supports underlining and highlighting (background color) for each text span.

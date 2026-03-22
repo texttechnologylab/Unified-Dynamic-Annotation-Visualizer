@@ -25,9 +25,21 @@ public class ConvertionController {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(body);
         JsonNode jsonNodeJson = node.get("data");
+        String widgetType = node.get("type").asText();
 
-        JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
-        String csv = converter.convert(jsonNodeJson);
+        String csv;
+        try {
+            Widget widget = Widget.constructWidget(widgetType);
+            csv = widget.toCsv(node);
+            if (csv == null) throw new Exception();
+            // widget-intrinsic native csv defined!
+
+        } catch (Exception ignored) {
+            // No widget-intrinsic csv defined -> Use general JsonToCsvConverter
+
+            JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
+            csv = converter.convert(jsonNodeJson);
+        }
 
         Map<String, String> response = new HashMap<>();
         response.put("content", csv);
