@@ -274,8 +274,8 @@ export default class BoundaryApproximation extends D3Visualization {
 
     if (this.interpolate) {
       for (const edge of edges) {
-        const dx = edge[1][0] - edge[0][0];
-        const dy = edge[1][1] - edge[0][1];
+        const dx = edge[1].x - edge[0].x;
+        const dy = edge[1].y - edge[0].y;
         const length = Math.sqrt(dx * dx + dy * dy);
 
         // Number of segments based on spacing
@@ -284,15 +284,14 @@ export default class BoundaryApproximation extends D3Visualization {
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
           points.push({
-            x: edge[0][0] + t * dx,
-            y: edge[0][1] + t * dy,
+            x: edge[0].x + t * dx,
+            y: edge[0].y + t * dy,
           });
         }
       }
     } else {
       for (const edge of edges) {
-        points.push({ x: edge[0][0], y: edge[0][1] });
-        points.push({ x: edge[1][0], y: edge[1][1] });
+        points.push(...edge);
       }
     }
 
