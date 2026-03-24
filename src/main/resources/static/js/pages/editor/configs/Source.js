@@ -10,7 +10,7 @@ export default class Source {
       type: "searchselect",
       label: "Annotation type",
       options: {
-        header: ["Annotation", "#"],
+        headers: ["Annotation", "#"],
         keys: ["annotation", "rowCount"],
         getData: getAnnotations,
       },

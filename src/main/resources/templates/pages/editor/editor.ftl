@@ -37,6 +37,8 @@
 
     <script type="module">
       import "/packages/gridstack-12.3.3/package/dist/gridstack-all.js";
+      import "/packages/floating-ui-core-1.7.5/package/dist/floating-ui.core.umd.min.js";
+      import "/packages/floating-ui-dom-1.7.6/package/dist/floating-ui.dom.umd.min.js";
       import "/packages/bootstrap-5.3.8/package/dist/js/bootstrap.bundle.min.js";
       import "/packages/d3-7.9.0/package/dist/d3.min.js";
       import Editor from "/js/pages/editor/Editor.js";

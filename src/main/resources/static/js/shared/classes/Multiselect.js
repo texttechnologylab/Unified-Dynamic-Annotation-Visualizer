@@ -4,40 +4,39 @@ export default class Multiselect {
   constructor(options) {
     this.options = options;
     this.selection = [];
-    this.dom = {};
   }
 
   commitSelection() {
-    this.dom.input.value = JSON.stringify(this.selection);
+    this.input.value = JSON.stringify(this.selection);
   }
 
   create(key, selected) {
     const template = document.querySelector("#multiselect-template");
     const root = template.content.cloneNode(true);
 
-    this.dom.input = root.querySelector("input");
-    this.dom.trigger = root.querySelector(".dv-multiselect");
-    this.dom.pills = root.querySelector(".dv-multiselect-pills");
-    this.dom.dropdown = root.querySelector(".dv-dropdown");
+    this.input = root.querySelector("input");
+    this.trigger = root.querySelector(".dv-multiselect");
+    this.pills = root.querySelector(".dv-multiselect-pills");
+    this.dropdown = root.querySelector(".dv-dropdown");
 
-    this.dom.input.name = key;
+    this.input.name = key;
 
     for (const option of this.options) {
       if (selected.includes(option.value)) {
         const node = this.createPill(option.label, option.value);
-        this.dom.pills.append(node);
+        this.pills.append(node);
 
         this.selection.push(option.value);
       } else {
         const node = this.createOption(option.label, option.value);
-        this.dom.dropdown.append(node);
+        this.dropdown.append(node);
       }
     }
 
-    this.dom.trigger.addEventListener("focus", () => this.show());
-    this.dom.trigger.addEventListener("blur", () => this.hide());
-    this.dom.dropdown.addEventListener("mousedown", (event) =>
-      event.preventDefault()
+    this.trigger.addEventListener("focus", () => this.show());
+    this.trigger.addEventListener("blur", () => this.hide());
+    this.dropdown.addEventListener("mousedown", (event) =>
+      event.preventDefault(),
     );
 
     this.commitSelection();
@@ -53,7 +52,7 @@ export default class Multiselect {
 
     option.addEventListener("click", () => {
       const node = this.createPill(label, value);
-      this.dom.pills.append(node);
+      this.pills.append(node);
 
       option.remove();
 
@@ -76,7 +75,7 @@ export default class Multiselect {
 
     icon.addEventListener("click", () => {
       const node = this.createOption(label, value);
-      this.dom.dropdown.append(node);
+      this.dropdown.append(node);
 
       pill.remove();
 
@@ -89,10 +88,36 @@ export default class Multiselect {
   }
 
   show() {
-    this.dom.dropdown.classList.add("show");
+    this.dropdown.classList.add("show");
+    this.updatePosition();
   }
 
   hide() {
-    this.dom.dropdown.classList.remove("show");
+    this.dropdown.classList.remove("show");
+    this.cleanup();
+  }
+
+  updatePosition() {
+    const { autoUpdate, computePosition, size, hide } = FloatingUIDOM;
+
+    // Position dropdown and update on reference move
+    this.cleanup = autoUpdate(this.trigger, this.dropdown, () => {
+      computePosition(this.trigger, this.dropdown, {
+        middleware: [
+          size({
+            apply({ rects, elements }) {
+              elements.floating.style.width = rects.reference.width + "px";
+            },
+          }),
+          hide(),
+        ],
+      }).then(({ x, y, middlewareData }) => {
+        this.dropdown.style.visibility = middlewareData.hide.referenceHidden
+          ? "hidden"
+          : "visible";
+        this.dropdown.style.left = x + "px";
+        this.dropdown.style.top = y + "px";
+      });
+    });
   }
 }

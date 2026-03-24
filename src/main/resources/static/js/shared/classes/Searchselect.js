@@ -1,50 +1,47 @@
 import { createElement } from "../modules/utils.js";
 
 export default class Searchselect {
-  constructor({ getData, keys = ["", ""], header = ["Results", ""] }) {
+  constructor({ getData, keys = ["", ""], headers = ["Results", ""] }) {
     this.getData = getData;
     this.keys = keys;
-    this.header = header;
+    this.headers = headers;
     this.value = "";
-    this.dom = {};
   }
 
   create(key, selected) {
     const template = document.querySelector("#searchselect-template");
     const root = template.content.cloneNode(true);
 
-    this.dom.input = root.querySelector("input");
-    this.dom.dropdown = root.querySelector(".dv-dropdown");
-    this.dom.header = root.querySelectorAll(".dv-searchselect-header>span");
-    this.dom.container = root.querySelector(".dv-searchselect-container");
+    this.reference = root.querySelector(".dv-searchselect-input");
+    this.input = root.querySelector("input");
+    this.dropdown = root.querySelector(".dv-dropdown");
+    this.header = root.querySelectorAll(".dv-searchselect-header>span");
+    this.container = root.querySelector(".dv-searchselect-container");
 
-    this.dom.header[0].textContent = this.header[0];
-    this.dom.header[1].textContent = this.header[1];
-    this.dom.input.name = key;
-    this.dom.input.value = selected;
+    this.header[0].textContent = this.headers[0];
+    this.header[1].textContent = this.headers[1];
+    this.input.name = key;
+    this.input.value = selected;
     this.value = selected;
 
-    this.dom.input.addEventListener("focus", () => {
-      this.dom.input.select();
-      this.autocomplete(this.dom.input.value, 20);
+    this.input.addEventListener("focus", () => {
+      this.input.select();
+      this.autocomplete(this.input.value, 20);
     });
 
-    this.dom.input.addEventListener("blur", () => {
-      this.dom.input.value = this.value;
+    this.input.addEventListener("blur", () => {
+      this.input.value = this.value;
       this.hide();
       this.clear();
     });
 
     let timeout = null;
-    this.dom.input.addEventListener("input", () => {
+    this.input.addEventListener("input", () => {
       clearTimeout(timeout);
-      timeout = setTimeout(
-        () => this.autocomplete(this.dom.input.value, 20),
-        300,
-      );
+      timeout = setTimeout(() => this.autocomplete(this.input.value, 20), 300);
     });
 
-    this.dom.dropdown.addEventListener("mousedown", (event) => {
+    this.dropdown.addEventListener("mousedown", (event) => {
       event.preventDefault();
     });
 
@@ -58,8 +55,17 @@ export default class Searchselect {
 
         items.forEach((item) => {
           const result = this.createResult(item);
-          this.dom.container.append(result);
+          this.container.append(result);
         });
+
+        if (items.length === 0) {
+          this.container.append(
+            createElement("span", {
+              className: "m-1",
+              textContent: "No results found",
+            }),
+          );
+        }
 
         this.show();
       })
@@ -72,11 +78,6 @@ export default class Searchselect {
     const label = createElement("span", {
       className: "dv-text-truncate",
       textContent: item[this.keys[0]] || item,
-    });
-    label.addEventListener("click", (event) => {
-      event.preventDefault();
-      this.value = item[this.keys[0]] || item;
-      this.dom.input.blur();
     });
 
     const info = createElement("span", {
@@ -92,18 +93,50 @@ export default class Searchselect {
       [label, info],
     );
 
+    result.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.value = item[this.keys[0]] || item;
+      this.input.blur();
+    });
+
     return result;
   }
 
   show() {
-    this.dom.dropdown.classList.add("show");
+    this.dropdown.classList.add("show");
+    this.updatePosition();
   }
 
   hide() {
-    this.dom.dropdown.classList.remove("show");
+    this.dropdown.classList.remove("show");
+    this.cleanup();
   }
 
   clear() {
-    this.dom.container.innerHTML = "";
+    this.container.innerHTML = "";
+  }
+
+  updatePosition() {
+    const { autoUpdate, computePosition, size, hide } = FloatingUIDOM;
+
+    // Position dropdown and update on reference move
+    this.cleanup = autoUpdate(this.reference, this.dropdown, () => {
+      computePosition(this.reference, this.dropdown, {
+        middleware: [
+          size({
+            apply({ rects, elements }) {
+              elements.floating.style.width = rects.reference.width + "px";
+            },
+          }),
+          hide(),
+        ],
+      }).then(({ x, y, middlewareData }) => {
+        this.dropdown.style.visibility = middlewareData.hide.referenceHidden
+          ? "hidden"
+          : "visible";
+        this.dropdown.style.left = x + "px";
+        this.dropdown.style.top = y + "px";
+      });
+    });
   }
 }

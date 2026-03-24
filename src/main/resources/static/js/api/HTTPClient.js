@@ -13,8 +13,8 @@ export default class HTTPClient {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`${response.status}: ${error}`);
+      const error = await response.json();
+      throw new Error(`${error.path} ${response.status}: ${error.error}`);
     }
 
     return response.json();
