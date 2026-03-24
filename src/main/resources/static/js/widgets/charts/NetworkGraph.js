@@ -58,10 +58,6 @@ export default class NetworkGraph extends D3Visualization {
     super(root, config, { top: 20, right: 20, bottom: 20, left: 20 });
   }
 
-  async fetch() {
-    return await d3.json("/data/network.json");
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);
