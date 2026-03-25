@@ -52,13 +52,13 @@
             They keep record of all the data that is relevant for the charts.
           </p>
           
-          <div class="dv-sources-container">
+          <div class="dv-sources-container"></div>
+          
             <button class="dv-add-source-button">
               <i class="bi bi-plus-lg"></i>
               <span>New source</span>
             </button>
           </div>
-        </div>
         <div class="tab-pane fade" id="widgets-tab-pane" role="tabpanel" tabindex="0">
           <p>
             Add new widgets by dragging them into the grid area to the right.<br>

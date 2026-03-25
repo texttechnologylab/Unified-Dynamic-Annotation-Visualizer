@@ -50,7 +50,7 @@ export default class Editor {
       .addEventListener("click", () => {
         const controller = createSource(Source.defaultConfig);
 
-        container.prepend(controller.root);
+        container.append(controller.root);
         controller.init();
       });
 
