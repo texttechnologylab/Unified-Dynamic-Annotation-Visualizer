@@ -51,10 +51,6 @@ export default class SimpleMap extends D3Visualization {
     this.worldColor = config.options.worldColor || "#b8b8b8";
   }
 
-  async fetch() {
-    return await d3.json("/data/features.geojson");
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);
