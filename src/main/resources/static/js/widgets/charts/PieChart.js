@@ -38,23 +38,6 @@ export default class PieChart extends D3Visualization {
       label: "Show legend",
     },
   };
-  static previewData = [
-    {
-      label: "Label 1",
-      value: 140,
-      color: "#00618f",
-    },
-    {
-      label: "Label 2",
-      value: 73,
-      color: "#3a4856",
-    },
-    {
-      label: "Label 3",
-      value: 56,
-      color: "#9eadbd",
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 10, right: 10, bottom: 10, left: 10 });

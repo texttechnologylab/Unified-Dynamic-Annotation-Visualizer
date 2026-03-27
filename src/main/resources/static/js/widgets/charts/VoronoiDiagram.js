@@ -22,35 +22,6 @@ export default class VoronoiDiagram extends D3Visualization {
       options: () => getGeneratorOptions("MapCoordinates"),
     },
   };
-  static previewData = [
-    {
-      x: 10,
-      y: 10,
-      cell: "#00618f",
-      fill: "#00618f",
-      stroke: "#555555",
-      label: "Cell 1",
-      abs: 0.5,
-    },
-    {
-      x: 12,
-      y: 32,
-      cell: "#3a4856",
-      fill: "#3a4856",
-      stroke: "#555555",
-      label: "Cell 7",
-      abs: 0.2,
-    },
-    {
-      x: 23,
-      y: 23,
-      cell: "#9eadbd",
-      fill: "#9eadbd",
-      stroke: "#555555",
-      label: "Cell 10",
-      abs: 0.1,
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });

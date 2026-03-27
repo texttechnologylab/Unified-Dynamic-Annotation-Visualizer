@@ -61,8 +61,7 @@
         </div>
         <div class="tab-pane fade" id="widgets-tab-pane" role="tabpanel" tabindex="0">
           <p>
-            Add new widgets by dragging them into the grid area to the right.<br>
-            <strong>Note:</strong> Dynamic widgets in the editor will display sample data for preview purposes.
+            Add new widgets by dragging them into the grid area to the right.
           </p>
           <div class="dv-available-widgets-container">
             <template id="available-widget-template">
