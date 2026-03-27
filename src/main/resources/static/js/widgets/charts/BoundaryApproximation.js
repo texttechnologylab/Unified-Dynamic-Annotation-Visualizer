@@ -186,7 +186,7 @@ export default class BoundaryApproximation extends D3Visualization {
         value: this.draw.grid,
         onchange: () => {
           this.draw.grid = !this.draw.grid;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -195,7 +195,7 @@ export default class BoundaryApproximation extends D3Visualization {
         value: this.draw.clusters,
         onchange: () => {
           this.draw.clusters = !this.draw.clusters;
-          this.render(this.data);
+          this.rerender();
         },
       },
     ]);

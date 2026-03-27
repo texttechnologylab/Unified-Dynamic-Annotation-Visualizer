@@ -72,7 +72,7 @@ export default class VoronoiDiagram extends D3Visualization {
         value: this.draw.points,
         onchange: () => {
           this.draw.points = !this.draw.points;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -81,7 +81,7 @@ export default class VoronoiDiagram extends D3Visualization {
         value: this.draw.polygons,
         onchange: () => {
           this.draw.polygons = !this.draw.polygons;
-          this.render(this.data);
+          this.rerender();
         },
       },
     ]);

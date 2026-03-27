@@ -58,7 +58,7 @@ export default class WidgetController {
         }
         this.setOptions(options);
 
-        this.widget.render(Widget.previewData || this.item.src);
+        this.widget.rerender();
       });
     });
     buttons[1].addEventListener("click", () => {

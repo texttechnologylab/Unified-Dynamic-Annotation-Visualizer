@@ -73,7 +73,7 @@ export default class BarChart extends D3Visualization {
         options: ["value", "label"],
         onchange: (event) => {
           this.filter.sort = event.target.value;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
       {
@@ -82,7 +82,7 @@ export default class BarChart extends D3Visualization {
         value: this.filter.desc,
         onchange: (event) => {
           this.filter.desc = event.target.checked;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
       {
@@ -93,7 +93,7 @@ export default class BarChart extends D3Visualization {
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
     ]);

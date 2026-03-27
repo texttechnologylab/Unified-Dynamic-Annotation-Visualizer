@@ -83,7 +83,7 @@ export default class PieChart extends D3Visualization {
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
     ]);

@@ -99,7 +99,7 @@ export default class LineChart extends D3Visualization {
             } else {
               this.filter.hide.push(name);
             }
-            this.fetch().then((data) => this.render(data));
+            this.rerender(true);
           },
         };
       }),

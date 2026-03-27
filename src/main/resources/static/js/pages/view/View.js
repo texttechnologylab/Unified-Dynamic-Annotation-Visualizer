@@ -47,7 +47,7 @@ export default class View {
       resetButton.classList.add("dv-hidden");
 
       for (const chart of state.charts) {
-        chart.fetch().then((data) => chart.render(data));
+        chart.rerender(true);
       }
     });
 
@@ -56,7 +56,7 @@ export default class View {
       resetButton.classList.remove("dv-hidden");
 
       for (const chart of state.charts) {
-        chart.fetch().then((data) => chart.render(data));
+        chart.rerender(true);
       }
     });
   }

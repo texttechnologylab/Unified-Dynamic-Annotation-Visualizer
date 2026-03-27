@@ -60,4 +60,8 @@ export default class StaticVideo {
 
     this.root.classed("overflow-hidden", true);
   }
+
+  rerender() {
+    this.render(this.src);
+  }
 }

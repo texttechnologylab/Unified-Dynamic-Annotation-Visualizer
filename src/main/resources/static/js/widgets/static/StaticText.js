@@ -54,7 +54,7 @@ export default class StaticText {
     this.root = d3.select(root);
     this.config = config;
 
-    this.text = config.src || "";
+    this.src = config.src || "";
     this.align = config.options.align || "start";
     this.size = config.options.size || "5";
     this.weight = config.options.weight || "normal";
@@ -67,7 +67,7 @@ export default class StaticText {
   }
 
   init() {
-    this.render(this.text);
+    this.render(this.src);
   }
 
   render(data) {
@@ -80,5 +80,9 @@ export default class StaticText {
         `text-container text-${this.align} fs-${this.size} fw-${this.weight} fst-${this.style} text-decoration-${this.decoration}`,
       )
       .text(data);
+  }
+
+  rerender() {
+    this.render(this.src);
   }
 }

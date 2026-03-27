@@ -108,7 +108,7 @@ export default class MedialAxis extends D3Visualization {
         value: this.draw.boundary,
         onchange: () => {
           this.draw.boundary = !this.draw.boundary;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -117,7 +117,7 @@ export default class MedialAxis extends D3Visualization {
         value: this.draw.triangles,
         onchange: () => {
           this.draw.triangles = !this.draw.triangles;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -126,7 +126,7 @@ export default class MedialAxis extends D3Visualization {
         value: this.draw.circles,
         onchange: () => {
           this.draw.circles = !this.draw.circles;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -135,7 +135,7 @@ export default class MedialAxis extends D3Visualization {
         value: this.draw.centers,
         onchange: () => {
           this.draw.centers = !this.draw.centers;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -144,7 +144,7 @@ export default class MedialAxis extends D3Visualization {
         value: this.draw.voronoi,
         onchange: () => {
           this.draw.voronoi = !this.draw.voronoi;
-          this.render(this.data);
+          this.rerender();
         },
       },
     ]);

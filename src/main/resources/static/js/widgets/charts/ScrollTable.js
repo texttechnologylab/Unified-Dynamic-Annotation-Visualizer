@@ -1,10 +1,7 @@
-import ControlsHandler from "../../pages/view/toolbar/ControlsHandler.js";
-import ExportHandler from "../../pages/view/toolbar/ExportHandler.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
-import { getData } from "../../api/data.api.js";
-import state from "../../pages/view/utils/viewState.js";
+import WidgetInterface from "../WidgetInterface.js";
 
-export default class ScrollTable {
+export default class ScrollTable extends WidgetInterface {
   static defaultConfig = {
     type: "ScrollTable",
     title: "Table",
@@ -46,32 +43,15 @@ export default class ScrollTable {
   ];
 
   constructor(root, config) {
-    this.root = d3.select(root);
-    this.config = config;
-
-    this.setTitle(this.config.title);
+    super(root, config);
 
     this.div = this.root.select(".dv-chart-area").append("div");
-    this.data = null;
-
-    this.filter = {};
-    this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this);
 
     this.numbers = config.options.numbers || true;
   }
 
   setTitle(title) {
     this.root.select(".dv-toolbar-title").attr("title", title).text(title);
-  }
-
-  async fetch() {
-    const { pipeline, generator, type } = this.config;
-
-    return await getData(pipeline, generator.id, type, {
-      corpus: state.corpusFilter.filter,
-      chart: this.filter,
-    });
   }
 
   clear() {
@@ -100,7 +80,7 @@ export default class ScrollTable {
         options: values,
         onchange: (event) => {
           this.filter.sort = event.target.value;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
       {
@@ -109,7 +89,7 @@ export default class ScrollTable {
         value: this.filter.desc,
         onchange: (event) => {
           this.filter.desc = event.target.checked;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
     ]);
