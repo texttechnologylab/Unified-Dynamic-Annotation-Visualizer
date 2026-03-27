@@ -1,9 +1,5 @@
 import accordions from "../../shared/modules/accordions.js";
-import {
-  identifierValid,
-  widgetsValid,
-  sourcesValid,
-} from "./utils/editorValidations.js";
+import { widgetsValid, sourcesValid } from "./utils/editorValidations.js";
 import state from "./utils/editorState.js";
 import {
   createSource,
@@ -33,6 +29,7 @@ export default class Editor {
     this.initGrid();
 
     // Load existing data
+    state.id = config.id;
     loadSources(config.sources || [], config.generators || []);
     state.grid.load(config.widgets || []);
 
@@ -56,11 +53,10 @@ export default class Editor {
 
     document.querySelector("#discard-button").addEventListener("click", () => {
       state.modal.confirm("Discard Changes", "Are you sure?", async () => {
-        const id = input.value;
         const pipelines = await getPipelines();
 
-        if (pipelines.includes(id)) {
-          window.open("/view/" + id, "_self");
+        if (pipelines.includes(state.id)) {
+          window.open("/view/" + state.id, "_self");
         } else {
           window.open("/", "_self");
         }
@@ -132,21 +128,21 @@ export default class Editor {
     });
   }
 
-  async validate(id) {
+  async validate(name) {
     const pipelines = await getPipelines();
     const config = {
-      id: id,
+      id: state.id,
+      name: name,
       sources: state.sources,
       generators: state.generators,
       widgets: state.grid.save(false),
     };
 
-    const ok =
-      identifierValid(config) && widgetsValid(config) && sourcesValid(config);
+    const ok = widgetsValid(config) && sourcesValid(config);
 
     if (ok && pipelines.includes(config.id)) {
       state.modal.confirm(
-        `Overwrite "${config.id}"`,
+        `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         async () => {
           state.modal.loading("Updating pipeline, please wait...");

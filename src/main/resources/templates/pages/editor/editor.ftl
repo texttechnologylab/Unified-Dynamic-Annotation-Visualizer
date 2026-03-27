@@ -24,7 +24,7 @@
     <#include "/pages/editor/editorGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=config?eval_json.id!"new-pipeline" />
+      <@sidebar name=config?eval_json.name!"untitled-pipeline" />
 
       <main class="dv-main">
         <@grid />

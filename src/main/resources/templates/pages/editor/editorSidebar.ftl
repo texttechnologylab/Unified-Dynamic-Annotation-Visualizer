@@ -1,4 +1,4 @@
-<#macro sidebar id>
+<#macro sidebar name>
   <aside class="dv-sidebar">
     <a class="dv-sidebar-header" href="/">
       <img src="/img/logo.png" alt="Logo">
@@ -10,7 +10,7 @@
 
       <label class="dv-label w-100 my-4">
         <span>Identifier:</span>
-        <input id="identifier-input" type="text" class="dv-text-input" value="${id}" />
+        <input id="identifier-input" type="text" class="dv-text-input" value="${name}" />
       </label>
 
       <ul class="nav nav-tabs nav-justified" role="tablist">

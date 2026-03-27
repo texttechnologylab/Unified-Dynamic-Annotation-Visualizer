@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+  <#assign config_json=config?eval_json>
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${id} - Dynamic Visualizations</title>
+    <title>${config_json.name!config_json.id} - Dynamic Visualizations</title>
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/pages/view.css" />
@@ -24,7 +26,7 @@
     <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=id pipelines=pipelines?eval_json widgets=widgets?eval_json />
+      <@sidebar pipelines=pipelines?eval_json config=config_json />
 
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>
@@ -47,10 +49,10 @@
       import "/packages/dompurify-3.3.2/package/dist/purify.min.js";
       import View from "/js/pages/view/View.js";
 
-      const widgets = JSON.parse("${widgets?json_string}");
-      const view = new View("${id}");
+      const config = JSON.parse("${config?json_string}");
+      const view = new View(config.id);
       
-      view.init(widgets);
+      view.init(config.widgets);
     </script>
   </body>
 </html>
