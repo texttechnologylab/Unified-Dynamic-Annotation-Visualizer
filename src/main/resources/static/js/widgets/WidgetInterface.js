@@ -32,6 +32,10 @@ export default class WidgetInterface {
     });
   }
 
+  clear() {
+    throw new Error("Method clear() not implemented.");
+  }
+
   init() {
     throw new Error("Method init() not implemented.");
   }

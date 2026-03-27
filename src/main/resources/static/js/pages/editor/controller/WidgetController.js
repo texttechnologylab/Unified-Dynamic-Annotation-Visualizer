@@ -17,6 +17,11 @@ export default class WidgetController {
     if (this.widget.setTitle) this.widget.setTitle(title);
   }
 
+  setGenerator(generator) {
+    this.item.generator = generator;
+    this.widget.rerender(true);
+  }
+
   setSrc(src) {
     this.item.src = src;
     this.widget.src = src;
@@ -39,8 +44,12 @@ export default class WidgetController {
     );
     const buttons = this.root.querySelectorAll("button");
 
-    this.widget = new Widget(this.root, this.item);
-    this.widget.render(Widget.previewData || this.item.src);
+    this.widget = new Widget(this.root, { pipeline: state.id, ...this.item });
+
+    // Render static widgets on initialisation
+    if (this.item.generator || this.item.src) {
+      this.widget.rerender(true);
+    }
 
     buttons[0].addEventListener("click", () => {
       const { title, generator, src, options } = this.item;

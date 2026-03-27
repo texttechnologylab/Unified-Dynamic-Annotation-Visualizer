@@ -171,10 +171,6 @@ export default class BoundaryApproximation extends D3Visualization {
     this.thresholds = config.options.thresholds || 5;
   }
 
-  async fetch() {
-    return await d3.json("/data/edges.json");
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);

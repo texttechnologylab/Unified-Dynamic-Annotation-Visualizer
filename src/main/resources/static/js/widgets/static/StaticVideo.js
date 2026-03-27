@@ -35,8 +35,8 @@ export default class StaticVideo {
     this.config = config;
 
     this.src = config.src || "";
-    this.controls = config.options.controls || true;
-    this.autoplay = config.options.autoplay || false;
+    this.controls = config.options.controls || false;
+    this.autoplay = config.options.autoplay || true;
   }
 
   clear() {
