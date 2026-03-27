@@ -122,6 +122,18 @@
   border-bottom-right-radius: inherit;
 }
 
+.dv-source-card-hint:only-child {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  padding: 0.25rem;
+}
+
+.dv-source-card-hint {
+  display: none;
+}
+
 .dv-add-source-button {
   width: 100%;
   display: flex;

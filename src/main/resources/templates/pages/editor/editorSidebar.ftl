@@ -98,7 +98,11 @@
               </button>
             </div>
           </div>
-          <div class="dv-source-card-body"></div>
+          <div class="dv-source-card-body">
+            <div class="dv-source-card-hint">
+              Add generators via the plus
+            </div>
+          </div>
         </div>
       </template>
 
