@@ -54,11 +54,11 @@
           
           <div class="dv-sources-container"></div>
           
-            <button class="dv-add-source-button">
-              <i class="bi bi-plus-lg"></i>
-              <span>New source</span>
-            </button>
-          </div>
+          <button class="dv-add-source-button">
+            <i class="bi bi-plus-lg"></i>
+            <span>New source</span>
+          </button>
+        </div>
         <div class="tab-pane fade" id="widgets-tab-pane" role="tabpanel" tabindex="0">
           <p>
             Add new widgets by dragging them into the grid area to the right.<br>
@@ -108,22 +108,22 @@
 
       <template id="generator-card-template">
         <div class="dv-generator-card">
-          <div class="dv-generator-card-title">
-            <div>
-              <div class="dv-generator-card-token"></div>
-            </div>
-            <div class="overflow-hidden">
+          <div class="dv-generator-card-header">
+            <div class="dv-generator-card-title">
+              <div><div class="dv-generator-card-token"></div></div>
               <div class="dv-generator-card-type"></div>
-              <div class="dv-generator-card-name"></div>
+            </div>
+            <div>
+              <button class="dv-btn" type="button" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="dv-btn" type="button" title="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
           </div>
-          <div class="dv-generator-card-buttons">
-            <button class="dv-btn" type="button" title="Edit">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="dv-btn" type="button" title="Remove">
-              <i class="bi bi-x-lg"></i>
-            </button>
+          <div class="dv-generator-card-body">
+            <div class="dv-generator-card-name"></div>
           </div>
         </div>
       </template>

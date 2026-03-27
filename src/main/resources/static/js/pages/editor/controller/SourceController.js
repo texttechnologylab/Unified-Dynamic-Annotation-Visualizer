@@ -52,7 +52,7 @@ export default class SourceController {
         "button",
         { className: "dv-btn dv-generator-option" },
         [
-          createElement("span", { className: "dv-generator-card-title" }, [
+          createElement("span", { className: "dv-generator-card-header" }, [
             createElement("div", {
               className: "dv-generator-card-token",
               textContent: Generator.token,
