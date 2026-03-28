@@ -45,11 +45,7 @@ export default class WidgetController {
     const buttons = this.root.querySelectorAll("button");
 
     this.widget = new Widget(this.root, { pipeline: state.id, ...this.item });
-
-    // Render static widgets on initialisation
-    if (this.item.generator || this.item.src) {
-      this.widget.rerender(true);
-    }
+    this.widget.rerender(true);
 
     buttons[0].addEventListener("click", () => {
       const { title, generator, src, options } = this.item;
@@ -67,7 +63,7 @@ export default class WidgetController {
         }
         this.setOptions(options);
 
-        this.widget.rerender();
+        this.widget.rerender(true);
       });
     });
     buttons[1].addEventListener("click", () => {

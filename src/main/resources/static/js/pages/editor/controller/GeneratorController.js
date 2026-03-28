@@ -57,12 +57,17 @@ export default class GeneratorController {
           this.setName(name);
           this.item.settings = settings;
           this.item.extends = ext;
+
+          // TODO: api.updateGenerator(state.id, this.item); + rerender connected widgets
         },
       );
     });
     buttons[1].addEventListener("click", () => {
       // Remove generator from the dom
       this.root.remove();
+
+      // Remove generator from the backend
+      // TODO: api.deleteGenerator(state.id, this.item); + rerender connected widgets
 
       // Remove generator from the state list
       removeGenerator(this.item);

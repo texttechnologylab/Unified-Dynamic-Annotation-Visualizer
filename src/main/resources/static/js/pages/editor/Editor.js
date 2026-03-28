@@ -47,6 +47,7 @@ export default class Editor {
       .addEventListener("click", () => {
         const controller = createSource(Source.defaultConfig);
 
+        // TODO: api.createSource(state.id, controller.item);
         container.append(controller.root);
         controller.init();
       });
@@ -54,6 +55,9 @@ export default class Editor {
     document.querySelector("#discard-button").addEventListener("click", () => {
       state.modal.confirm("Discard Changes", "Are you sure?", async () => {
         const pipelines = await getPipelines();
+
+        // Delete temp pipeline
+        // TODO: api.deletePipeline(state.id);
 
         if (pipelines.includes(state.id)) {
           window.open("/view/" + state.id, "_self");
@@ -152,6 +156,9 @@ export default class Editor {
       );
     } else if (ok) {
       state.modal.loading("Creating pipeline, please wait...");
+
+      // Promote temp pipeline
+      // TODO: api.promotePipeline(state.id, config.name, config.widgets);
       await createPipeline(config);
       window.open("/view/" + config.id, "_self");
     }
