@@ -7,6 +7,7 @@ import org.texttechnologylab.udav.api.service.PipelineService;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/pipelines")
@@ -20,12 +21,12 @@ public class PipelineController {
 
     // List names with optional search + pagination
     @GetMapping
-    public ResponseEntity<List<String>> list(
+    public ResponseEntity<List<Map<String, String>>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size,
             @RequestParam(required = false) String q
     ) throws Exception {
-        return ResponseEntity.ok(service.listIds(page, size, q));
+        return ResponseEntity.ok(service.listSummaries(page, size, q));
     }
 
     // Get full JSON by name

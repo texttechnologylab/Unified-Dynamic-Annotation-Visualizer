@@ -18,6 +18,8 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -59,18 +61,31 @@ public class PipelineService {
 
     @Transactional(readOnly = true)
     public List<String> listIds(int page, int size, String q) throws Exception {
+        return listSummaries(page, size, q).stream()
+                .map(summary -> summary.get("id"))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, String>> listSummaries(int page, int size, String q) throws Exception {
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
+            var fieldId = DSL.field(DSL.name(COL_ID), String.class);
+            var fieldName = DSL.field(DSL.name(COL_NAME), String.class);
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
-                    : DSL.field(DSL.name(COL_ID), String.class).likeIgnoreCase("%" + q + "%");
-            return dsl.select(DSL.field(DSL.name(COL_ID), String.class))
+                    : fieldId.likeIgnoreCase("%" + q + "%")
+                    .or(fieldName.likeIgnoreCase("%" + q + "%"));
+            return dsl.select(fieldId, fieldName)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
-                    .orderBy(DSL.field(DSL.name(COL_ID)).asc())
+                    .orderBy(fieldId.asc())
                     .offset(Math.max(0, page) * Math.max(1, size))
                     .limit(Math.max(1, size))
-                    .fetchInto(String.class);
+                    .fetch(record -> Map.of(
+                            "id", record.get(fieldId),
+                            "name", Objects.requireNonNullElse(record.get(fieldName), record.get(fieldId))
+                    ));
         }
     }
 
