@@ -18,6 +18,13 @@
     <#include "/shared/modal.ftl">
     <#include "/shared/fileInput.ftl">
 
+    <#function safeFilename str>
+      <#return str
+        ?replace("[<>:\"/\\\\|?*\\x00-\\x1F]", "", "r")
+        ?replace("\\s+", "-", "r")
+      >
+    </#function>
+
     <div class="dv-layout">
       <div class="dv-main-title">
         <div class="dv-main-title-logo">
@@ -53,7 +60,7 @@
                   class="dv-btn-hidden"
                   title="Export configuration"
                   href="/api/pipelines/${pipeline.id}?pretty=true"
-                  download="config.json"
+                  download="${safeFilename(pipeline.name)}.json"
                 >
                   <i class="bi bi-download"></i>
                 </a>

@@ -1,6 +1,8 @@
 package org.texttechnologylab.udav.api.Controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.texttechnologylab.udav.api.service.PipelineService;
@@ -14,6 +16,7 @@ import java.util.Map;
 public class PipelineController {
 
     private final PipelineService service;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public PipelineController(PipelineService service) {
         this.service = service;
@@ -24,15 +27,19 @@ public class PipelineController {
     public ResponseEntity<List<Map<String, String>>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "100") int size,
-            @RequestParam(required = false) String q
-    ) throws Exception {
+            @RequestParam(required = false) String q) throws Exception {
         return ResponseEntity.ok(service.listSummaries(page, size, q));
     }
 
     // Get full JSON by name
     @GetMapping("/{id}")
-    public ResponseEntity<JsonNode> get(@PathVariable String id) throws Exception {
-        JsonNode json = service.get(id);
+    public ResponseEntity<String> get(
+            @PathVariable String id,
+            @RequestParam(name = "pretty", defaultValue = "false") boolean pretty) throws Exception {
+        JsonNode node = service.get(id);
+        String json = pretty
+                ? mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
+                : mapper.writeValueAsString(node);
         return ResponseEntity.ok(json);
     }
 

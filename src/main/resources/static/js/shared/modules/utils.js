@@ -74,3 +74,7 @@ export function applyStyles(node, changes) {
 
   return node.node();
 }
+
+export function safeFilename(str) {
+  return str.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").replace(/\s+/g, "-");
+}
