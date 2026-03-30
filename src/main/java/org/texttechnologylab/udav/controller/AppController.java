@@ -32,7 +32,7 @@ public class AppController {
 	}
 
 	public String getPipelines() throws Exception {
-		return mapper.writeValueAsString(service.listIds(0, 100, ""));
+		return mapper.writeValueAsString(service.listSummaries(0, 100, ""));
 	}
 
 	public String getConfigById(String id) throws Exception {

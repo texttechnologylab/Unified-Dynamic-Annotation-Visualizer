@@ -9,15 +9,15 @@
     </a>
     <div class="dv-dropdown">
       <#list pipelines as pipeline>
-        <#if pipeline != id>
+        <#if pipeline.id != id>
           <a
             class="dv-pipeline-switcher-item"
-            title="${pipeline}"
-            href="/view/${pipeline}"
+            title="${pipeline.name}"
+            href="/view/${pipeline.id}"
           >
             <div class="dv-pipeline-switcher-title">
               <i class="bi bi-clipboard-data"></i>
-              <span class="dv-text-truncate">${pipeline}</span>
+              <span class="dv-text-truncate">${pipeline.name}</span>
             </div>
           </a>
         </#if>

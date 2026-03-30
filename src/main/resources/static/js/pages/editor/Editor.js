@@ -59,7 +59,7 @@ export default class Editor {
         // Delete temp pipeline
         // TODO: api.deletePipeline(state.id);
 
-        if (pipelines.includes(state.id)) {
+        if (pipelines.find((p) => p.id === state.id)) {
           window.open("/view/" + state.id, "_self");
         } else {
           window.open("/", "_self");
@@ -144,7 +144,7 @@ export default class Editor {
 
     const ok = widgetsValid(config) && sourcesValid(config);
 
-    if (ok && pipelines.includes(config.id)) {
+    if (ok && pipelines.find((p) => p.id === config.id)) {
       state.modal.confirm(
         `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",

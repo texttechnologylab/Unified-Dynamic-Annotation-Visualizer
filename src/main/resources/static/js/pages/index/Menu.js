@@ -13,9 +13,9 @@ export default class Menu {
     document.querySelectorAll("[data-dv-toggle='modal']").forEach((node) => {
       node.addEventListener("click", () => {
         this.modal.confirm(
-          "Delete " + node.dataset.pipeline,
+          "Delete " + node.dataset.name,
           "Do you want to delete this pipeline?",
-          () => this.removePipeline(node.dataset.pipeline),
+          () => this.removePipeline(node.dataset.id),
         );
       });
     });

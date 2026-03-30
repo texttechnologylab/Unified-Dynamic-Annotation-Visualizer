@@ -32,27 +32,27 @@
         <div class="dv-menu">
           <div class="dv-menu-item-list">
             <#list pipelines?eval_json as pipeline>
-              <div id="pipeline-${pipeline}" class="dv-btn dv-menu-item">
+              <div id="pipeline-${pipeline.id}" class="dv-btn dv-menu-item">
                 <a
                   class="dv-menu-link"
                   title="Select pipeline"
-                  href="/view/${pipeline}"
+                  href="/view/${pipeline.id}"
                 >
                   <i class="bi bi-clipboard-data"></i>
-                  <span>${pipeline}</span>
+                  <span>${pipeline.name}</span>
                 </a>
 
                 <a
                   class="dv-btn-hidden"
                   title="Edit configuration"
-                  href="/editor/${pipeline}"
+                  href="/editor/${pipeline.id}"
                 >
                   <i class="bi bi-pencil"></i>
                 </a>
                 <a
                   class="dv-btn-hidden"
                   title="Export configuration"
-                  href="/api/pipelines/${pipeline}?pretty=true"
+                  href="/api/pipelines/${pipeline.id}?pretty=true"
                   download="config.json"
                 >
                   <i class="bi bi-download"></i>
@@ -61,7 +61,8 @@
                   class="dv-btn-hidden dv-btn-delete"
                   title="Delete pipeline"
                   data-dv-toggle="modal"
-                  data-pipeline="${pipeline}"
+                  data-id="${pipeline.id}"
+                  data-name="${pipeline.name}"
                 >
                   <i class="bi bi-trash"></i>
                 </button>
