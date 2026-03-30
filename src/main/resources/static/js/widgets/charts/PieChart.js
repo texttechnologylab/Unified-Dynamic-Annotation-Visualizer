@@ -50,19 +50,18 @@ export default class PieChart extends D3Visualization {
     const data = await this.fetch();
     this.render(data);
 
-    const min = d3.min(data.map((d) => d.value));
     const max = d3.max(data.map((d) => d.value));
 
     this.filter = {
-      min,
-      max,
+      min: 0,
+      max: max,
     };
     this.controls.append([
       {
         type: "rangedouble",
         label: "Range",
         value: [this.filter.min, this.filter.max],
-        options: { min, max },
+        options: { min: 0, max: max },
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
