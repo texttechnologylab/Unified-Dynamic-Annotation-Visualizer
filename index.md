@@ -366,7 +366,7 @@ To add a new generator, follow these steps:
 
 ## Authors / Contributors
 * Thiemo Dahmann [<img src="./img/github.svg" height="20px">](https://github.com/LociStar)
-* Julian Schneider [<img src="./img/github.svg" height="20px">](https://github.com/Julian99S)
+* Julian Schneider [<img src="./img/github.svg" height="20px">](https://github.com/Julian99S) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Julian-Schneider-28)
 * Philipp Stephan [<img src="./img/github.svg" height="20px">](https://github.com/phpp28) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Philipp-Stephan-4)
 * Giuseppe Abrami (Supervision) [<img src="./img/github.svg" height="20px">](https://github.com/abrami) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Giuseppe-Abrami)
 * Prof. Dr. Alexander Mehler (Supervision) [<img src="./img/rg.svg" height="20px">](https://www.researchgate.net/profile/Alexander-Mehler-2)
