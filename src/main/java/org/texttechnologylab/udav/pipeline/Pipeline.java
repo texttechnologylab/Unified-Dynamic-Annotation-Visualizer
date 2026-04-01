@@ -436,6 +436,8 @@ public class Pipeline {
 
         // Build a map of sourceId -> createsGenerators list for quick lookup
         Map<String, List<Map<String, Object>>> sourceGeneratorMap = new LinkedHashMap<>();
+        // Track generator IDs already present per source to keep merge idempotent.
+        Map<String, Set<String>> sourceGeneratorIds = new LinkedHashMap<>();
 
         for (Map<String, Object> source : originalSources) {
             Map<String, Object> newSource = new LinkedHashMap<>(source);
@@ -446,8 +448,20 @@ public class Pipeline {
                     (List<Map<String, Object>>) source.getOrDefault("createsGenerators", new ArrayList<>());
             List<Map<String, Object>> generatorList = new ArrayList<>(existingGenerators);
 
+            Set<String> existingIds = new LinkedHashSet<>();
+            for (Map<String, Object> existingGenerator : existingGenerators) {
+                Object existingId = existingGenerator.get("id");
+                if (existingId != null) {
+                    String id = existingId.toString().trim();
+                    if (!id.isEmpty()) {
+                        existingIds.add(id);
+                    }
+                }
+            }
+
             newSource.put("createsGenerators", generatorList);
             sourceGeneratorMap.put(sourceId, generatorList);
+            sourceGeneratorIds.put(sourceId, existingIds);
             newSources.add(newSource);
         }
 
@@ -462,6 +476,16 @@ public class Pipeline {
             if (targetList == null) {
                 throw new IllegalArgumentException(
                         "Generator references unknown source id: " + sourceId);
+            }
+
+            Object generatorIdObj = generator.get("id");
+            String generatorId = generatorIdObj == null ? null : generatorIdObj.toString().trim();
+            if (generatorId != null && !generatorId.isEmpty()) {
+                Set<String> seenIds = sourceGeneratorIds.get(sourceId);
+                if (seenIds.contains(generatorId)) {
+                    continue;
+                }
+                seenIds.add(generatorId);
             }
 
             // Copy the generator without the "source" key, as it's now implied by nesting
