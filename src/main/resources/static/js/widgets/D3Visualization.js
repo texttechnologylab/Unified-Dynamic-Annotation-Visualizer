@@ -1,15 +1,9 @@
-import { getData } from "../api/data.api.js";
-import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
-import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
-import state from "../pages/view/utils/viewState.js";
 import { debounce, randomId } from "../shared/modules/utils.js";
+import WidgetInterface from "./WidgetInterface.js";
 
-export default class D3Visualization {
+export default class D3Visualization extends WidgetInterface {
   constructor(root, config, margin) {
-    this.root = d3.select(root);
-    this.config = config;
-
-    this.setTitle(this.config.title);
+    super(root, config);
 
     const { width, height } = this.getDimensions();
     this.width = width - margin.left - margin.right;
@@ -18,11 +12,6 @@ export default class D3Visualization {
 
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.svg = this.root.select(".dv-chart-area").append("svg");
-    this.data = null;
-
-    this.filter = {};
-    this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this);
 
     // Re-render chart on resize of container
     const observer = new ResizeObserver(
@@ -36,10 +25,6 @@ export default class D3Visualization {
     observer.observe(root);
   }
 
-  setTitle(title) {
-    this.root.select(".dv-toolbar-title").attr("title", title).text(title);
-  }
-
   getDimensions() {
     const area = this.root.select(".dv-chart-area").node();
     const rect = area.getBoundingClientRect();
@@ -51,16 +36,7 @@ export default class D3Visualization {
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
 
-    this.render(this.data);
-  }
-
-  async fetch() {
-    const { pipeline, generator, type } = this.config;
-
-    return await getData(pipeline, generator.id, type, {
-      corpus: state.corpusFilter.filter,
-      chart: this.filter,
-    });
+    this.rerender();
   }
 
   clear() {
@@ -71,14 +47,6 @@ export default class D3Visualization {
     this.plotArea = this.svg
       .append("g")
       .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
-  }
-
-  init() {
-    throw new Error("Method init() not implemented.");
-  }
-
-  render() {
-    throw new Error("Method render() not implemented.");
   }
 
   mouseover(event) {

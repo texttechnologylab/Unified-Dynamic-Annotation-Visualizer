@@ -1,7 +1,7 @@
 <#include "/shared/accordion.ftl">
 <#include "/shared/pipelineSwitcher.ftl">
 
-<#macro sidebar id pipelines widgets>
+<#macro sidebar pipelines config>
   <aside class="dv-sidebar">
     <a class="dv-sidebar-header" href="/">
       <img src="/img/logo.png" alt="Logo">
@@ -18,14 +18,14 @@
       </a>
       <a 
         class="dv-btn dv-menu-link"
-        href="/editor/${id}"
+        href="/editor/${config.id}"
       >
         <i class="bi bi-pencil"></i>
         <span>Edit Pipeline</span>
       </a>
       
       <div class="dv-menu-title">Pipeline</div>
-      <@pipelineSwitcher pipelines=pipelines selected=id />
+      <@pipelineSwitcher pipelines=pipelines id=config.id name=config.name!config.id />
       
       <div class="dv-menu-title">Corpus Filter</div>
       <div class="dv-corpus-filter">

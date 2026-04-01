@@ -40,38 +40,6 @@ export default class LineChart extends D3Visualization {
       ],
     },
   };
-  static previewData = [
-    {
-      name: "Dataset",
-      color: "#00618f",
-      coordinates: [
-        {
-          y: 5,
-          x: 0,
-        },
-        {
-          y: 20,
-          x: 20,
-        },
-        {
-          y: 10,
-          x: 40,
-        },
-        {
-          y: 40,
-          x: 60,
-        },
-        {
-          y: 5,
-          x: 80,
-        },
-        {
-          y: 60,
-          x: 100,
-        },
-      ],
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 20, right: 30, bottom: 30, left: 40 });
@@ -99,7 +67,7 @@ export default class LineChart extends D3Visualization {
             } else {
               this.filter.hide.push(name);
             }
-            this.fetch().then((data) => this.render(data));
+            this.rerender(true);
           },
         };
       }),

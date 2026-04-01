@@ -82,32 +82,6 @@ export default class BoundaryApproximation extends D3Visualization {
       options: { min: 1, max: 50 },
     },
   };
-  static previewData = [
-    [
-      [276.4694937085933, 210.96513455773257],
-      [231.44104269965737, 212.1801872596352],
-    ],
-    [
-      [279.8532649869678, 233.57060329542853],
-      [258.5205158524833, 232.82647918776243],
-    ],
-    [
-      [258.5205158524833, 232.82647918776243],
-      [241.73193780364903, 233.5652548110095],
-    ],
-    [
-      [354.0914634285864, 159.91399739642264],
-      [344.64352898661446, 156.26693179627298],
-    ],
-    [
-      [354.0914634285864, 159.91399739642264],
-      [355.3915585448194, 160.5893335465575],
-    ],
-    [
-      [298.0951585828476, 253.41146322242082],
-      [296.1249795167421, 253.9237691377335],
-    ],
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 40, right: 40, bottom: 40, left: 40 });
@@ -135,10 +109,6 @@ export default class BoundaryApproximation extends D3Visualization {
     this.thresholds = config.options.thresholds || 5;
   }
 
-  async fetch() {
-    return await d3.json("/data/edges.json");
-  }
-
   async init() {
     const data = await this.fetch();
     this.render(data);
@@ -150,7 +120,7 @@ export default class BoundaryApproximation extends D3Visualization {
         value: this.draw.grid,
         onchange: () => {
           this.draw.grid = !this.draw.grid;
-          this.render(this.data);
+          this.rerender();
         },
       },
       {
@@ -159,7 +129,7 @@ export default class BoundaryApproximation extends D3Visualization {
         value: this.draw.clusters,
         onchange: () => {
           this.draw.clusters = !this.draw.clusters;
-          this.render(this.data);
+          this.rerender();
         },
       },
     ]);
@@ -274,8 +244,8 @@ export default class BoundaryApproximation extends D3Visualization {
 
     if (this.interpolate) {
       for (const edge of edges) {
-        const dx = edge[1][0] - edge[0][0];
-        const dy = edge[1][1] - edge[0][1];
+        const dx = edge[1].x - edge[0].x;
+        const dy = edge[1].y - edge[0].y;
         const length = Math.sqrt(dx * dx + dy * dy);
 
         // Number of segments based on spacing
@@ -284,15 +254,14 @@ export default class BoundaryApproximation extends D3Visualization {
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;
           points.push({
-            x: edge[0][0] + t * dx,
-            y: edge[0][1] + t * dy,
+            x: edge[0].x + t * dx,
+            y: edge[0].y + t * dy,
           });
         }
       }
     } else {
       for (const edge of edges) {
-        points.push({ x: edge[0][0], y: edge[0][1] });
-        points.push({ x: edge[1][0], y: edge[1][1] });
+        points.push(...edge);
       }
     }
 

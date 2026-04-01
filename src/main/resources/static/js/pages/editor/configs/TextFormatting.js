@@ -28,7 +28,7 @@ export default class TextFormatting {
       type: "searchselect",
       label: "XML File",
       options: {
-        header: ["File", ""],
+        headers: ["File", ""],
         getData: getFiles,
       },
     },

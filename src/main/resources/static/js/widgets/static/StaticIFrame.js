@@ -58,4 +58,8 @@ export default class StaticIFrame {
 
     this.root.classed("overflow-hidden", true);
   }
+
+  rerender() {
+    this.render(this.src);
+  }
 }

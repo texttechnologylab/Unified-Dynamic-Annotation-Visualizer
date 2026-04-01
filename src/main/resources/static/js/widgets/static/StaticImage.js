@@ -43,4 +43,8 @@ export default class StaticImage {
       .attr("width", "100%")
       .attr("height", "100%");
   }
+
+  rerender() {
+    this.render(this.src);
+  }
 }

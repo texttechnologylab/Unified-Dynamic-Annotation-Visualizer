@@ -28,31 +28,11 @@ export default class SimpleMap extends D3Visualization {
       label: "World color",
     },
   };
-  static previewData = [
-    {
-      type: "Feature",
-      properties: {
-        label: "London - New York",
-        color: "#00618f",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [0.1278, 51.5074],
-          [-74.0059, 40.7128],
-        ],
-      },
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 0, right: 0, bottom: 0, left: 0 });
 
     this.worldColor = config.options.worldColor || "#b8b8b8";
-  }
-
-  async fetch() {
-    return await d3.json("/data/features.geojson");
   }
 
   async init() {

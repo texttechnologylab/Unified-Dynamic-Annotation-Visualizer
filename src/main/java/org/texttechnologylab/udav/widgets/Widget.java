@@ -7,7 +7,6 @@ import org.texttechnologylab.udav.api.Repositories.GeneratorDataRepository;
 import org.texttechnologylab.udav.api.charts.ChartHandler;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
 
 @RequiredArgsConstructor
 public abstract class Widget implements ChartHandler {
@@ -24,6 +23,9 @@ public abstract class Widget implements ChartHandler {
 
     // Overwrite if diagram should have a custom tex definition
     public String toTex(JsonNode jsonNode) { return null; }
+
+    // Overwrite if diagram should have a custom csv definition
+    public String toCsv(JsonNode jsonNode) { return null; }
 
     public static Widget constructWidget(String className, GeneratorDataRepository repo, ObjectMapper mapper) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (className.contains(".")) {

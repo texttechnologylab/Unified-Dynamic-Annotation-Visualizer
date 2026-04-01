@@ -1,5 +1,9 @@
 import { getCsv, getTikz } from "../../../api/convertions.api.js";
-import { applyStyles, createElement } from "../../../shared/modules/utils.js";
+import {
+  applyStyles,
+  createElement,
+  safeFilename,
+} from "../../../shared/modules/utils.js";
 import state from "../utils/viewState.js";
 
 export default class ExportHandler {
@@ -10,7 +14,7 @@ export default class ExportHandler {
     const root = widget.root.node ? widget.root.node() : widget.root;
     const dropdown = root.querySelector(".dv-dropdown-menu");
 
-    this.filename = widget.config.id.toLowerCase();
+    this.filename = safeFilename(widget.config.title);
 
     const formats = {
       csv: "bi bi-table",

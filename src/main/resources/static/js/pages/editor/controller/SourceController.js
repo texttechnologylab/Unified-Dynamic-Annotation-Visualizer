@@ -52,7 +52,7 @@ export default class SourceController {
         "button",
         { className: "dv-btn dv-generator-option" },
         [
-          createElement("span", { className: "dv-generator-card-title" }, [
+          createElement("span", { className: "dv-generator-card-header" }, [
             createElement("div", {
               className: "dv-generator-card-token",
               textContent: Generator.token,
@@ -79,14 +79,18 @@ export default class SourceController {
 
       builder.buildForm({ uri }, ({ uri }) => {
         this.item.uri = uri;
+        // TODO: api.updateSource(state.id, this.item); + rerender connected widgets
       });
     });
 
     buttons[2].addEventListener("click", () => {
-      // Remove generator from the dom
+      // Remove source from the dom
       this.root.remove();
 
-      // Remove generator from the state list
+      // Remove source from the backend
+      // TODO: api.deleteSource(state.id, this.item); + remove connected generators
+
+      // Remove source from the state list
       removeSource(this.item);
     });
   }
@@ -94,6 +98,7 @@ export default class SourceController {
   appendGenerator(container, config) {
     const controller = createGenerator(config, this.item.id);
 
+    // TODO: api.createGenerator(state.id, config);
     container.append(controller.root);
     controller.init();
   }

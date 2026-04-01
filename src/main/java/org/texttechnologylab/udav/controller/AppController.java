@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.api.service.PipelineService;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 @Controller
 public class AppController {
@@ -31,11 +32,7 @@ public class AppController {
 	}
 
 	public String getPipelines() throws Exception {
-		return mapper.writeValueAsString(service.listIds(0, 100, ""));
-	}
-
-	public String getWidgetsById(String id) throws Exception {
-		return service.get(id).get("widgets").toString();
+		return mapper.writeValueAsString(service.listSummaries(0, 100, ""));
 	}
 
 	public String getConfigById(String id) throws Exception {
@@ -51,9 +48,8 @@ public class AppController {
 
 	@GetMapping("/view/{id}")
 	public String view(@PathVariable("id") String id, Model model) throws Exception {
-		model.addAttribute("id", id);
 		model.addAttribute("pipelines", getPipelines());
-		model.addAttribute("widgets", getWidgetsById(id));
+		model.addAttribute("config", getConfigById(id));
 		model.addAttribute("chatbot", !llmUrl.isEmpty() && !llmToken.isEmpty());
 
 		return "/pages/view/view";
@@ -61,13 +57,14 @@ public class AppController {
 
 	@GetMapping("/editor")
 	public String editorNew(Model model) throws Exception {
-		model.addAttribute("config", "{}");
+		model.addAttribute("config", "{\"id\":\"" + UUID.randomUUID().toString() + "\"}");
 
 		return "/pages/editor/editor";
 	}
 
 	@PostMapping("/editor")
 	public String editorFile(@RequestParam("file") MultipartFile file, Model model) throws Exception {
+		// TODO: add id if missing
 		model.addAttribute("config", new String(file.getBytes(), StandardCharsets.UTF_8));
 
 		return "/pages/editor/editor";
