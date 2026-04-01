@@ -1,7 +1,6 @@
 import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
-import dropdowns from "../../shared/modules/dropdowns.js";
 import state from "./utils/viewState.js";
 import { createTemplateElement } from "../../shared/modules/utils.js";
 
@@ -18,7 +17,6 @@ export default class View {
     state.corpusFilter.init();
     sidepanels.init();
     accordions.init();
-    dropdowns.init();
   }
 
   initSwitcher() {
