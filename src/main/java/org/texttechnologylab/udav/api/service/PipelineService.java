@@ -91,7 +91,7 @@ public class PipelineService {
                         String id = record.get(fieldId);
                         String json = record.get(fieldJson);
 
-                        String name = null;
+                        String name = "untitled-pipeline";
                         if (json != null) {
                             JsonNode root = parseJson(json);
                             JsonNode nameNode = root.get("name");
