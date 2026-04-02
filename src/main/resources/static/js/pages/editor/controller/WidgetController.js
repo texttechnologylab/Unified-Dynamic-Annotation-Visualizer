@@ -6,7 +6,9 @@ import { createTemplateElement } from "../../../shared/modules/utils.js";
 export default class WidgetController {
   constructor(item) {
     this.root = createTemplateElement(
-      item.src ? "#static-widget-template" : "#chart-widget-template",
+      item.type.startsWith("Static")
+        ? "#static-widget-template"
+        : "#chart-widget-template",
     );
     this.item = item;
     this.widget = null;

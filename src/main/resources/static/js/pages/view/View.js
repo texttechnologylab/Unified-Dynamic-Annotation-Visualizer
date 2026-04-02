@@ -85,7 +85,7 @@ export default class View {
         const widget = new Widget(root, { pipeline: this.pipeline, ...item });
         widget.init();
 
-        if (!item.src) {
+        if (!item.type.startsWith("Static")) {
           state.charts.push(widget);
         }
       });
