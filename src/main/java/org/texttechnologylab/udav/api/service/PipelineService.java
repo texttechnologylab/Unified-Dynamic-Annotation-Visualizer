@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import static org.springframework.http.HttpStatus.*;
@@ -77,20 +76,35 @@ public class PipelineService {
             DSLContext dsl = DSL.using(c);
             var fieldId = DSL.field(DSL.name(COL_ID), String.class);
             var fieldName = DSL.field(DSL.name(COL_NAME), String.class);
+            var fieldJson = DSL.field(DSL.name(COL_JSON), String.class);
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
                     : fieldId.likeIgnoreCase("%" + q + "%")
                     .or(fieldName.likeIgnoreCase("%" + q + "%"));
-            return dsl.select(fieldId, fieldName)
+            return dsl.select(fieldId, fieldJson)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
                     .orderBy(fieldId.asc())
                     .offset(Math.max(0, page) * Math.max(1, size))
                     .limit(Math.max(1, size))
-                    .fetch(record -> Map.of(
-                            "id", record.get(fieldId),
-                            "name", Objects.requireNonNullElse(record.get(fieldName), record.get(fieldId))
-                    ));
+                    .fetch(record -> {
+                        String id = record.get(fieldId);
+                        String json = record.get(fieldJson);
+
+                        String name = null;
+                        if (json != null) {
+                            JsonNode root = parseJson(json);
+                            JsonNode nameNode = root.get("name");
+                            if (nameNode != null && !nameNode.isNull()) {
+                                name = nameNode.asText();
+                            }
+                        }
+
+                        Map<String, String> summary = new LinkedHashMap<>();
+                        summary.put("id", id);
+                        summary.put("name", name);
+                        return summary;
+                    });
         }
     }
 
