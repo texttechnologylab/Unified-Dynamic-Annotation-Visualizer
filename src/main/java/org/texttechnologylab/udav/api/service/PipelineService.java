@@ -65,6 +65,18 @@ public class PipelineService {
     }
 
     @Transactional(readOnly = true)
+    public List<String> listAllIds() throws Exception {
+        try (Connection c = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(c);
+            var fieldId = DSL.field(DSL.name(COL_ID), String.class);
+            return dsl.select(fieldId)
+                    .from(DSL.table(DSL.name(schema, TABLE)))
+                    .orderBy(fieldId.asc())
+                    .fetch(fieldId);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<String> listIds(int page, int size, String q) throws Exception {
         return listSummaries(page, size, q).stream()
                 .map(summary -> summary.get("id"))
