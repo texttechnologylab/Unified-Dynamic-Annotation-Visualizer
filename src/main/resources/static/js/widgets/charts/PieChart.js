@@ -22,7 +22,7 @@ export default class PieChart extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("CategoryNumber"),
+      options: () => getGeneratorOptions(["CategoryNumber"]),
     },
     "options.hole": {
       type: "range",

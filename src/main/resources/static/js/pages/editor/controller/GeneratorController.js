@@ -35,7 +35,7 @@ export default class GeneratorController {
         type: "multiselect",
         label: "Extends (optional)",
         options: () =>
-          getGeneratorOptions(this.item.type).filter(
+          getGeneratorOptions([this.item.type]).filter(
             (option) => option.value !== this.item.id,
           ),
       },

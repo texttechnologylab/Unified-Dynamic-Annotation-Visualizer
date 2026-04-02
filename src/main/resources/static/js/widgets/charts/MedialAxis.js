@@ -19,7 +19,7 @@ export default class MedialAxis extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
   };
 

@@ -19,7 +19,7 @@ export default class HighlightText extends WidgetInterface {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("TextFormatting"),
+      options: () => getGeneratorOptions(["TextFormatting"]),
     },
   };
 

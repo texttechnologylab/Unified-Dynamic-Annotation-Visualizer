@@ -53,9 +53,9 @@ export function createWidget(item) {
   return new WidgetController(item);
 }
 
-export function getGeneratorOptions(type) {
-  const configs = type
-    ? state.generators.filter((config) => config.type === type)
+export function getGeneratorOptions(types) {
+  const configs = types
+    ? state.generators.filter((config) => types.includes(config.type))
     : state.generators;
 
   return configs.map((generator) => {

@@ -19,7 +19,7 @@ export default class NetworkGraph extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
   };
 

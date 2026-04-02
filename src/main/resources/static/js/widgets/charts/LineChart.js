@@ -23,7 +23,7 @@ export default class LineChart extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
     "options.points": {
       type: "switch",

@@ -21,7 +21,7 @@ export default class ScrollTable extends WidgetInterface {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions(),
+      options: () => getGeneratorOptions(["CategoryNumber", "MapCoordinates"]),
     },
     "options.numbers": {
       type: "switch",

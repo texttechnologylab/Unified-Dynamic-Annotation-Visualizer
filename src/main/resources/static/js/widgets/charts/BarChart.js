@@ -21,7 +21,7 @@ export default class BarChart extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("CategoryNumber"),
+      options: () => getGeneratorOptions(["CategoryNumber"]),
     },
     "options.horizontal": {
       type: "switch",

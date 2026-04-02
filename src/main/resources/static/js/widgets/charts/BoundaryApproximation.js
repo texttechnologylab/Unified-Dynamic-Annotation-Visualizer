@@ -30,7 +30,7 @@ export default class BoundaryApproximation extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
     "options.interpolate": {
       type: "switch",
