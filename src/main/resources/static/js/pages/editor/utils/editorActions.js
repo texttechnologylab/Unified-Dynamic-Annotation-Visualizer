@@ -10,8 +10,8 @@ export function loadSources(sources, generators) {
   for (const config of sources) {
     const controller = createSource(config);
 
-    container.prepend(controller.root);
-    controller.init(generators);
+    container.append(controller.root);
+    controller.init(generators.filter((gen) => gen.source === config.id));
   }
 }
 
