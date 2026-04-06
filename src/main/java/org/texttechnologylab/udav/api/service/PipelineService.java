@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.texttechnologylab.udav.db.SchemaObjectNames;
+import org.texttechnologylab.udav.pipeline.Pipeline;
 
 import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -246,7 +247,7 @@ public class PipelineService {
                 continue;
             }
             ObjectNode sourceObject = (ObjectNode) sourceNode;
-            String sourceId = sourceObject.path("id").asText(null);
+            String sourceId = Pipeline.stripNSuffix(sourceObject.path("id").asText(null));
             if (sourceId == null || sourceId.isBlank()) {
                 continue;
             }
@@ -275,7 +276,7 @@ public class PipelineService {
                     continue;
                 }
 
-                String sourceId = generatorNode.path("source").asText(null);
+                String sourceId = Pipeline.stripNSuffix(generatorNode.path("source").asText(null));
                 if (sourceId == null || sourceId.isBlank()) {
                     throw new ResponseStatusException(BAD_REQUEST, "Generator is missing source reference");
                 }

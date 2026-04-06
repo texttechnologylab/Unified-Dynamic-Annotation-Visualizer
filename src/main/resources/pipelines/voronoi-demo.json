@@ -6,6 +6,11 @@
       "uri": "XY_dict_single.json",
       "settings": {},
       "id": "Source-gfaki97"
+    },
+    {
+      "uri": "XY_dict_reducedSize.json",
+      "settings": {},
+      "id": "Source-many-voronois"
     }
   ],
   "generators": [
@@ -39,6 +44,37 @@
       },
       "extends": [],
       "id": "MapCoordinates-1w5ip76"
+    },
+    {
+      "name": "My many Voronois",
+      "type": "MapCoordinates@N",
+      "source": "Source-many-voronois@N",
+      "settings": {
+        "keysMap": {
+          "1_0": {
+            "X": "coordinates@0",
+            "Y": "coordinates@1",
+            "Z_abs": "scale",
+            "colors_S": [
+              "fillColor@Red",
+              "fillColor@Green",
+              "fillColor@Blue",
+              "fillColor@Alpha"
+            ],
+            "colors_SE": [
+              "strokeColor@Red",
+              "strokeColor@Green",
+              "strokeColor@Blue",
+              "strokeColor@Alpha"
+            ]
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-@ID@"
     }
   ],
   "widgets": [
@@ -63,7 +99,7 @@
       "type": "VoronoiDiagram",
       "title": "Voronoi Diagram",
       "generator": {
-        "id": "MapCoordinates-1w5ip76"
+        "id": "MapCoordinates-0d978587ca89fd4080e2fddfc140b7eb8a04d034"
       },
       "options": {
         "min": -1,
