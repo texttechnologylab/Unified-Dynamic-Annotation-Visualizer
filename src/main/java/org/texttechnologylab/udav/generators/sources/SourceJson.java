@@ -4,11 +4,18 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Table;
+import org.jooq.impl.DSL;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
 import org.texttechnologylab.udav.pipeline.JSONView;
+import org.texttechnologylab.udav.sources.DBAccess;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,9 +30,9 @@ public class SourceJson extends Source {
     protected final JSONView singleFileJSONView;
     protected final Map<String, JSONView> filenameToJsonView; // TODO: Use or remove
 
-    public SourceJson(String filepath) throws IOException {
+    public SourceJson(String filepath, DBAccess dbAccess) throws IOException, SQLException {
         this.singleFileName = SOURCE_FILES_PATH + "/" + filepath.trim();
-        this.singleFileJSONView = readJsonViewFromFile(singleFileName);
+        this.singleFileJSONView = readJsonViewFromDB(singleFileName, dbAccess);
         this.filenameToJsonView = null;
     }
     public SourceJson(String normalizedFilepath, JSONView jsonView) {
@@ -175,25 +182,52 @@ public class SourceJson extends Source {
         }
     }
 
-    private static JSONView readJsonViewFromFile(String path) throws IOException {
-        try (InputStream in = SourceJson.class.getClassLoader().getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IllegalArgumentException("File not found: " + path);
-            }
+    private static JSONView readJsonViewFromDB(String path, DBAccess dbAccess) throws IOException, SQLException {
+        if (dbAccess == null) {
+            throw new IllegalArgumentException("dbAccess must not be null");
+        }
 
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode rootNode = mapper.readTree(in);
+        String sourceFileName = path.trim();
+        int slashIdx = sourceFileName.lastIndexOf('/');
+        if (slashIdx >= 0 && slashIdx < sourceFileName.length() - 1) {
+            sourceFileName = sourceFileName.substring(slashIdx + 1);
+        }
 
-            Object rootValue;
-            if (rootNode.isObject()) {
-                rootValue = mapper.convertValue(rootNode, new TypeReference<Map<String, Object>>() {});
-            } else if (rootNode.isArray()) {
-                rootValue = mapper.convertValue(rootNode, new TypeReference<List<Object>>() {});
-            } else {
-                // For primitive root nodes (string, number, boolean, null)
-                rootValue = mapper.convertValue(rootNode, Object.class);
-            }
-            return new JSONView(rootValue);
+        String json = readJsonString(dbAccess, sourceFileName);
+        if (json == null && !"public".equalsIgnoreCase(dbAccess.getSchema())) {
+            json = readJsonString(dbAccess, "public", sourceFileName);
+        }
+        if (json == null) {
+            throw new IllegalArgumentException("JSON source not found in DB table \"" + SchemaObjectNames.TABLE_JSON_DATA + "\": " + sourceFileName);
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(json);
+
+        Object rootValue;
+        if (rootNode.isObject()) {
+            rootValue = mapper.convertValue(rootNode, new TypeReference<Map<String, Object>>() {});
+        } else if (rootNode.isArray()) {
+            rootValue = mapper.convertValue(rootNode, new TypeReference<List<Object>>() {});
+        } else {
+            rootValue = mapper.convertValue(rootNode, Object.class);
+        }
+        return new JSONView(rootValue);
+    }
+
+    private static String readJsonString(DBAccess dbAccess, String sourceFileName) throws SQLException {
+        return readJsonString(dbAccess, dbAccess.getSchema(), sourceFileName);
+    }
+
+    private static String readJsonString(DBAccess dbAccess, String schema, String sourceFileName) throws SQLException {
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+            Table<?> table = DSL.table(DSL.name(schema, SchemaObjectNames.TABLE_JSON_DATA));
+            Field<String> fName = DSL.field(DSL.name(schema, SchemaObjectNames.TABLE_JSON_DATA, SchemaObjectNames.COL_JSON_DATA_SOURCEFILE_NAME), String.class);
+            Field<String> fJson = DSL.field(DSL.name(schema, SchemaObjectNames.TABLE_JSON_DATA, SchemaObjectNames.COL_JSON_DATA_JSON), String.class);
+            return dsl.select(fJson).from(table).where(fName.eq(sourceFileName)).fetchOne(fJson);
+        } catch (org.jooq.exception.DataAccessException e) {
+            return null;
         }
     }
 }

@@ -211,8 +211,8 @@ public class Pipeline {
                         }
                     }
                     if (requiresSubSources && sourceObj != null && !(sourceObj instanceof SourceN)
-                            && stripNSuffix(sourceDefinition).toUpperCase().endsWith(".JSON")) {
-                        sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition));
+                            && isDbJsonBackedSource(stripNSuffix(sourceDefinition))) {
+                        sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition), dbAccess);
                     }
 
                     generatorsLoop:
@@ -432,11 +432,11 @@ public class Pipeline {
 
     private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException, IOException {
         String normalizedDefinition = stripNSuffix(definition);
-        if (normalizedDefinition.trim().toUpperCase().endsWith(".JSON")) {
+        if (isDbJsonBackedSource(normalizedDefinition)) {
             if (hasNSuffix(definition)) {
-                return new SourceJsonN(normalizedDefinition);
+                return new SourceJsonN(normalizedDefinition, dbAccess);
             }
-            return new SourceJson(normalizedDefinition);
+            return new SourceJson(normalizedDefinition, dbAccess);
         }
         return new SourceUIMA(normalizedDefinition, dbAccess);
     }
@@ -581,8 +581,8 @@ public class Pipeline {
                 SourceN sourceN;
                 if (sourceObj instanceof SourceN sN) {
                     sourceN = sN;
-                } else if (sourceDefinition != null && stripNSuffix(sourceDefinition).toUpperCase().endsWith(".JSON")) {
-                    sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition));
+                } else if (sourceDefinition != null && isDbJsonBackedSource(stripNSuffix(sourceDefinition))) {
+                    sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition), dbAccess);
                     sourceN = (SourceN) sourceObj;
                 } else {
                     String generatorId = stringOrNull(generator.get("id"));
@@ -643,5 +643,11 @@ public class Pipeline {
         if (value == null) return null;
         String stringValue = value.toString().trim();
         return stringValue.isEmpty() ? null : stringValue;
+    }
+
+    private static boolean isDbJsonBackedSource(String definition) {
+        if (definition == null) return false;
+        String normalized = definition.trim().toUpperCase();
+        return normalized.endsWith(".JSON") || normalized.endsWith(".XML");
     }
 }
