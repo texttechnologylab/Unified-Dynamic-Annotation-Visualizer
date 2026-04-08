@@ -99,17 +99,27 @@ public class Pipeline {
      * (B) { ...the pipeline... }   // single object without the "pipelines" wrapper
      */
     public static Pipeline fromDB(DBAccess dbAccess, String pipelineId) {
-        if (dbAccess.getDataSource() == null) throw new IllegalArgumentException("dataSource must not be null");
+        return fromDB(dbAccess, dbAccess, pipelineId);
+    }
+
+    /**
+     * Load a pipeline row from {@code readAccess}'s schema, but build all generators
+     * (and write their data) using {@code writeAccess}'s schema.
+     * Use this when the pipeline table lives in a shared schema (app.db.schema) but each
+     * pipeline's generator data lives in its own schema (the pipeline id).
+     */
+    public static Pipeline fromDB(DBAccess readAccess, DBAccess writeAccess, String pipelineId) {
+        if (readAccess.getDataSource() == null) throw new IllegalArgumentException("dataSource must not be null");
         if (pipelineId == null || pipelineId.isBlank()) throw new IllegalArgumentException("pipelineId must not be null/blank");
 
         final String json;
-        try (Connection c = dbAccess.getDataSource().getConnection()) {
+        try (Connection c = readAccess.getDataSource().getConnection()) {
             DSLContext dsl = DSL.using(c);
 
-            // qualify everything with public
-            Table<?> T = DSL.table(DSL.name("public", "pipeline"));
-            Field<String> F_JSON = DSL.field(DSL.name("public", "pipeline", "json"), String.class);
-            Field<String> F_ID = DSL.field(DSL.name("public", "pipeline", "pipeline_id"), String.class);
+            String pipelineSchema = readAccess.getSchema();
+            Table<?> T = DSL.table(DSL.name(pipelineSchema, "pipeline"));
+            Field<String> F_JSON = DSL.field(DSL.name(pipelineSchema, "pipeline", "json"), String.class);
+            Field<String> F_ID = DSL.field(DSL.name(pipelineSchema, "pipeline", "pipeline_id"), String.class);
 
             String val = dsl.select(F_JSON)
                     .from(T)
@@ -130,7 +140,7 @@ public class Pipeline {
 
             // Accept both a single object or a { "pipelines": [...] } envelope
             Map<String, Object> root;
-            Object parsed = mapper.readValue(json, new TypeReference<Object>() {
+            Object parsed = mapper.readValue(json, new TypeReference<>() {
             });
             if (parsed instanceof Map<?, ?> m) {
                 //noinspection unchecked
@@ -156,13 +166,13 @@ public class Pipeline {
                 throw new IllegalArgumentException("Invalid pipeline JSON: " + append);
             }
 
-            Object first = pipelines.get(0);
+            Object first = pipelines.getFirst();
             if (!(first instanceof Map<?, ?> pipelineMap)) {
                 throw new IllegalArgumentException("Invalid pipeline JSON: pipeline entry is not an object.");
             }
 
             JSONView view = new JSONView(pipelineMap);
-            Pipeline pipeline = generatePipelineFromJSONView(view, dbAccess);
+            Pipeline pipeline = generatePipelineFromJSONView(view, writeAccess);
 
             // Sanity check: if the DB row was envelope-form with a different id, warn but continue
             String loadedId = pipeline.getId();
