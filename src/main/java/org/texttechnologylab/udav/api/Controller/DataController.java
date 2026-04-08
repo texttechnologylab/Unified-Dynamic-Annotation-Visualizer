@@ -119,6 +119,89 @@ public class DataController {
                 .body(json);
     }
 
+    @GetMapping(value = "/data/groups/resolve", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<JsonNode> resolveGroup(
+            @RequestParam("pipelineId") String pipelineId,
+            @RequestParam("templateGeneratorId") String templateGeneratorId,
+            @RequestParam(value = "chartType", required = false) String chartType
+    ) throws Exception {
+        return ResponseEntity.ok(handler.resolveGroup(pipelineId, templateGeneratorId, chartType));
+    }
+
+    @PostMapping(value = "/data/groups/item", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<JsonNode> getGroupItem(
+            @RequestParam("pipelineId") String pipelineId,
+            @RequestParam("templateGeneratorId") String templateGeneratorId,
+            @RequestParam("chartType") String chartType,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestBody FilterEnvelope body
+    ) throws Exception {
+        Map<String, String> filterValues = toStringMap(body.chart());
+        Map<String, String> corpusValues = toStringMap(body.corpus());
+        return ResponseEntity.ok(handler.groupItemByPage(
+                pipelineId,
+                templateGeneratorId,
+                chartType,
+                page,
+                filterValues,
+                corpusValues
+        ));
+    }
+
+    @PostMapping(value = "/data/groups/itemById", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<JsonNode> getGroupItemById(
+            @RequestParam("pipelineId") String pipelineId,
+            @RequestParam("templateGeneratorId") String templateGeneratorId,
+            @RequestParam("chartType") String chartType,
+            @RequestParam("generatorId") String generatorId,
+            @RequestBody FilterEnvelope body
+    ) throws Exception {
+        Map<String, String> filterValues = toStringMap(body.chart());
+        Map<String, String> corpusValues = toStringMap(body.corpus());
+        return ResponseEntity.ok(handler.groupItemById(
+                pipelineId,
+                templateGeneratorId,
+                chartType,
+                generatorId,
+                filterValues,
+                corpusValues
+        ));
+    }
+
+    @PostMapping(value = "/data/groups/download")
+    public ResponseEntity<byte[]> downloadGroup(
+            @RequestParam("pipelineId") String pipelineId,
+            @RequestParam("templateGeneratorId") String templateGeneratorId,
+            @RequestParam("chartType") String chartType,
+            @RequestParam(value = "format", defaultValue = "json") String format,
+            @RequestBody(required = false) FilterEnvelope body
+    ) throws Exception {
+        Map<String, String> filterValues = toStringMap(body == null ? null : body.chart());
+        Map<String, String> corpusValues = toStringMap(body == null ? null : body.corpus());
+
+        byte[] zip = handler.buildGroupArchive(
+                pipelineId,
+                templateGeneratorId,
+                chartType,
+                format,
+                filterValues,
+                corpusValues
+        );
+
+        String safeFormat = (format == null || format.isBlank()) ? "json" : format.toLowerCase(Locale.ROOT);
+        String filename = String.format(
+                Locale.ROOT,
+                "%s-%s-all.zip",
+                templateGeneratorId.replaceAll("[^a-zA-Z0-9._-]", "_"),
+                safeFormat.replaceAll("[^a-zA-Z0-9._-]", "_")
+        );
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/zip")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(zip);
+    }
+
     /**
      * Envelope DTO for the posted filters.
      */
