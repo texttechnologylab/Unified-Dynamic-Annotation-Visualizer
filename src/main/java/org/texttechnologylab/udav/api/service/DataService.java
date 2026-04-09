@@ -48,13 +48,88 @@ public class DataService {
                                  Map<String, String> corpus,
                                  boolean pretty,
                                  String schema) {
-        JsonNode node = renderNode(id, type, filters, corpus, schema);
+        JsonNode node = ensureArrayPayload(renderNode(id, type, filters, corpus, schema));
         try {
             return pretty ? mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
                     : mapper.writeValueAsString(node);
         } catch (Exception e) {
             return "[]";
         }
+    }
+
+    public JsonNode buildDataJson(String pipelineId,
+                                  String generatorId,
+                                  String chartType,
+                                  Integer page,
+                                  Integer size,
+                                  Boolean includeIds,
+                                  Map<String, String> filters,
+                                  Map<String, String> corpus) throws Exception {
+        boolean isTemplate = isTemplateGeneratorId(generatorId);
+        boolean wantsPagination = isTemplate || page != null || size != null;
+
+        if (!wantsPagination) {
+            return ensureArrayPayload(renderNode(generatorId, chartType, filters, corpus, pipelineId));
+        }
+
+        int requestedPage = page == null ? 0 : page;
+        int requestedSize = Math.max(1, size == null ? 1 : size);
+
+        GroupResolution group = isTemplate
+                ? resolveGroupInternal(pipelineId, generatorId)
+                : new GroupResolution(Collections.singletonList(generatorId));
+
+        List<String> ids = group.ids();
+        ObjectNode out = mapper.createObjectNode();
+        ObjectNode meta = out.putObject("meta");
+        meta.put("pipelineId", pipelineId);
+        meta.put("templateGeneratorId", generatorId);
+        meta.put("chartType", chartType);
+        meta.put("total", ids.size());
+        meta.put("pageSize", requestedSize);
+
+        if (ids.isEmpty()) {
+            meta.put("page", 0);
+            meta.putNull("generatorId");
+            meta.put("hasPrev", false);
+            meta.put("hasNext", false);
+            if (includeIds == null || includeIds) {
+                meta.set("ids", mapper.createArrayNode());
+            }
+            out.set("data", mapper.createArrayNode());
+            return out;
+        }
+
+        int maxPage = (ids.size() - 1) / requestedSize;
+        int clampedPage = Math.max(0, Math.min(requestedPage, maxPage));
+        int from = clampedPage * requestedSize;
+        int to = Math.min(ids.size(), from + requestedSize);
+        List<String> pageIds = ids.subList(from, to);
+
+        meta.put("page", clampedPage);
+        meta.put("generatorId", pageIds.get(0));
+        meta.put("hasPrev", clampedPage > 0);
+        meta.put("hasNext", clampedPage < maxPage);
+
+        if (includeIds == null || includeIds) {
+            ArrayNode idsNode = meta.putArray("ids");
+            for (String id : ids) {
+                idsNode.add(id);
+            }
+        }
+
+        if (requestedSize == 1) {
+            out.set("data", ensureArrayPayload(renderNode(pageIds.get(0), chartType, filters, corpus, pipelineId)));
+            return out;
+        }
+
+        ArrayNode data = out.putArray("data");
+        for (String id : pageIds) {
+            ObjectNode itemNode = data.addObject();
+            itemNode.put("generatorId", id);
+            itemNode.set("data", ensureArrayPayload(renderNode(id, chartType, filters, corpus, pipelineId)));
+        }
+        return out;
     }
 
     public ObjectNode resolveGroup(String pipelineId, String templateGeneratorId, String chartType) throws Exception {
@@ -159,7 +234,9 @@ public class DataService {
                                     String format,
                                     Map<String, String> filters,
                                     Map<String, String> corpus) throws Exception {
-        GroupResolution group = resolveGroupInternal(pipelineId, templateGeneratorId);
+        GroupResolution group = isTemplateGeneratorId(templateGeneratorId)
+                ? resolveGroupInternal(pipelineId, templateGeneratorId)
+                : new GroupResolution(Collections.singletonList(templateGeneratorId));
         String normalizedFormat = normalizeExportFormat(format);
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -417,6 +494,22 @@ public class DataService {
         if (definition == null) return false;
         String normalized = definition.trim().toUpperCase(Locale.ROOT);
         return normalized.endsWith(".JSON") || normalized.endsWith(".XML");
+    }
+
+    private static boolean isTemplateGeneratorId(String generatorId) {
+        return generatorId != null && generatorId.contains("@ID@");
+    }
+
+    private JsonNode ensureArrayPayload(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) {
+            return mapper.createArrayNode();
+        }
+        if (node.isArray()) {
+            return node;
+        }
+        ArrayNode wrapped = mapper.createArrayNode();
+        wrapped.add(node);
+        return wrapped;
     }
 
     private record GroupResolution(List<String> ids) {}
