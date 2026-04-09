@@ -36,10 +36,10 @@ export default class BarChart extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data } = await this.fetch();
+    this.render(data[0]);
 
-    const max = d3.max(data.map((d) => d.value));
+    const max = d3.max(data[0].map((d) => d.value));
 
     this.filter = {
       sort: "value",

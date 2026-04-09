@@ -28,8 +28,8 @@ export default class NetworkGraph extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data } = await this.fetch();
+    this.render(data[0]);
   }
 
   render(data) {

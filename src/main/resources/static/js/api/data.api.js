@@ -1,15 +1,24 @@
 import { api } from "./clients.js";
 
-export async function getData(pipelineId, generatorId, chartType, filter) {
+export async function getData(
+  pipelineId,
+  generatorId,
+  chartType,
+  page,
+  filter,
+) {
   return await api
     .post(
-      `/data?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}`,
+      `/data?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&page=${page}`,
       filter,
     )
     .then((data) => {
       return data;
     })
     .catch(async () => {
-      return await d3.json(`/data/${chartType}.json`);
+      return {
+        data: [await d3.json(`/data/${chartType}.json`)],
+        meta: { total: 1, ids: ["1"] },
+      };
     });
 }

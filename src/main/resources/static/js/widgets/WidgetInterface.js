@@ -2,6 +2,7 @@ import { getData } from "../api/data.api.js";
 import ControlsHandler from "../pages/view/toolbar/ControlsHandler.js";
 import ExportHandler from "../pages/view/toolbar/ExportHandler.js";
 import state from "../pages/view/utils/viewState.js";
+import WidgetPagination from "../shared/classes/WidgetPagination.js";
 
 export default class WidgetInterface {
   static defaultConfig;
@@ -17,6 +18,11 @@ export default class WidgetInterface {
     this.filter = {};
     this.controls = new ControlsHandler(this);
     this.exports = new ExportHandler(this);
+
+    this.pagination = new WidgetPagination({
+      container: this.root.select(".dv-chart-area").node(),
+      onPageChange: () => this.rerender(true),
+    });
   }
 
   setTitle(title) {
@@ -26,10 +32,16 @@ export default class WidgetInterface {
   async fetch() {
     const { pipeline, generator, type } = this.config;
 
-    return await getData(pipeline, generator.id, type, {
-      corpus: state.corpusFilter.filter,
-      chart: this.filter,
-    });
+    return await getData(
+      pipeline,
+      generator.id,
+      type,
+      this.pagination.currentPage,
+      {
+        corpus: state.corpusFilter.filter,
+        chart: this.filter,
+      },
+    );
   }
 
   clear() {
@@ -46,7 +58,7 @@ export default class WidgetInterface {
 
   rerender(fetch = false) {
     if (fetch) {
-      this.fetch().then((data) => this.render(data));
+      this.fetch().then(({ data }) => this.render(data[0]));
     } else {
       this.render(this.data);
     }

@@ -46,6 +46,83 @@
   border-bottom-right-radius: inherit;
 }
 
+.dv-pagination-dropdown {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.dv-pagination-indicator {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-variant-numeric: tabular-nums; /* prevents layout shift as numbers change */
+  color: #444;
+  background-color: var(--bg-color-emphasis);
+  opacity: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  padding: 2px 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+  transition-delay: 800ms;
+}
+
+.dv-btn-pagination {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #444;
+  font-size: var(--font-size-lg);
+  border-radius: 50%;
+  background-color: var(--bg-color-emphasis);
+  opacity: 0;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease,
+    opacity 300ms ease;
+  transition-delay: 800ms;
+}
+
+.dv-chart-area:hover {
+  .dv-pagination-indicator,
+  .dv-btn-pagination {
+    opacity: 0.9;
+    transition-delay: 0ms;
+  }
+}
+
+.dv-btn-pagination:hover {
+  background: var(--hover-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dv-btn-pagination:active {
+  background: var(--active-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.dv-btn-pagination.prev {
+  left: 1rem;
+}
+
+.dv-btn-pagination.next {
+  right: 1rem;
+}
+
 .dv-chart-tooltip {
   position: absolute;
   opacity: 0;

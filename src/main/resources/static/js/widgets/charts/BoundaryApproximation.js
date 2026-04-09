@@ -110,8 +110,8 @@ export default class BoundaryApproximation extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data } = await this.fetch();
+    this.render(data[0]);
 
     this.controls.append([
       {
