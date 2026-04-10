@@ -47,8 +47,9 @@
     },
     {
       "name": "My many Voronois",
-      "type": "MapCoordinates@N",
-      "source": "Source-many-voronois@N",
+      "type": "MapCoordinates",
+      "source": "Source-many-voronois",
+      "generatorGroup": true,
       "settings": {
         "keysMap": {
           "1_0": {

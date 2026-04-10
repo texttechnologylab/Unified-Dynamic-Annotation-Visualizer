@@ -300,10 +300,7 @@ public class DataService {
                         continue;
                     }
 
-                    String rawType = textOrNull(generatorNode.get("type"));
-                    String rawSource = textOrNull(generatorNode.get("source"));
-                    boolean isTemplate = Pipeline.hasNSuffix(rawType) || Pipeline.hasNSuffix(rawSource);
-                    if (!isTemplate) {
+                    if (!isGeneratorGroup(generatorNode)) {
                         return new GroupResolution(Collections.singletonList(templateGeneratorId));
                     }
 
@@ -322,10 +319,8 @@ public class DataService {
                     continue;
                 }
 
-                String rawType = textOrNull(generatorNode.get("type"));
                 String rawSource = textOrNull(generatorNode.get("source"));
-                boolean isTemplate = Pipeline.hasNSuffix(rawType) || Pipeline.hasNSuffix(rawSource);
-                if (!isTemplate) {
+                if (!isGeneratorGroup(generatorNode)) {
                     return new GroupResolution(Collections.singletonList(templateGeneratorId));
                 }
 
@@ -491,6 +486,10 @@ public class DataService {
 
     private static boolean isTemplateGeneratorId(String generatorId) {
         return generatorId != null && generatorId.contains("@ID@");
+    }
+
+    private static boolean isGeneratorGroup(JsonNode generatorNode) {
+        return generatorNode != null && generatorNode.path("generatorGroup").asBoolean(false);
     }
 
     private JsonNode ensureDatasetList(JsonNode node) {
