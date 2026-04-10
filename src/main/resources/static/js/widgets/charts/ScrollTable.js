@@ -50,8 +50,10 @@ export default class ScrollTable extends WidgetInterface {
   }
 
   async init() {
-    const { data } = await this.fetch();
+    const { data, meta } = await this.fetch();
     this.render(data[0]);
+
+    if (meta.total > 1) this.pagination.init(meta.ids);
 
     const values = Object.values(data[0][0]);
 

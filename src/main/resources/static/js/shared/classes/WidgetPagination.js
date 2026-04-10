@@ -6,23 +6,24 @@ export default class WidgetPagination {
     this.container = container;
     this.onPageChange = onPageChange;
     this.currentPage = 0;
-    this.totalElements = 1;
+    this.elements = [];
   }
 
   get totalPages() {
-    return Math.ceil(this.totalElements / this.pageSize);
+    return Math.ceil(this.elements.length / this.pageSize);
   }
 
-  init(totalElements, options) {
-    this.totalElements = totalElements;
-    this.createControls(this.container, options);
+  init(elements) {
+    this.elements = elements;
+    this.createControls();
     this.updateIndicator();
   }
 
-  createControls(container, options) {
+  createControls() {
     this.btnPrevious = this.createButton("left");
     this.btnNext = this.createButton("right");
     this.indicator = this.createIndicator();
+    this.dropdown = this.createDropdown();
 
     this.btnPrevious.addEventListener("click", () =>
       this.setPage(this.currentPage - 1),
@@ -30,20 +31,27 @@ export default class WidgetPagination {
     this.btnNext.addEventListener("click", () =>
       this.setPage(this.currentPage + 1),
     );
+    this.dropdown.addEventListener("change", (e) =>
+      this.setPage(parseInt(e.target.value)),
+    );
 
-    container.append(this.btnPrevious);
-    container.append(this.btnNext);
-    container.append(this.indicator);
-    container.append(this.dropdown);
+    const controls = createElement(
+      "div",
+      { className: "dv-pagination-controls" },
+      [this.dropdown, this.btnPrevious, this.btnNext, this.indicator],
+    );
+
+    this.container.append(controls);
   }
 
-  async setPage(page) {
+  setPage(page) {
     // handle both edge cases: going forward from the last page wraps to 0,
     // and going back from page 0 wraps to the last page.
     this.currentPage = (page + this.totalPages) % this.totalPages;
 
-    await this.onPageChange();
+    this.onPageChange();
     this.updateIndicator();
+    this.dropdown.value = this.currentPage;
   }
 
   updateIndicator() {
@@ -69,11 +77,13 @@ export default class WidgetPagination {
     });
   }
 
-  createDropdown(options) {
+  createDropdown() {
     return createElement(
       "select",
       { className: "dv-pagination-dropdown" },
-      options.map((opt) => createElement("option", { textContent: opt })),
+      this.elements.map((opt, index) =>
+        createElement("option", { textContent: opt, value: index }),
+      ),
     );
   }
 }
