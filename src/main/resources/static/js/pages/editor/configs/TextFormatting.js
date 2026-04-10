@@ -8,6 +8,7 @@ export default class TextFormatting {
   static defaultConfig = {
     name: "New TextFormatting",
     type: "TextFormatting",
+    generatorGroup: false,
     settings: {
       style: "underline",
       sofaFile: "",
