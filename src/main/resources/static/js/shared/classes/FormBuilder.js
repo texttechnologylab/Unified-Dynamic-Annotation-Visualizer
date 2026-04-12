@@ -70,7 +70,7 @@ export default class FormBuilder {
   parseValue(key, formData) {
     const config = this.formConfig[key];
 
-    switch (config.type) {
+    switch (config?.type) {
       case "number":
       case "range":
         return Number(formData.get(key));
