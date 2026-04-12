@@ -1,6 +1,8 @@
 import { getCsv, getTikz } from "../../../api/convertions.api.js";
+import { exportData } from "../../../api/data.api.js";
 import {
   applyStyles,
+  createButton,
   createElement,
   safeFilename,
 } from "../../../shared/modules/utils.js";
@@ -10,39 +12,45 @@ export default class ExportHandler {
   constructor(widget) {
     this.serializer = new XMLSerializer();
     this.widget = widget;
-
-    const root = widget.root.node ? widget.root.node() : widget.root;
-    const dropdown = root.querySelector(".dv-dropdown-menu");
-
     this.filename = safeFilename(widget.config.title);
+  }
 
-    const formats = {
-      tex: "bi bi-file-earmark-font",
-      csv: "bi bi-table",
-      json: "bi bi-braces",
-    };
+  init(bulkExports = false) {
+    const root = this.widget.root.node
+      ? this.widget.root.node()
+      : this.widget.root;
+    const dropdown = root.querySelector(".dv-dropdown-menu");
+    const formats = {};
 
-    if (widget.svg) {
+    if (this.widget.svg) {
       formats.svg = "bi bi-file-earmark-code";
       formats.png = "bi bi-image";
     }
 
-    if (dropdown) {
-      Object.entries(formats).forEach(([format, icon]) => {
-        const button = createElement(
-          "button",
-          {
-            className: "dv-btn",
-            type: "button",
-            onclick: () => this.prepareExport(format),
-          },
-          [
-            createElement("i", { className: icon }),
-            createElement("span", { textContent: "Export as " + format }),
-          ],
-        );
-        dropdown.append(button);
-      });
+    formats.tex = "bi bi-file-earmark-font";
+    formats.csv = "bi bi-table";
+    formats.json = "bi bi-braces";
+
+    Object.entries(formats).forEach(([format, icon]) => {
+      const button = createButton(icon, "Export as " + format, () =>
+        this.prepareExport(format),
+      );
+
+      dropdown.append(button);
+    });
+
+    if (bulkExports) {
+      dropdown.append(createElement("div", { className: "dv-divider" }));
+
+      Object.entries({ csv: "bi bi-table", json: "bi bi-braces" }).forEach(
+        ([format, icon]) => {
+          const button = createButton(icon, "Export all as " + format, () =>
+            this.exportZIP(format),
+          );
+
+          dropdown.append(button);
+        },
+      );
     }
   }
 
@@ -76,6 +84,19 @@ export default class ExportHandler {
         this.exportJSON();
         break;
     }
+  }
+
+  async exportZIP(format) {
+    const { pipeline, generator, type } = this.widget.config;
+
+    const blob = await exportData(pipeline, generator.id, type, format, {
+      corpus: state.corpusFilter.filter,
+      chart: this.widget.filter,
+    });
+    const url = URL.createObjectURL(blob, {
+      type: "application/zip",
+    });
+    this.downloadURL(url, `${this.filename}.zip`);
   }
 
   exportSVG() {

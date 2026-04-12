@@ -22,3 +22,17 @@ export async function getData(
       };
     });
 }
+
+export async function exportData(
+  pipelineId,
+  generatorId,
+  chartType,
+  format,
+  filter,
+) {
+  return await api.post(
+    `/data/export?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&format=${format}`,
+    filter,
+    "blob",
+  );
+}

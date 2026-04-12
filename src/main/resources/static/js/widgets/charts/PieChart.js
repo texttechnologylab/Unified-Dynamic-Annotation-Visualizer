@@ -50,7 +50,8 @@ export default class PieChart extends D3Visualization {
     const { data, meta } = await this.fetch();
     this.render(data[0]);
 
-    if (meta.total > 1) this.pagination.init(meta.ids);
+    this.exports.init(meta.total > 1);
+    this.pagination.init(meta.ids);
 
     const max = d3.max(data[0].map((d) => d.value));
 

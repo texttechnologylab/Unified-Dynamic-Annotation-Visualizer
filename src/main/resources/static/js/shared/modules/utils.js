@@ -43,6 +43,21 @@ export function createTemplateElement(
   return element;
 }
 
+export function createButton(icon, textContent, onclick) {
+  return createElement(
+    "button",
+    {
+      className: "dv-btn",
+      type: "button",
+      onclick,
+    },
+    [
+      createElement("i", { className: icon }),
+      createElement("span", { textContent }),
+    ],
+  );
+}
+
 export function deepClone(object, skip = []) {
   // Make a copy excluding skipped keys
   const copy = {};

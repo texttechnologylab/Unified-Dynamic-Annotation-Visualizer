@@ -15,8 +15,11 @@ export default class WidgetPagination {
 
   init(elements) {
     this.elements = elements;
-    this.createControls();
-    this.updateIndicator();
+
+    if (elements.length > 1) {
+      this.createControls();
+      this.updateIndicator();
+    }
   }
 
   createControls() {
