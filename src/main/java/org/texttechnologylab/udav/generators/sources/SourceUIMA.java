@@ -25,7 +25,7 @@ public class SourceUIMA extends Source {
         this.uri = uri.trim();
         this.dbAccess = dbAccess;
         try (Connection connection = dbAccess.getDataSource().getConnection()) {
-            DSLContext dsl = DSL.using(dbAccess.getDataSource().getConnection());
+            DSLContext dsl = DSL.using(connection);
             TypeTableResolver resolver = new TypeTableResolver(dsl, DB_SCHEMA_UIMA);
             this.tableHash = resolver.tableForType(uri);
         }
