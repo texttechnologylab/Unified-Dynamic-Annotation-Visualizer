@@ -2,8 +2,7 @@ package org.texttechnologylab.udav.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -14,17 +13,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.texttechnologylab.udav.db.SchemaObjectNames;
-import org.texttechnologylab.udav.pipeline.Pipeline;
 
-import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -38,11 +33,9 @@ public class PipelineService {
     private final SourceBuildService sourceBuildService;
     private final DataSource dataSource;
     private final ObjectMapper objectMapper;
-
+    Logger LOGGER = LoggerFactory.getLogger(PipelineService.class);
     @Value("${app.db.schema:public}")
     private String schema;
-
-    Logger LOGGER = LoggerFactory.getLogger(PipelineService.class);
 
     public PipelineService(SourceBuildService sourceBuildService, DataSource dataSource, ObjectMapper objectMapper) {
         this.sourceBuildService = sourceBuildService;
@@ -85,7 +78,7 @@ public class PipelineService {
             return dsl.select(fieldId, fieldJson)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
-                    .orderBy(fieldId.asc())
+                    .orderBy(fieldName.asc())
                     .offset(Math.max(0, page) * Math.max(1, size))
                     .limit(Math.max(1, size))
                     .fetch(record -> {
@@ -116,6 +109,7 @@ public class PipelineService {
             String json = dsl.select(DSL.field(DSL.name(COL_JSON), String.class))
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(DSL.field(DSL.name(COL_ID)).eq(id))
+                    .orderBy(DSL.field(DSL.name(COL_NAME)).asc())
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
 
@@ -125,10 +119,9 @@ public class PipelineService {
 
     @Transactional
     public String create(JsonNode json) throws Exception {
-        JsonNode normalizedJson = normalizeGeneratorLayout(json);
-        String id = normalizedJson.path("id").asText("main");
-
-        String jsonStr = toString(normalizedJson);
+        String id = json.get("id").asText();
+        String name = json.get("name").asText();
+        String jsonStr = toString(json);
 
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
@@ -144,7 +137,7 @@ public class PipelineService {
                             DSL.field(DSL.name(COL_ID)),
                             DSL.field(DSL.name(COL_NAME)),
                             DSL.field(DSL.name(COL_JSON)))
-                    .values(id, id, jsonStr)
+                    .values(id, name, jsonStr)
                     .execute();
 
             sourceBuildService.startBuild(id, id);
@@ -157,13 +150,12 @@ public class PipelineService {
 
     @Transactional
     public void update(JsonNode json) throws Exception {
-        JsonNode normalizedJson = normalizeGeneratorLayout(json);
-        String id = normalizedJson.path("id").asText(null);
+        String id = json.get("id").asText();
         if (id == null || id.isBlank()) {
             throw new ResponseStatusException(BAD_REQUEST, "Missing or empty pipeline id");
         }
 
-        String jsonStr = toString(normalizedJson);
+        String jsonStr = toString(json);
 
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
@@ -228,81 +220,4 @@ public class PipelineService {
         }
     }
 
-    private JsonNode normalizeGeneratorLayout(JsonNode json) {
-        if (json == null || !json.isObject()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Invalid pipeline JSON object");
-        }
-
-        ObjectNode root = ((ObjectNode) json).deepCopy();
-        JsonNode sourcesNode = root.get("sources");
-        if (!sourcesNode.isArray()) {
-            return root;
-        }
-
-        Map<String, ObjectNode> sourceById = new LinkedHashMap<>();
-        Map<String, Set<String>> generatorIdsBySource = new LinkedHashMap<>();
-
-        for (JsonNode sourceNode : (ArrayNode) sourcesNode) {
-            if (!sourceNode.isObject()) {
-                continue;
-            }
-            ObjectNode sourceObject = (ObjectNode) sourceNode;
-            String sourceId = Pipeline.stripNSuffix(sourceObject.path("id").asText(null));
-            if (sourceId == null || sourceId.isBlank()) {
-                continue;
-            }
-
-            JsonNode createsGeneratorsNode = sourceObject.get("createsGenerators");
-            ArrayNode createsGenerators = (createsGeneratorsNode instanceof ArrayNode)
-                    ? (ArrayNode) createsGeneratorsNode
-                    : sourceObject.putArray("createsGenerators");
-
-            Set<String> existingIds = new LinkedHashSet<>();
-            for (JsonNode existingGenerator : createsGenerators) {
-                String existingId = existingGenerator.path("id").asText("").trim();
-                if (!existingId.isEmpty()) {
-                    existingIds.add(existingId);
-                }
-            }
-
-            sourceById.put(sourceId, sourceObject);
-            generatorIdsBySource.put(sourceId, existingIds);
-        }
-
-        JsonNode topLevelGenerators = root.get("generators");
-        if (topLevelGenerators instanceof ArrayNode generatorsArray) {
-            for (JsonNode generatorNode : generatorsArray) {
-                if (!generatorNode.isObject()) {
-                    continue;
-                }
-
-                String sourceId = Pipeline.stripNSuffix(generatorNode.path("source").asText(null));
-                if (sourceId == null || sourceId.isBlank()) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Generator is missing source reference");
-                }
-
-                ObjectNode targetSource = sourceById.get(sourceId);
-                if (targetSource == null) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Generator references unknown source id: " + sourceId);
-                }
-
-                String generatorId = generatorNode.path("id").asText("").trim();
-                Set<String> seenIds = generatorIdsBySource.get(sourceId);
-                if (!generatorId.isEmpty() && seenIds.contains(generatorId)) {
-                    continue;
-                }
-
-                ObjectNode generatorCopy = ((ObjectNode) generatorNode).deepCopy();
-                generatorCopy.remove("source");
-                ((ArrayNode) targetSource.get("createsGenerators")).add(generatorCopy);
-
-                if (!generatorId.isEmpty()) {
-                    seenIds.add(generatorId);
-                }
-            }
-        }
-
-        root.remove("generators");
-        return root;
-    }
 }
