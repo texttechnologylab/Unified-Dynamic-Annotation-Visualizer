@@ -155,13 +155,14 @@ public class PipelineService {
             throw new ResponseStatusException(BAD_REQUEST, "Missing or empty pipeline id");
         }
 
+        String name = json.get("name").asText();
         String jsonStr = toString(json);
 
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
 
             int updated = dsl.update(DSL.table(DSL.name(schema, TABLE)))
-                    .set(DSL.field(DSL.name(COL_NAME)), id)
+                    .set(DSL.field(DSL.name(COL_NAME)), name)
                     .set(DSL.field(DSL.name(COL_JSON)), jsonStr)
                     .where(DSL.field(DSL.name(COL_ID)).eq(id))
                     .execute();
