@@ -29,7 +29,7 @@ public class SourceBuildService {
      * Build all sources for a given schema + pipeline.
      * This version runs synchronously and is not concurrency-guarded.
      */
-    public void startBuild(String schema, @Nullable String pipelineId) {
+    public void startBuild(String schema, @Nullable String pipelineId) { //TODO: remove duplicate unnecessary call
         try {
             doBuild(schema, pipelineId);
         } catch (Exception e) {
