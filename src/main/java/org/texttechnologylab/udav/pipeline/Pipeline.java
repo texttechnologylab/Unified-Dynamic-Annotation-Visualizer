@@ -87,7 +87,7 @@ public class Pipeline {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid pipeline JSON.");
+            throw new IllegalArgumentException("Invalid pipeline JSON: " + e.getMessage(), e);
         }
     }
 
@@ -130,6 +130,8 @@ public class Pipeline {
                 throw new IllegalArgumentException("No pipeline found with id \"" + pipelineId + "\".");
             }
             json = val;
+            System.out.println("JSON:");
+            System.out.println(json);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load pipeline \"" + pipelineId + "\" from DB.", e);
         }
@@ -172,6 +174,8 @@ public class Pipeline {
             }
 
             JSONView view = new JSONView(pipelineMap);
+            System.out.println("Parsed JSONView from DB:");
+            System.out.println(view.toJson(true));
             Pipeline pipeline = generatePipelineFromJSONView(view, writeAccess);
 
             // Sanity check: if the DB row was envelope-form with a different id, warn but continue
@@ -326,7 +330,7 @@ public class Pipeline {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid pipeline JSON.");
+            throw new IllegalArgumentException("Invalid pipeline JSON: " + e.getMessage(), e);
         }
     }
 
