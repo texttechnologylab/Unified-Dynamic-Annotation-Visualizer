@@ -36,8 +36,10 @@ export default class MedialAxis extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    if (meta.total > 1) this.pagination.init(meta.ids);
 
     this.controls.append([
       {

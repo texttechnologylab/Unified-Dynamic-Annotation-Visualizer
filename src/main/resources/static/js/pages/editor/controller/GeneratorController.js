@@ -49,12 +49,13 @@ export default class GeneratorController {
     const buttons = this.root.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {
-      const { name, settings, extends: ext } = this.item;
+      const { name, generatorGroup, settings, extends: ext } = this.item;
 
       builder.buildForm(
-        { name, settings, extends: ext },
-        ({ name, settings, extends: ext }) => {
+        { name, generatorGroup, settings, extends: ext },
+        ({ name, generatorGroup, settings, extends: ext }) => {
           this.setName(name);
+          this.item.generatorGroup = generatorGroup;
           this.item.settings = settings;
           this.item.extends = ext;
 

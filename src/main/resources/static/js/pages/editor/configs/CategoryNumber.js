@@ -6,6 +6,7 @@ export default class CategoryNumber {
   static defaultConfig = {
     name: "New CategoryNumber",
     type: "CategoryNumber",
+    generatorGroup: false,
     settings: {},
     extends: [],
   };

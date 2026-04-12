@@ -260,7 +260,7 @@ public class Pipeline {
                         String subSourceId = getJSONViewOptionalString(generatorEntry, "__udavSubSourceId");
                         if (subSourceId != null) {
                             if (!(sourceObj instanceof SourceN sourceN)) {
-                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": source does not support @N expansion.");
+                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": source does not support grouped expansion.");
                             }
                             Source resolvedSubSource = sourceN.getSubSourcesIdToObjectMap().get(subSourceId);
                             if (resolvedSubSource == null) {
@@ -447,25 +447,14 @@ public class Pipeline {
     private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException, IOException {
         String normalizedDefinition = stripNSuffix(definition);
         if (isDbJsonBackedSource(normalizedDefinition)) {
-            if (hasNSuffix(definition)) {
-                return new SourceJsonN(normalizedDefinition, dbAccess);
-            }
             return new SourceJson(normalizedDefinition, dbAccess);
         }
         return new SourceUIMA(normalizedDefinition, dbAccess);
     }
 
-    public static boolean hasNSuffix(String value) {
-        return value != null && value.trim().toUpperCase().endsWith("@N");
-    }
-
     public static String stripNSuffix(String value) {
         if (value == null) return null;
-        String trimmed = value.trim();
-        if (trimmed.toUpperCase().endsWith("@N")) {
-            return trimmed.substring(0, trimmed.length() - 2);
-        }
-        return trimmed;
+        return value.trim();
     }
 
     private static String getJSONViewOptionalString(JSONView view, String name) {
@@ -577,12 +566,9 @@ public class Pipeline {
             List<Map<String, Object>> expandedGenerators = new ArrayList<>();
 
             for (Map<String, Object> generator : originalGenerators) {
-                String rawType = stringOrNull(generator.get("type"));
-                String rawSourceRef = stringOrNull(generator.get("source"));
-                boolean templateType = hasNSuffix(rawType);
-                boolean templateSource = hasNSuffix(rawSourceRef);
+                boolean generatorGroup = booleanOrDefault(generator.get("generatorGroup"), false);
 
-                if (!templateType && !templateSource) {
+                if (!generatorGroup) {
                     Map<String, Object> copy = new LinkedHashMap<>(generator);
                     String existingId = stringOrNull(copy.get("id"));
                     if (existingId != null && !existingId.isBlank()) {
@@ -600,10 +586,10 @@ public class Pipeline {
                     sourceN = (SourceN) sourceObj;
                 } else {
                     String generatorId = stringOrNull(generator.get("id"));
-                    throw new IllegalArgumentException("Generator \"" + generatorId + "\" uses @N but source does not support it.");
+                    throw new IllegalArgumentException("Generator \"" + generatorId + "\" is grouped but source does not support grouped expansion.");
                 }
 
-                String normalizedType = stripNSuffix(rawType);
+                String normalizedType = stringOrNull(generator.get("type"));
                 String idTemplate = stringOrNull(generator.get("id"));
 
                 int fallbackIndex = 0;
@@ -657,6 +643,14 @@ public class Pipeline {
         if (value == null) return null;
         String stringValue = value.toString().trim();
         return stringValue.isEmpty() ? null : stringValue;
+    }
+
+    private static boolean booleanOrDefault(Object value, boolean defaultValue) {
+        if (value == null) return defaultValue;
+        if (value instanceof Boolean b) return b;
+        String text = value.toString().trim();
+        if (text.isEmpty()) return defaultValue;
+        return Boolean.parseBoolean(text);
     }
 
     private static boolean isDbJsonBackedSource(String definition) {

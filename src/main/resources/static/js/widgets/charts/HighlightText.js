@@ -40,14 +40,16 @@ export default class HighlightText extends WidgetInterface {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    if (meta.total > 1) this.pagination.init(meta.ids);
 
     this.filter = {
       hide: [],
     };
     this.controls.append(
-      data.datasets.map(({ name }) => {
+      data[0].datasets.map(({ name }) => {
         return {
           type: "switch",
           label: name.split(".").slice(-2).join("."),

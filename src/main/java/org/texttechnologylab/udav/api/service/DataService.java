@@ -48,7 +48,7 @@ public class DataService {
                                  Map<String, String> corpus,
                                  boolean pretty,
                                  String schema) {
-        JsonNode node = ensureArrayPayload(renderNode(id, type, filters, corpus, schema));
+        JsonNode node = ensureDatasetList(renderNode(id, type, filters, corpus, schema));
         try {
             return pretty ? mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
                     : mapper.writeValueAsString(node);
@@ -66,11 +66,6 @@ public class DataService {
                                   Map<String, String> filters,
                                   Map<String, String> corpus) throws Exception {
         boolean isTemplate = isTemplateGeneratorId(generatorId);
-        boolean wantsPagination = isTemplate || page != null || size != null;
-
-        if (!wantsPagination) {
-            return ensureArrayPayload(renderNode(generatorId, chartType, filters, corpus, pipelineId));
-        }
 
         int requestedPage = page == null ? 0 : page;
         int requestedSize = Math.max(1, size == null ? 1 : size);
@@ -93,9 +88,7 @@ public class DataService {
             meta.putNull("generatorId");
             meta.put("hasPrev", false);
             meta.put("hasNext", false);
-            if (includeIds == null || includeIds) {
-                meta.set("ids", mapper.createArrayNode());
-            }
+            meta.set("ids", mapper.createArrayNode());
             out.set("data", mapper.createArrayNode());
             return out;
         }
@@ -111,15 +104,15 @@ public class DataService {
         meta.put("hasPrev", clampedPage > 0);
         meta.put("hasNext", clampedPage < maxPage);
 
+        ArrayNode idsNode = meta.putArray("ids");
         if (includeIds == null || includeIds) {
-            ArrayNode idsNode = meta.putArray("ids");
             for (String id : ids) {
                 idsNode.add(id);
             }
         }
 
         if (requestedSize == 1) {
-            out.set("data", ensureArrayPayload(renderNode(pageIds.get(0), chartType, filters, corpus, pipelineId)));
+            out.set("data", ensureDatasetList(renderNode(pageIds.get(0), chartType, filters, corpus, pipelineId)));
             return out;
         }
 
@@ -127,7 +120,7 @@ public class DataService {
         for (String id : pageIds) {
             ObjectNode itemNode = data.addObject();
             itemNode.put("generatorId", id);
-            itemNode.set("data", ensureArrayPayload(renderNode(id, chartType, filters, corpus, pipelineId)));
+            itemNode.set("data", ensureDatasetList(renderNode(id, chartType, filters, corpus, pipelineId)));
         }
         return out;
     }
@@ -180,7 +173,7 @@ public class DataService {
         meta.put("generatorId", generatorId);
         meta.put("hasPrev", clampedPage > 0);
         meta.put("hasNext", clampedPage < group.ids().size() - 1);
-        out.set("data", data);
+        out.set("data", ensureDatasetList(data));
         return out;
     }
 
@@ -224,7 +217,7 @@ public class DataService {
         meta.put("generatorId", generatorId);
         meta.put("hasPrev", page > 0);
         meta.put("hasNext", page < group.ids().size() - 1);
-        out.set("data", data);
+        out.set("data", ensureDatasetList(data));
         return out;
     }
 
@@ -307,10 +300,7 @@ public class DataService {
                         continue;
                     }
 
-                    String rawType = textOrNull(generatorNode.get("type"));
-                    String rawSource = textOrNull(generatorNode.get("source"));
-                    boolean isTemplate = Pipeline.hasNSuffix(rawType) || Pipeline.hasNSuffix(rawSource);
-                    if (!isTemplate) {
+                    if (!isGeneratorGroup(generatorNode)) {
                         return new GroupResolution(Collections.singletonList(templateGeneratorId));
                     }
 
@@ -329,10 +319,8 @@ public class DataService {
                     continue;
                 }
 
-                String rawType = textOrNull(generatorNode.get("type"));
                 String rawSource = textOrNull(generatorNode.get("source"));
-                boolean isTemplate = Pipeline.hasNSuffix(rawType) || Pipeline.hasNSuffix(rawSource);
-                if (!isTemplate) {
+                if (!isGeneratorGroup(generatorNode)) {
                     return new GroupResolution(Collections.singletonList(templateGeneratorId));
                 }
 
@@ -500,13 +488,15 @@ public class DataService {
         return generatorId != null && generatorId.contains("@ID@");
     }
 
-    private JsonNode ensureArrayPayload(JsonNode node) {
+    private static boolean isGeneratorGroup(JsonNode generatorNode) {
+        return generatorNode != null && generatorNode.path("generatorGroup").asBoolean(false);
+    }
+
+    private JsonNode ensureDatasetList(JsonNode node) {
         if (node == null || node.isNull() || node.isMissingNode()) {
             return mapper.createArrayNode();
         }
-        if (node.isArray()) {
-            return node;
-        }
+        // API contract: data is always a list of datasets, independent of widget payload shape.
         ArrayNode wrapped = mapper.createArrayNode();
         wrapped.add(node);
         return wrapped;

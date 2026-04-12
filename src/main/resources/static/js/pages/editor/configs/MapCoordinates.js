@@ -6,6 +6,7 @@ export default class MapCoordinates {
   static defaultConfig = {
     name: "New MapCoordinates",
     type: "MapCoordinates",
+    generatorGroup: false,
     settings: {},
     extends: [],
   };
@@ -13,6 +14,10 @@ export default class MapCoordinates {
     name: {
       type: "text",
       label: "Name",
+    },
+    generatorGroup: {
+      type: "switch",
+      label: "Generator group",
     },
   };
 }
