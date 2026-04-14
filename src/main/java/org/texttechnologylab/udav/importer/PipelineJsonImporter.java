@@ -107,7 +107,7 @@ public class PipelineJsonImporter implements ApplicationRunner {
 
             String canonicalJson = parsed.canonicalJson();
             String pipelineIdOriginal = parsed.pipelineId();
-            String pipelineName = filenameWithoutExt(p.getFileName().toString());
+            String pipelineName = parsed.pipelineName();
 
             if (pipelineNameExists(dsl, T, F_NAME, pipelineName)) {
                 LOGGER.warn("Pipeline with name {} already exists.", pipelineName);
@@ -172,11 +172,14 @@ public class PipelineJsonImporter implements ApplicationRunner {
     // --- Helpers (unchanged logic, but schema-qualified versions for existence checks) ---
 
     private ParsedPipeline parseAndCanonicalize(String raw) throws Exception {
-        JsonNode root = mapper.readTree(raw);
-        String pipelineId = extractPipelineId(root);
-        String canonical = mapper.writeValueAsString(root);
-        return new ParsedPipeline(canonical, pipelineId);
-    }
+    JsonNode root = mapper.readTree(raw);
+
+    String pipelineId = extractPipelineId(root);
+    String pipelineName = extractPipelineName(root);
+
+    String canonical = mapper.writeValueAsString(root);
+    return new ParsedPipeline(canonical, pipelineId, pipelineName);
+}
 
     private String extractPipelineId(JsonNode root) {
         JsonNode pipelineNode = root;
@@ -192,6 +195,25 @@ public class PipelineJsonImporter implements ApplicationRunner {
             throw new IllegalArgumentException("Invalid pipeline JSON: missing textual \"id\".");
         }
         return idNode.asText();
+    }
+
+    private String extractPipelineName(JsonNode root) {
+        JsonNode pipelineNode = root;
+
+        if (root.has("pipelines")) {
+            JsonNode arr = root.get("pipelines");
+            if (arr.isArray() && !arr.isEmpty()) {
+                pipelineNode = arr.get(0);
+            }
+        }
+
+        JsonNode nameNode = pipelineNode.get("name");
+
+        if (nameNode == null || nameNode.isNull() || nameNode.asText().isBlank()) {
+            return "untitled-pipeline";
+        }
+
+        return nameNode.asText();
     }
 
     private boolean pipelineIdExists(DSLContext dsl, Table<Record> T, Field<String> F_ID, String pipelineId) {
@@ -231,16 +253,11 @@ public class PipelineJsonImporter implements ApplicationRunner {
         }
     }
 
-    private String filenameWithoutExt(String name) {
-        int dot = name.lastIndexOf('.');
-        return (dot > 0) ? name.substring(0, dot) : name;
-    }
-
     private String canonicalize(String json) throws Exception {
         JsonNode node = mapper.readTree(json);
         return mapper.writeValueAsString(node);
     }
 
-    private record ParsedPipeline(String canonicalJson, String pipelineId) {
+    private record ParsedPipeline(String canonicalJson, String pipelineId, String pipelineName) {
     }
 }

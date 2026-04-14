@@ -74,8 +74,8 @@ public class PipelineService {
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
                     : fieldId.likeIgnoreCase("%" + q + "%")
-                    .or(fieldName.likeIgnoreCase("%" + q + "%"));
-            return dsl.select(fieldId, fieldJson)
+                            .or(fieldName.likeIgnoreCase("%" + q + "%"));
+            return dsl.select(fieldId, fieldName, fieldJson)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
                     .orderBy(fieldName.asc())
@@ -83,16 +83,7 @@ public class PipelineService {
                     .limit(Math.max(1, size))
                     .fetch(record -> {
                         String id = record.get(fieldId);
-                        String json = record.get(fieldJson);
-
-                        String name = "untitled-pipeline";
-                        if (json != null) {
-                            JsonNode root = parseJson(json);
-                            JsonNode nameNode = root.get("name");
-                            if (nameNode != null && !nameNode.isNull()) {
-                                name = nameNode.asText();
-                            }
-                        }
+                        String name = record.get(fieldName);
 
                         Map<String, String> summary = new LinkedHashMap<>();
                         summary.put("id", id);
@@ -134,9 +125,9 @@ public class PipelineService {
             if (exists) throw new ResponseStatusException(CONFLICT, "Pipeline already exists");
 
             dsl.insertInto(DSL.table(DSL.name(schema, TABLE)),
-                            DSL.field(DSL.name(COL_ID)),
-                            DSL.field(DSL.name(COL_NAME)),
-                            DSL.field(DSL.name(COL_JSON)))
+                    DSL.field(DSL.name(COL_ID)),
+                    DSL.field(DSL.name(COL_NAME)),
+                    DSL.field(DSL.name(COL_JSON)))
                     .values(id, name, jsonStr)
                     .execute();
 
