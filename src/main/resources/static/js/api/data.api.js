@@ -12,14 +12,14 @@ export async function getData(
       `/data?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&page=${page}`,
       filter,
     )
-    .then((data) => {
-      return data;
-    })
-    .catch(async () => {
-      return {
-        data: [await d3.json(`/data/${chartType}.json`)],
-        meta: { total: 1, ids: ["1"] },
-      };
+    .then(async ({ data, meta }) => {
+      if (meta.total === 0) {
+        return {
+          data: [await d3.json(`/data/${chartType}.json`)],
+          meta: { total: 1, ids: ["1"] },
+        };
+      }
+      return { data, meta };
     });
 }
 

@@ -74,20 +74,14 @@ public class DataService {
                 ? resolveGroupInternal(pipelineId, generatorId)
                 : new GroupResolution(Collections.singletonList(generatorId));
 
-        List<String> ids = group.ids();
+        List<String> ids = group.ids().stream().filter(id -> id != null && !id.isBlank()).toList();
         ObjectNode out = mapper.createObjectNode();
         ObjectNode meta = out.putObject("meta");
-        meta.put("pipelineId", pipelineId);
-        meta.put("templateGeneratorId", generatorId);
-        meta.put("chartType", chartType);
         meta.put("total", ids.size());
         meta.put("pageSize", requestedSize);
 
         if (ids.isEmpty()) {
             meta.put("page", 0);
-            meta.putNull("generatorId");
-            meta.put("hasPrev", false);
-            meta.put("hasNext", false);
             meta.set("ids", mapper.createArrayNode());
             out.set("data", mapper.createArrayNode());
             return out;
@@ -100,9 +94,6 @@ public class DataService {
         List<String> pageIds = ids.subList(from, to);
 
         meta.put("page", clampedPage);
-        meta.put("generatorId", pageIds.get(0));
-        meta.put("hasPrev", clampedPage > 0);
-        meta.put("hasNext", clampedPage < maxPage);
 
         ArrayNode idsNode = meta.putArray("ids");
         if (includeIds == null || includeIds) {
@@ -119,7 +110,6 @@ public class DataService {
         ArrayNode data = out.putArray("data");
         for (String id : pageIds) {
             ObjectNode itemNode = data.addObject();
-            itemNode.put("generatorId", id);
             itemNode.set("data", ensureDatasetList(renderNode(id, chartType, filters, corpus, pipelineId)));
         }
         return out;
