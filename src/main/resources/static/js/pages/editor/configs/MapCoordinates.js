@@ -7,7 +7,10 @@ export default class MapCoordinates {
     name: "New MapCoordinates",
     type: "MapCoordinates",
     generatorGroup: false,
-    settings: {},
+    settings: {
+      keysMap: {},
+      fixedKeys: {},
+    },
     extends: [],
   };
   static formConfig = {
@@ -18,6 +21,22 @@ export default class MapCoordinates {
     generatorGroup: {
       type: "switch",
       label: "Generator group",
+    },
+    "settings.keysMap": {
+      type: "json",
+      label: "Keys mapping (json)",
+      options: {
+        rows: 5,
+        message: "Invalid json mapping.",
+      },
+    },
+    "settings.fixedKeys": {
+      type: "json",
+      label: "Fixed keys (json)",
+      options: {
+        rows: 5,
+        message: "Invalid json mapping.",
+      },
     },
   };
 }

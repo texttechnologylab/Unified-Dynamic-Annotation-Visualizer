@@ -21,7 +21,7 @@ export default class FormBuilder {
     const fields = [];
 
     for (const [key, value] of Object.entries(config)) {
-      if (isObject(value)) {
+      if (isObject(value) && !this.formConfig[[...path, key].join(".")]) {
         fields.push(...this.parseConfig(value, [...path, key]));
       } else {
         fields.push(this.createInputField([...path, key].join("."), value));
@@ -33,7 +33,7 @@ export default class FormBuilder {
 
   writeToConfig(config, formData, path = []) {
     for (const [key, value] of Object.entries(config)) {
-      if (isObject(value)) {
+      if (isObject(value) && !this.formConfig[[...path, key].join(".")]) {
         config[key] = this.writeToConfig(value, formData, [...path, key]);
       } else {
         config[key] = this.parseValue([...path, key].join("."), formData);
@@ -76,6 +76,7 @@ export default class FormBuilder {
         return Number(formData.get(key));
 
       case "multiselect":
+      case "json":
         return JSON.parse(formData.get(key));
 
       case "switch":

@@ -50,9 +50,15 @@ export default class GeneratorController {
 
     buttons[0].addEventListener("click", () => {
       const { name, generatorGroup, settings, extends: ext } = this.item;
+      const defaultSettings = Generator.defaultConfig.settings;
 
       builder.buildForm(
-        { name, generatorGroup, settings, extends: ext },
+        {
+          name,
+          generatorGroup,
+          settings: { ...defaultSettings, ...settings },
+          extends: ext,
+        },
         ({ name, generatorGroup, settings, extends: ext }) => {
           this.setName(name);
           this.item.generatorGroup = generatorGroup;

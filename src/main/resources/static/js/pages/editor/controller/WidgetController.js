@@ -51,10 +51,11 @@ export default class WidgetController {
 
     buttons[0].addEventListener("click", () => {
       const { title, generator, src, options } = this.item;
+      const defaultOptions = Widget.defaultConfig.options;
 
       const config = generator
-        ? { title, generator, options }
-        : { title, src, options };
+        ? { title, generator, options: { ...defaultOptions, ...options } }
+        : { title, src, options: { ...defaultOptions, ...options } };
 
       builder.buildForm(config, ({ title, generator, src, options }) => {
         this.setTitle(title);
