@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Editor - Dynamic Visualizations</title>
+    <title>Editor | UDAV</title>
+    <meta name="description" content="UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.">
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/pages/editor.css" />
