@@ -349,8 +349,8 @@ public class GeneratorDataRepository {
                                     record.get(COLOR)
                             )
                     );
-        } catch (org.jooq.exception.DataAccessException ignored) {
-            // Edge table is optional and may not exist for old generators.
+        } catch (Exception ignored) {
+            // Edge table is optional and may not exist (or may not be visible yet) in some schemas.
             return Collections.emptyMap();
         }
     }

@@ -35,13 +35,14 @@ public class MapCoordinates extends Generator {
     public void setup() throws SQLException {
         entries = new ArrayList<>();
         edges   = new ArrayList<>();
+        double coordinateScale = readCoordinateScaleSetting();
 
         if (SourceJson.class.equals(source.getClass())) {
             SourceJson sourceJson = (SourceJson) source;
 
             String inputFormat = readStringSetting("inputFormat");
             if ("edgePairs".equalsIgnoreCase(inputFormat)) {
-                setupFromEdgePairs(sourceJson);
+                setupFromEdgePairs(sourceJson, coordinateScale);
                 return;
             }
 
@@ -57,7 +58,7 @@ public class MapCoordinates extends Generator {
                 for (int c = 0; true; c++) {
                     Number coordinateNumber = coordinates.get(Integer.toString(c));
                     if (coordinateNumber == null) break;
-                    coordinatesNumbers.add(coordinateNumber);
+                    coordinatesNumbers.add(coordinateNumber.doubleValue() * coordinateScale);
                 }
                 if (coordinatesNumbers.isEmpty()) continue;
 
@@ -107,14 +108,14 @@ public class MapCoordinates extends Generator {
         }
     }
 
-    private void setupFromEdgePairs(SourceJson sourceJson) {
+    private void setupFromEdgePairs(SourceJson sourceJson, double coordinateScale) {
         double epsilon = readDoubleSetting("epsilon", 1e-6d);
         String filename = sourceJson.getSingleFileName();
 
         // Preferred path: same settings grammar as other generators (keysMap/keys/fixedKeys).
         List<Map<String, Object>> mappedEdges = sourceJson.generateKeysMapRowWise(settings);
         if (!mappedEdges.isEmpty()) {
-            setupFromMappedEdgePairs(filename, mappedEdges, epsilon);
+            setupFromMappedEdgePairs(filename, mappedEdges, epsilon, coordinateScale);
             return;
         }
 
@@ -129,8 +130,8 @@ public class MapCoordinates extends Generator {
                 continue;
             }
 
-            PointData fromPoint = readPoint(edgePair.get(0));
-            PointData toPoint = readPoint(edgePair.get(1));
+            PointData fromPoint = scalePoint(readPoint(edgePair.get(0)), coordinateScale);
+            PointData toPoint = scalePoint(readPoint(edgePair.get(1)), coordinateScale);
             if (fromPoint == null || toPoint == null) {
                 continue;
             }
@@ -145,10 +146,10 @@ public class MapCoordinates extends Generator {
         }
     }
 
-    private void setupFromMappedEdgePairs(String filename, List<Map<String, Object>> mappedEdges, double epsilon) {
+    private void setupFromMappedEdgePairs(String filename, List<Map<String, Object>> mappedEdges, double epsilon, double coordinateScale) {
         for (Map<String, Object> edgeMap : mappedEdges) {
-            PointData fromPoint = readPointFromMapped(edgeMap.get("from"));
-            PointData toPoint = readPointFromMapped(edgeMap.get("to"));
+            PointData fromPoint = scalePoint(readPointFromMapped(edgeMap.get("from")), coordinateScale);
+            PointData toPoint = scalePoint(readPointFromMapped(edgeMap.get("to")), coordinateScale);
             if (fromPoint == null || toPoint == null) {
                 continue;
             }
@@ -176,6 +177,29 @@ public class MapCoordinates extends Generator {
             return null;
         }
         return new PointData(xNumber.doubleValue(), yNumber.doubleValue());
+    }
+
+    private PointData scalePoint(PointData pointData, double coordinateScale) {
+        if (pointData == null) return null;
+        if (coordinateScale == 1.0d) return pointData;
+        return new PointData(pointData.x * coordinateScale, pointData.y * coordinateScale);
+    }
+
+    private double readCoordinateScaleSetting() {
+        try {
+            Object value = configGenerator.get("settings").get("scale").getNode();
+            if (value instanceof Number number) {
+                double parsed = number.doubleValue();
+                return Double.isFinite(parsed) ? parsed : 1.0d;
+            }
+            if (value instanceof String s) {
+                double parsed = Double.parseDouble(s.trim());
+                return Double.isFinite(parsed) ? parsed : 1.0d;
+            }
+        } catch (Exception ignored) {
+            // Fall through to default.
+        }
+        return 1.0d;
     }
 
     private Number getNumber(Map<?, ?> map, String... keys) {
@@ -324,26 +348,26 @@ public class MapCoordinates extends Generator {
             }
             if (!vertexBatch.isEmpty()) dsl.batch(vertexBatch).execute();
 
-            // ── Edge table (new, created only when edges exist) ───────────────
-            if (!edges.isEmpty()) {
-                dsl.createTableIfNotExists(
-                                DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES))
-                        .column(DBConstants.TABLEATTR_GENERATORID,
-                                org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
-                        .column(DBConstants.TABLEATTR_FILENAME,
-                                org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
-                        .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_FROM,
-                                org.jooq.impl.SQLDataType.INTEGER.nullable(false))
-                        .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_TO,
-                                org.jooq.impl.SQLDataType.INTEGER.nullable(false))
-                        .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_NUMBER,
-                                org.jooq.impl.SQLDataType.DOUBLE.nullable(true))
-                        .column(DBConstants.TABLEATTR_GENERATORDATA_LABEL,
-                                org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(true))
-                        .column(DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL,
-                                org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
-                        .execute();
+            // ── Edge table (always created; rows may be empty for point-only generators) ──
+            dsl.createTableIfNotExists(
+                            DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES))
+                    .column(DBConstants.TABLEATTR_GENERATORID,
+                            org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_FILENAME,
+                            org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_FROM,
+                            org.jooq.impl.SQLDataType.INTEGER.nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_TO,
+                            org.jooq.impl.SQLDataType.INTEGER.nullable(false))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_EDGE_NUMBER,
+                            org.jooq.impl.SQLDataType.DOUBLE.nullable(true))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_LABEL,
+                            org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(true))
+                    .column(DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL,
+                            org.jooq.impl.SQLDataType.VARCHAR.length(DBConstants.DEFAULTSIZE_VARCHAR).nullable(false))
+                    .execute();
 
+            if (!edges.isEmpty()) {
                 Table<?> EDGE_TABLE =
                         DSL.table(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES));
 

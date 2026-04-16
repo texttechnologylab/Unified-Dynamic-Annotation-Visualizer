@@ -34,6 +34,8 @@ public class SimpleMap extends Widget {
 
         Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> result =
                 repo.loadMapCoordinatesByFile(schema, generatorId);
+        Map<String, List<GeneratorDataRepository.MapCoordinatesEdgeRow>> edgesByFile =
+                repo.loadMapCoordinatesEdgesByFile(schema, generatorId);
 
         assert mapper != null;
         ArrayNode out = mapper.createArrayNode();
@@ -70,6 +72,57 @@ public class SimpleMap extends Widget {
                 coordinates.add(row.coordinates().get(0));
                 coordinates.add(row.coordinates().get(1));
                 geometry.set("coordinates", coordinates);
+                feature.set("geometry", geometry);
+
+                out.add(feature);
+            }
+
+            List<GeneratorDataRepository.MapCoordinatesEdgeRow> edges = edgesByFile.get(filename);
+            if (edges == null || edges.isEmpty()) {
+                continue;
+            }
+
+            for (GeneratorDataRepository.MapCoordinatesEdgeRow edge : edges) {
+                int from = edge.fromIndex();
+                int to = edge.toIndex();
+                if (from < 0 || to < 0 || from >= rows.size() || to >= rows.size()) {
+                    continue;
+                }
+
+                GeneratorDataRepository.MapCoordinatesRow fromRow = rows.get(from);
+                GeneratorDataRepository.MapCoordinatesRow toRow = rows.get(to);
+                if (fromRow.coordinates() == null || fromRow.coordinates().size() < 2
+                        || toRow.coordinates() == null || toRow.coordinates().size() < 2) {
+                    continue;
+                }
+
+                var feature = mapper.createObjectNode();
+                feature.put("type", "Feature");
+
+                var properties = mapper.createObjectNode();
+                String lineLabel = firstNonBlank(edge.label(), fromRow.label(), toRow.label(), filename);
+                properties.put("label", lineLabel);
+                String lineColor = firstNonBlank(edge.color(), fromRow.strokeColor(), toRow.strokeColor(), "#00618f");
+                properties.put("color", lineColor);
+                if (edge.number() != null) {
+                    properties.put("number", edge.number());
+                }
+                feature.set("properties", properties);
+
+                var geometry = mapper.createObjectNode();
+                geometry.put("type", "LineString");
+
+                ArrayNode lineCoordinates = mapper.createArrayNode();
+                ArrayNode fromCoordinates = mapper.createArrayNode();
+                fromCoordinates.add(fromRow.coordinates().get(0));
+                fromCoordinates.add(fromRow.coordinates().get(1));
+                ArrayNode toCoordinates = mapper.createArrayNode();
+                toCoordinates.add(toRow.coordinates().get(0));
+                toCoordinates.add(toRow.coordinates().get(1));
+
+                lineCoordinates.add(fromCoordinates);
+                lineCoordinates.add(toCoordinates);
+                geometry.set("coordinates", lineCoordinates);
                 feature.set("geometry", geometry);
 
                 out.add(feature);
