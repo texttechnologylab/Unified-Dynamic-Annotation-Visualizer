@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MapCoordinates extends Generator {
 
@@ -37,6 +38,12 @@ public class MapCoordinates extends Generator {
 
         if (SourceJson.class.equals(source.getClass())) {
             SourceJson sourceJson = (SourceJson) source;
+
+            String inputFormat = readStringSetting("inputFormat");
+            if ("edgePairs".equalsIgnoreCase(inputFormat)) {
+                setupFromEdgePairs(sourceJson);
+                return;
+            }
 
             List<Map<String, Object>> keysMap = sourceJson.generateKeysMap(settings);
             for (Map<String, Object> map : keysMap) {
@@ -98,6 +105,149 @@ public class MapCoordinates extends Generator {
                 }
             }
         }
+    }
+
+    private void setupFromEdgePairs(SourceJson sourceJson) {
+        double epsilon = readDoubleSetting("epsilon", 1e-6d);
+        String filename = sourceJson.getSingleFileName();
+
+        // Preferred path: same settings grammar as other generators (keysMap/keys/fixedKeys).
+        List<Map<String, Object>> mappedEdges = sourceJson.generateKeysMapRowWise(settings);
+        if (!mappedEdges.isEmpty()) {
+            setupFromMappedEdgePairs(filename, mappedEdges, epsilon);
+            return;
+        }
+
+        // Backward-compatible fallback for raw edge arrays: [[{x,y},{x,y}], ...]
+        Object node = sourceJson.getSingleFileJSONView().getNode();
+        if (!(node instanceof List<?> edgePairs)) {
+            return;
+        }
+
+        for (Object edgeObj : edgePairs) {
+            if (!(edgeObj instanceof List<?> edgePair) || edgePair.size() < 2) {
+                continue;
+            }
+
+            PointData fromPoint = readPoint(edgePair.get(0));
+            PointData toPoint = readPoint(edgePair.get(1));
+            if (fromPoint == null || toPoint == null) {
+                continue;
+            }
+
+            int fromIndex = findOrAddVertex(filename, fromPoint, epsilon);
+            int toIndex = findOrAddVertex(filename, toPoint, epsilon);
+            if (fromIndex == toIndex) {
+                continue;
+            }
+
+            edges.add(new Edge(filename, fromIndex, toIndex, null, null, Color.GRAY));
+        }
+    }
+
+    private void setupFromMappedEdgePairs(String filename, List<Map<String, Object>> mappedEdges, double epsilon) {
+        for (Map<String, Object> edgeMap : mappedEdges) {
+            PointData fromPoint = readPointFromMapped(edgeMap.get("from"));
+            PointData toPoint = readPointFromMapped(edgeMap.get("to"));
+            if (fromPoint == null || toPoint == null) {
+                continue;
+            }
+
+            int fromIndex = findOrAddVertex(filename, fromPoint, epsilon);
+            int toIndex = findOrAddVertex(filename, toPoint, epsilon);
+            if (fromIndex == toIndex) {
+                continue;
+            }
+
+            Number edgeNumber = edgeMap.get("number") instanceof Number n ? n : null;
+            String edgeLabel = edgeMap.get("label") instanceof String s ? s : null;
+            Color edgeColor = mapRGBAorStringToColor(edgeMap.get("color"), Color.GRAY);
+            edges.add(new Edge(filename, fromIndex, toIndex, edgeNumber, edgeLabel, edgeColor));
+        }
+    }
+
+    private PointData readPointFromMapped(Object mappedPoint) {
+        if (!(mappedPoint instanceof Map<?, ?> pointMap)) {
+            return null;
+        }
+        Number xNumber = getNumber(pointMap, "0", "x", "X");
+        Number yNumber = getNumber(pointMap, "1", "y", "Y");
+        if (xNumber == null || yNumber == null) {
+            return null;
+        }
+        return new PointData(xNumber.doubleValue(), yNumber.doubleValue());
+    }
+
+    private Number getNumber(Map<?, ?> map, String... keys) {
+        for (String key : keys) {
+            Object value = map.get(key);
+            if (value instanceof Number number) {
+                return number;
+            }
+        }
+        return null;
+    }
+
+    private int findOrAddVertex(String filename, PointData point, double epsilon) {
+        for (int i = 0; i < entries.size(); i++) {
+            Entry entry = entries.get(i);
+            if (entry.coordinates == null || entry.coordinates.size() < 2) {
+                continue;
+            }
+            double x = entry.coordinates.get(0).doubleValue();
+            double y = entry.coordinates.get(1).doubleValue();
+            if (Math.abs(x - point.x) <= epsilon && Math.abs(y - point.y) <= epsilon) {
+                return i;
+            }
+        }
+
+        List<Number> coordinates = List.of(point.x, point.y);
+        entries.add(new Entry(filename, null, coordinates, null, Color.BLUE, Color.RED, Color.WHITE));
+        return entries.size() - 1;
+    }
+
+    private PointData readPoint(Object rawPoint) {
+        if (!(rawPoint instanceof Map<?, ?> rawMap)) {
+            return null;
+        }
+        Object xObj = rawMap.get("x");
+        if (xObj == null) {
+            xObj = rawMap.get("X");
+        }
+        Object yObj = rawMap.get("y");
+        if (yObj == null) {
+            yObj = rawMap.get("Y");
+        }
+        if (!(xObj instanceof Number xNumber) || !(yObj instanceof Number yNumber)) {
+            return null;
+        }
+        return new PointData(xNumber.doubleValue(), yNumber.doubleValue());
+    }
+
+    private String readStringSetting(String key) {
+        try {
+            Object value = configGenerator.get("settings").get(key).getNode();
+            return value == null ? null : Objects.toString(value, null);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private double readDoubleSetting(String key, double defaultValue) {
+        try {
+            Object value = configGenerator.get("settings").get(key).getNode();
+            if (value instanceof Number number) {
+                double parsed = number.doubleValue();
+                return parsed > 0 ? parsed : defaultValue;
+            }
+            if (value instanceof String s) {
+                double parsed = Double.parseDouble(s.trim());
+                return parsed > 0 ? parsed : defaultValue;
+            }
+        } catch (Exception ignored) {
+            // Fall through to default.
+        }
+        return defaultValue;
     }
 
 
@@ -327,4 +477,6 @@ public class MapCoordinates extends Generator {
             this.color     = color;
         }
     }
+
+    private record PointData(double x, double y) {}
 }

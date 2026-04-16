@@ -56,6 +56,25 @@ public class SourceJson extends Source {
         return keysMap;
     }
 
+    /**
+     * Same settings grammar as {@link #generateKeysMap(GeneratorSettings)}, but interpreted row-wise.
+     * Useful for list-root JSON where each list item is one logical row (e.g. edge pairs).
+     */
+    public List<Map<String, Object>> generateKeysMapRowWise(GeneratorSettings settings) {
+
+        Map<String, Object> map_keysMap = (Map<String, Object>) settings.getMapSettingOrDefault("keysMap", null);
+        List<Map<String, Object>> keysMap;
+        if (map_keysMap == null) {
+            map_keysMap = (Map<String, Object>) settings.getMapSettingOrDefault("keys", null);
+            keysMap = generateFlatKeysRowWise(map_keysMap);
+        } else {
+            keysMap = generateFlatKeysMapRowWise(map_keysMap);
+        }
+        addFixedKeysToKeysMap(keysMap, (Map<String, Object>) settings.getMapSettingOrDefault("fixedKeys", null));
+
+        return keysMap;
+    }
+
     private void addFixedKeysToKeysMap(List<Map<String, Object>> keysMap, Map<String, Object> fixedKeys) {
         if (fixedKeys == null) return;
         for (Map<String, Object> m : keysMap) {
@@ -98,6 +117,50 @@ public class SourceJson extends Source {
         ArrayList<Map<String, Object>> flatKeysMap = new ArrayList<>();
         if (keysMapRoot == null) return flatKeysMap;
         generateFlatKeysMapRecursive(keysMapRoot, singleFileJSONView, flatKeysMap);
+        return flatKeysMap;
+    }
+
+    private List<Map<String, Object>> generateFlatKeysRowWise(Map<String, Object> keysRoot) {
+        ArrayList<Map<String, Object>> flatKeysMap = new ArrayList<>();
+        if (keysRoot == null) return flatKeysMap;
+        if (!singleFileJSONView.isList()) return flatKeysMap;
+
+        for (Object rowObj : singleFileJSONView.asList()) {
+            JSONView row = new JSONView(rowObj);
+            HashMap<String, Object> currentMap = new HashMap<>();
+            for (Map.Entry<String, Object> entry : keysRoot.entrySet()) {
+                String key = entry.getKey();
+                if (entry.getValue() instanceof List<?> valueList) {
+                    int i = 0;
+                    HashMap<String, Object> innerMap = new HashMap<>();
+                    for (Object e : valueList) {
+                        String value = (String) e;
+                        innerMap.put(Integer.toString(i), getChildNode(row, value));
+                        i++;
+                    }
+                    currentMap.put(key, innerMap);
+                } else {
+                    String value = (String) entry.getValue();
+                    currentMap.put(key, getChildNode(row, value));
+                }
+            }
+            flatKeysMap.add(currentMap);
+        }
+
+        return flatKeysMap;
+    }
+
+    private List<Map<String, Object>> generateFlatKeysMapRowWise(Map<String, Object> keysMapRoot) {
+        ArrayList<Map<String, Object>> flatKeysMap = new ArrayList<>();
+        if (keysMapRoot == null) return flatKeysMap;
+        if (!singleFileJSONView.isList()) return flatKeysMap;
+
+        for (Object rowObj : singleFileJSONView.asList()) {
+            HashMap<String, Object> currentMap = new HashMap<>();
+            generateFlatKeysMapRecursiveRowWise(keysMapRoot, new JSONView(rowObj), currentMap);
+            flatKeysMap.add(currentMap);
+        }
+
         return flatKeysMap;
     }
     private void generateFlatKeysMapRecursive(Map<String, Object> keysMapCurrentPosition, JSONView currentPosition, ArrayList<Map<String, Object>> flatKeysMap) {
@@ -180,6 +243,70 @@ public class SourceJson extends Source {
                 generateFlatKeysMapRecursive((Map<String, Object>) value, currentPosition.get(key), flatKeysMap);
             }
         }
+    }
+
+    private void generateFlatKeysMapRecursiveRowWise(Map<String, Object> keysMapCurrentPosition, JSONView currentPosition, Map<String, Object> currentMap) {
+        for (Map.Entry<String, Object> entry : keysMapCurrentPosition.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            JSONView valuePosition = getChildView(currentPosition, key);
+            if (valuePosition == null) {
+                continue;
+            }
+
+            if (value instanceof String stringValue) {
+                putMappedValue(currentMap, stringValue.trim(), valuePosition.getNode());
+            } else if (value instanceof List<?> listValue) {
+                Object rawNode = valuePosition.getNode();
+                if (!(rawNode instanceof List<?> valueNode)) {
+                    continue;
+                }
+                int listSize = listValue.size();
+                for (int i = 0; i < listSize; i++) {
+                    String stringValue = (String) listValue.get(i);
+                    Object mappedNode = i < valueNode.size() ? valueNode.get(i) : null;
+                    putMappedValue(currentMap, stringValue, mappedNode);
+                }
+            } else if (value instanceof Map<?, ?> subMap) {
+                generateFlatKeysMapRecursiveRowWise((Map<String, Object>) subMap, valuePosition, currentMap);
+            }
+        }
+    }
+
+    private static void putMappedValue(Map<String, Object> destination, String target, Object value) {
+        String trimmed = target.trim();
+        if (trimmed.contains("@")) {
+            String[] split = trimmed.split("@", 2);
+            Map<String, Object> innerValueMap = (Map<String, Object>) destination.get(split[0]);
+            if (innerValueMap == null) {
+                innerValueMap = new HashMap<>();
+                destination.put(split[0], innerValueMap);
+            }
+            innerValueMap.put(split[1], value);
+        } else {
+            destination.put(trimmed, value);
+        }
+    }
+
+    private static JSONView getChildView(JSONView currentPosition, String key) {
+        try {
+            if (currentPosition.isMap()) {
+                return currentPosition.get(key);
+            }
+            if (currentPosition.isList()) {
+                int idx = Integer.parseInt(key);
+                return currentPosition.get(idx);
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+        return null;
+    }
+
+    private static Object getChildNode(JSONView currentPosition, String key) {
+        JSONView child = getChildView(currentPosition, key);
+        return child != null ? child.getNode() : null;
     }
 
     private static JSONView readJsonViewFromDB(String path, DBAccess dbAccess) throws IOException, SQLException {

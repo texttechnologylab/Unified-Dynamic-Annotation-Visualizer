@@ -34,27 +34,54 @@ public class BoundaryApproximation extends Widget {
             return mapper.createArrayNode();
         }
 
-        Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> result =
+        Map<String, List<GeneratorDataRepository.MapCoordinatesRow>> pointsByFile =
                 repo.loadMapCoordinatesByFile(schema, generatorId);
+        Map<String, List<GeneratorDataRepository.MapCoordinatesEdgeRow>> edgesByFile =
+                repo.loadMapCoordinatesEdgesByFile(schema, generatorId);
 
         assert mapper != null;
 
-        ArrayNode coordinatesArr = mapper.createArrayNode();
+        ArrayNode edgePairs = mapper.createArrayNode();
 
-        for (Map.Entry<String, List<GeneratorDataRepository.MapCoordinatesRow>> entry : result.entrySet()) {
-            List<GeneratorDataRepository.MapCoordinatesRow> rows = entry.getValue();
-            if (rows == null || rows.isEmpty()) continue;
+        for (Map.Entry<String, List<GeneratorDataRepository.MapCoordinatesEdgeRow>> entry : edgesByFile.entrySet()) {
+            String filename = entry.getKey();
+            List<GeneratorDataRepository.MapCoordinatesEdgeRow> fileEdges = entry.getValue();
+            List<GeneratorDataRepository.MapCoordinatesRow> vertices = pointsByFile.get(filename);
+            if (fileEdges == null || fileEdges.isEmpty() || vertices == null || vertices.isEmpty()) {
+                continue;
+            }
 
-            for (GeneratorDataRepository.MapCoordinatesRow row : rows) {
-                if (row.coordinates() != null && row.coordinates().size() > 1) {
-                    ObjectNode coordObj = mapper.createObjectNode();
-                    coordObj.put("x", row.coordinates().get(0));
-                    coordObj.put("y", row.coordinates().get(1));
-                    coordinatesArr.add(coordObj);
+            for (GeneratorDataRepository.MapCoordinatesEdgeRow edge : fileEdges) {
+                int from = edge.fromIndex();
+                int to = edge.toIndex();
+                if (from < 0 || to < 0 || from >= vertices.size() || to >= vertices.size()) {
+                    continue;
                 }
+
+                GeneratorDataRepository.MapCoordinatesRow fromRow = vertices.get(from);
+                GeneratorDataRepository.MapCoordinatesRow toRow = vertices.get(to);
+                if (!isValid2D(fromRow) || !isValid2D(toRow)) {
+                    continue;
+                }
+
+                ArrayNode pair = mapper.createArrayNode();
+                pair.add(pointNode(fromRow));
+                pair.add(pointNode(toRow));
+                edgePairs.add(pair);
             }
         }
 
-        return coordinatesArr;
+        return edgePairs;
+    }
+
+    private boolean isValid2D(GeneratorDataRepository.MapCoordinatesRow row) {
+        return row != null && row.coordinates() != null && row.coordinates().size() > 1;
+    }
+
+    private ObjectNode pointNode(GeneratorDataRepository.MapCoordinatesRow row) {
+        ObjectNode coordObj = mapper.createObjectNode();
+        coordObj.put("x", row.coordinates().get(0));
+        coordObj.put("y", row.coordinates().get(1));
+        return coordObj;
     }
 }

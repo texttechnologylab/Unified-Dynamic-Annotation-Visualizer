@@ -11,6 +11,11 @@
       "uri": "XY_dict_reducedSize.json",
       "settings": {},
       "id": "Source-many-voronois"
+    },
+    {
+      "uri": "BoundaryApproximation.json",
+      "settings": {},
+      "id": "Source-boundary-edges"
     }
   ],
   "generators": [
@@ -76,6 +81,34 @@
       },
       "extends": [],
       "id": "MapCoordinates-@ID@"
+    },
+    {
+      "name": "Boundary Edge Points",
+      "type": "MapCoordinates",
+      "source": "Source-boundary-edges",
+      "settings": {
+        "inputFormat": "edgePairs",
+        "keysMap": {
+          "0": {
+            "x": "from@0",
+            "y": "from@1"
+          },
+          "1": {
+            "x": "to@0",
+            "y": "to@1"
+          },
+          "2": {
+            "label": "label",
+            "number": "number",
+            "color": "color"
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-boundary-edges"
     }
   ],
   "widgets": [
@@ -100,7 +133,7 @@
       "type": "VoronoiDiagram",
       "title": "Voronoi Diagram",
       "generator": {
-        "id": "MapCoordinates-0d978587ca89fd4080e2fddfc140b7eb8a04d034"
+        "id": "MapCoordinates-1w5ip76"
       },
       "options": {
         "min": -1,
