@@ -1,9 +1,10 @@
 import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
-import ChartGPT from "../../shared/classes/ChartGPT.js";
+import ChatBot from "../../shared/classes/ChatBot.js";
 import state from "./utils/viewState.js";
 import { createTemplateElement } from "../../shared/modules/utils.js";
+import { instruction } from "../../shared/modules/instruction.js";
 
 export default class View {
   constructor(pipeline) {
@@ -20,8 +21,8 @@ export default class View {
     accordions.init();
 
     if (document.querySelector(".dv-chat-bot")) {
-      const chartgpt = new ChartGPT("You are an assistant called ChartGPT.");
-      chartgpt.init();
+      const chatbot = new ChatBot(instruction);
+      chatbot.init();
     }
   }
 
