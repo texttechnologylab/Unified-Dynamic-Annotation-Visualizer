@@ -323,6 +323,38 @@ public class GeneratorDataRepository {
                 );
     }
 
+    public Map<String, List<MapCoordinatesEdgeRow>> loadMapCoordinatesEdgesByFile(String schema, String generatorId) {
+
+        Table<?> TABLE = DSL.table(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES));
+
+        Field<String> GENERATORID = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORID), String.class);
+        Field<String> FILENAME = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_FILENAME), String.class);
+        Field<Integer> EDGE_FROM = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORDATA_EDGE_FROM), Integer.class);
+        Field<Integer> EDGE_TO = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORDATA_EDGE_TO), Integer.class);
+        Field<Double> EDGE_NUMBER = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORDATA_EDGE_NUMBER), Double.class);
+        Field<String> LABEL = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORDATA_LABEL), String.class);
+        Field<String> COLOR = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES, DBConstants.TABLEATTR_GENERATORDATA_COLOR_FILL), String.class);
+
+        try {
+            return dsl.select(FILENAME, EDGE_FROM, EDGE_TO, EDGE_NUMBER, LABEL, COLOR)
+                    .from(TABLE)
+                    .where(GENERATORID.eq(generatorId))
+                    .fetchGroups(
+                            record -> record.get(FILENAME),
+                            record -> new MapCoordinatesEdgeRow(
+                                    record.get(EDGE_FROM) != null ? record.get(EDGE_FROM) : -1,
+                                    record.get(EDGE_TO) != null ? record.get(EDGE_TO) : -1,
+                                    record.get(EDGE_NUMBER),
+                                    record.get(LABEL),
+                                    record.get(COLOR)
+                            )
+                    );
+        } catch (Exception ignored) {
+            // Edge table is optional and may not exist (or may not be visible yet) in some schemas.
+            return Collections.emptyMap();
+        }
+    }
+
     // Helper method to convert your stored string back to a List<Double>
     private static List<Double> coordinatesStringToList(String coordinatesStr) {
         if (coordinatesStr == null || coordinatesStr.isEmpty()) return Collections.emptyList();
@@ -339,4 +371,6 @@ public class GeneratorDataRepository {
     public record SegmentRow(int begin, int end, String category, String type) {}
 
     public record MapCoordinatesRow(String label, List<Double> coordinates, double scale, String fillColor, String strokeColor, String outsideColor) {}
+
+    public record MapCoordinatesEdgeRow(int fromIndex, int toIndex, Double number, String label, String color) {}
 }

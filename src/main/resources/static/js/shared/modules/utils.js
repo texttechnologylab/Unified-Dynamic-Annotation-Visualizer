@@ -12,6 +12,15 @@ export function isObject(item) {
   return typeof item === "object" && !Array.isArray(item) && item !== null;
 }
 
+export function isJson(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 export function debounce(fn, timeout = 300) {
   let timer;
   return (...args) => {
@@ -41,6 +50,21 @@ export function createTemplateElement(
   element.append(...children);
 
   return element;
+}
+
+export function createButton(icon, textContent, onclick) {
+  return createElement(
+    "button",
+    {
+      className: "dv-btn",
+      type: "button",
+      onclick,
+    },
+    [
+      createElement("i", { className: icon }),
+      createElement("span", { textContent }),
+    ],
+  );
 }
 
 export function deepClone(object, skip = []) {

@@ -35,7 +35,7 @@ export default class GeneratorController {
         type: "multiselect",
         label: "Extends (optional)",
         options: () =>
-          getGeneratorOptions(this.item.type).filter(
+          getGeneratorOptions([this.item.type]).filter(
             (option) => option.value !== this.item.id,
           ),
       },
@@ -49,12 +49,19 @@ export default class GeneratorController {
     const buttons = this.root.querySelectorAll("button");
 
     buttons[0].addEventListener("click", () => {
-      const { name, settings, extends: ext } = this.item;
+      const { name, generatorGroup, settings, extends: ext } = this.item;
+      const defaultSettings = Generator.defaultConfig.settings;
 
       builder.buildForm(
-        { name, settings, extends: ext },
-        ({ name, settings, extends: ext }) => {
+        {
+          name,
+          generatorGroup,
+          settings: { ...defaultSettings, ...settings },
+          extends: ext,
+        },
+        ({ name, generatorGroup, settings, extends: ext }) => {
           this.setName(name);
+          this.item.generatorGroup = generatorGroup;
           this.item.settings = settings;
           this.item.extends = ext;
 

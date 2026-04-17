@@ -75,12 +75,17 @@ export default class SourceController {
 
     // Initialize buttons
     buttons[1].addEventListener("click", () => {
-      const { uri } = this.item;
+      const { uri, settings } = this.item;
+      const defaultSettings = Source.defaultConfig.settings;
 
-      builder.buildForm({ uri }, ({ uri }) => {
-        this.item.uri = uri;
-        // TODO: api.updateSource(state.id, this.item); + rerender connected widgets
-      });
+      builder.buildForm(
+        { uri, settings: { ...defaultSettings, ...settings } },
+        ({ uri, settings }) => {
+          this.item.uri = uri;
+          this.item.settings = settings;
+          // TODO: api.updateSource(state.id, this.item); + rerender connected widgets
+        },
+      );
     });
 
     buttons[2].addEventListener("click", () => {

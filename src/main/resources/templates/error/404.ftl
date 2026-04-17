@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>404 - Dynamic Visualizations</title>
+    <title>Not Found | UDAV</title>
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/shared/globals.css" />

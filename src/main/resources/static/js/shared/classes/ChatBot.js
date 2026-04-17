@@ -3,7 +3,7 @@ import state from "../../pages/view/utils/viewState.js";
 import { svgToBase64 } from "../modules/convert.js";
 import { createElement } from "../modules/utils.js";
 
-export default class ChartGPT {
+export default class ChatBot {
   constructor(instruction) {
     const root = document.querySelector(".dv-chat-bot");
     this.chat = root.querySelector(".dv-chat-messages");

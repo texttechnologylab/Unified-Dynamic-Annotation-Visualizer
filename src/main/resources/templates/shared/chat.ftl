@@ -1,9 +1,9 @@
-<#macro chat>
+<#macro chat title>
   <div class="dv-chat-bot collapsed">
     <div class="dv-chat-header">
       <div class="dv-chat-title">
         <i class="bi bi-robot"></i>
-        <span>Cha<span class="dv-bold">r</span>tGPT</span>
+        <span>${title}</span>
       </div>
       <div class="dv-chat-toolbar">
         <button id="btn-toggle" class="dv-btn" title="Expand/Contract">

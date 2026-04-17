@@ -40,7 +40,8 @@ public class Pipeline {
         this.rootJSONView = rootJSONView;
         this.generators = generators;
         this.baseGenerators = baseGenerators;
-        this.visualizedGenerators = findGeneratorsUsedByVisualizations();
+        // Persist/build every declared generator, not only widget-referenced ones.
+        this.visualizedGenerators = new LinkedHashMap<>(generators);
         this.dbAccess = dbAccess;
 
         currentState = PipelineState.CREATED_GENERATORS;
@@ -86,7 +87,7 @@ public class Pipeline {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid pipeline JSON.");
+            throw new IllegalArgumentException("Invalid pipeline JSON: " + e.getMessage(), e);
         }
     }
 
@@ -98,17 +99,27 @@ public class Pipeline {
      * (B) { ...the pipeline... }   // single object without the "pipelines" wrapper
      */
     public static Pipeline fromDB(DBAccess dbAccess, String pipelineId) {
-        if (dbAccess.getDataSource() == null) throw new IllegalArgumentException("dataSource must not be null");
+        return fromDB(dbAccess, dbAccess, pipelineId);
+    }
+
+    /**
+     * Load a pipeline row from {@code readAccess}'s schema, but build all generators
+     * (and write their data) using {@code writeAccess}'s schema.
+     * Use this when the pipeline table lives in a shared schema (app.db.schema) but each
+     * pipeline's generator data lives in its own schema (the pipeline id).
+     */
+    public static Pipeline fromDB(DBAccess readAccess, DBAccess writeAccess, String pipelineId) {
+        if (readAccess.getDataSource() == null) throw new IllegalArgumentException("dataSource must not be null");
         if (pipelineId == null || pipelineId.isBlank()) throw new IllegalArgumentException("pipelineId must not be null/blank");
 
         final String json;
-        try (Connection c = dbAccess.getDataSource().getConnection()) {
+        try (Connection c = readAccess.getDataSource().getConnection()) {
             DSLContext dsl = DSL.using(c);
 
-            // qualify everything with public
-            Table<?> T = DSL.table(DSL.name("public", "pipeline"));
-            Field<String> F_JSON = DSL.field(DSL.name("public", "pipeline", "json"), String.class);
-            Field<String> F_ID = DSL.field(DSL.name("public", "pipeline", "pipeline_id"), String.class);
+            String pipelineSchema = readAccess.getSchema();
+            Table<?> T = DSL.table(DSL.name(pipelineSchema, "pipeline"));
+            Field<String> F_JSON = DSL.field(DSL.name(pipelineSchema, "pipeline", "json"), String.class);
+            Field<String> F_ID = DSL.field(DSL.name(pipelineSchema, "pipeline", "pipeline_id"), String.class);
 
             String val = dsl.select(F_JSON)
                     .from(T)
@@ -129,7 +140,7 @@ public class Pipeline {
 
             // Accept both a single object or a { "pipelines": [...] } envelope
             Map<String, Object> root;
-            Object parsed = mapper.readValue(json, new TypeReference<Object>() {
+            Object parsed = mapper.readValue(json, new TypeReference<>() {
             });
             if (parsed instanceof Map<?, ?> m) {
                 //noinspection unchecked
@@ -155,13 +166,13 @@ public class Pipeline {
                 throw new IllegalArgumentException("Invalid pipeline JSON: " + append);
             }
 
-            Object first = pipelines.get(0);
+            Object first = pipelines.getFirst();
             if (!(first instanceof Map<?, ?> pipelineMap)) {
                 throw new IllegalArgumentException("Invalid pipeline JSON: pipeline entry is not an object.");
             }
 
             JSONView view = new JSONView(pipelineMap);
-            Pipeline pipeline = generatePipelineFromJSONView(view, dbAccess);
+            Pipeline pipeline = generatePipelineFromJSONView(view, writeAccess);
 
             // Sanity check: if the DB row was envelope-form with a different id, warn but continue
             String loadedId = pipeline.getId();
@@ -179,7 +190,9 @@ public class Pipeline {
 
     public static Pipeline generatePipelineFromJSONView(JSONView pipelineView, DBAccess dbAccess) {
         try {
-            pipelineView = new JSONView(mergeGeneratorsIntoSources(pipelineView.asMap()));
+            Map<String, Object> merged = mergeGeneratorsIntoSources(pipelineView.asMap());
+            Map<String, Object> expanded = expandNTemplates(merged, dbAccess);
+            pipelineView = new JSONView(expanded);
 
             String id = getJSONViewString(pipelineView, "id");
             JSONView sourcesView = pipelineView.get("sources");
@@ -196,11 +209,21 @@ public class Pipeline {
                 for (JSONView sourcesEntry : sourcesView) {
                     String sourceID = getJSONViewString(sourcesEntry, "id");
                     String sourceDefinition = getJSONViewOptionalString(sourcesEntry, "uri"); // TODO: Use better key name as this could also be a non uri source
-                    if (sourceDefinition != null && sourceDefinition.contains("@")) continue; // TODO: Remove
                     Source sourceObj = (sourceDefinition == null)? null : decideSourceFromJSONDefinition(sourceDefinition, dbAccess);
 
                     GeneratorSettings settingsBundle = GeneratorSettings.fromConfig(sourcesEntry);
                     JSONView generatorsView = sourcesEntry.get("createsGenerators");
+                    boolean requiresSubSources = false;
+                    for (JSONView generatorEntry : generatorsView) {
+                        if (getJSONViewOptionalString(generatorEntry, "__udavSubSourceId") != null) {
+                            requiresSubSources = true;
+                            break;
+                        }
+                    }
+                    if (requiresSubSources && sourceObj != null && !(sourceObj instanceof SourceN)
+                            && isDbJsonBackedSource(stripNSuffix(sourceDefinition))) {
+                        sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition), dbAccess);
+                    }
 
                     generatorsLoop:
                     for (JSONView generatorEntry : generatorsView) {
@@ -229,6 +252,19 @@ public class Pipeline {
 
                         Generator generator = Generator.constructGenerator(generatorID, generatorType, generatorEntry, sourcesEntry, settingsBundle, dbAccess);
 
+                        Source generatorSourceObj = sourceObj;
+                        String subSourceId = getJSONViewOptionalString(generatorEntry, "__udavSubSourceId");
+                        if (subSourceId != null) {
+                            if (!(sourceObj instanceof SourceN sourceN)) {
+                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": source does not support grouped expansion.");
+                            }
+                            Source resolvedSubSource = sourceN.getSubSourcesIdToObjectMap().get(subSourceId);
+                            if (resolvedSubSource == null) {
+                                throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": sub-source \"" + subSourceId + "\" not found.");
+                            }
+                            generatorSourceObj = resolvedSubSource;
+                        }
+
                         if (extendsGenerators == null) {
                             GeneratorSettings combinedSettings = generator.getSettings();
                             if (!combinedSettings.getBooleanSettingOrDefault("ignoreCombiCommonProperties", false)) {
@@ -244,8 +280,8 @@ public class Pipeline {
                         }
 
                         if (generator.getSource() == null) {
-                            if (sourceObj == null) throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": Non-derived generators need a source, which is not defined in group with id \"" + sourceID + "\".");
-                            generator.setSource(sourceObj);
+                            if (generatorSourceObj == null) throw new IllegalArgumentException("Error for generator \"" + generatorID + "\": Non-derived generators need a source, which is not defined in group with id \"" + sourceID + "\".");
+                            generator.setSource(generatorSourceObj);
                         }
 
                         generators.put(generatorID, generator);
@@ -290,7 +326,7 @@ public class Pipeline {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid pipeline JSON.");
+            throw new IllegalArgumentException("Invalid pipeline JSON: " + e.getMessage(), e);
         }
     }
 
@@ -405,12 +441,16 @@ public class Pipeline {
     }
 
     private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException, IOException {
-        if (definition.trim().toUpperCase().endsWith(".JSON")) {
-            return new SourceJson(definition);
-        } else if (definition.trim().toUpperCase().endsWith(".JSON@N")) {
-            return new SourceJsonN(definition);
+        String normalizedDefinition = stripNSuffix(definition);
+        if (isDbJsonBackedSource(normalizedDefinition)) {
+            return new SourceJson(normalizedDefinition, dbAccess);
         }
-        return new SourceUIMA(definition, dbAccess);
+        return new SourceUIMA(normalizedDefinition, dbAccess);
+    }
+
+    public static String stripNSuffix(String value) {
+        if (value == null) return null;
+        return value.trim();
     }
 
     private static String getJSONViewOptionalString(JSONView view, String name) {
@@ -441,7 +481,7 @@ public class Pipeline {
 
         for (Map<String, Object> source : originalSources) {
             Map<String, Object> newSource = new LinkedHashMap<>(source);
-            String sourceId = (String) source.get("id");
+            String sourceId = stripNSuffix((String) source.get("id"));
 
             // Ensure createsGenerators exists; copy existing ones if present
             List<Map<String, Object>> existingGenerators =
@@ -470,7 +510,7 @@ public class Pipeline {
                 (List<Map<String, Object>>) input.getOrDefault("generators", new ArrayList<>());
 
         for (Map<String, Object> generator : standaloneGenerators) {
-            String sourceId = (String) generator.get("source");
+            String sourceId = stripNSuffix((String) generator.get("source"));
 
             List<Map<String, Object>> targetList = sourceGeneratorMap.get(sourceId);
             if (targetList == null) {
@@ -499,5 +539,119 @@ public class Pipeline {
         result.remove("generators");
 
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> expandNTemplates(Map<String, Object> input, DBAccess dbAccess) throws SQLException, IOException {
+        Map<String, Object> result = new LinkedHashMap<>(input);
+        List<Map<String, Object>> originalSources = (List<Map<String, Object>>) input.get("sources");
+        if (originalSources == null) {
+            return result;
+        }
+
+        List<Map<String, Object>> expandedSources = new ArrayList<>();
+        Set<String> globalGeneratorIds = new LinkedHashSet<>();
+
+        for (Map<String, Object> source : originalSources) {
+            Map<String, Object> newSource = new LinkedHashMap<>(source);
+            String sourceDefinition = (String) source.get("uri");
+            Source sourceObj = sourceDefinition == null ? null : decideSourceFromJSONDefinition(sourceDefinition, dbAccess);
+
+            List<Map<String, Object>> originalGenerators =
+                    (List<Map<String, Object>>) source.getOrDefault("createsGenerators", new ArrayList<>());
+            List<Map<String, Object>> expandedGenerators = new ArrayList<>();
+
+            for (Map<String, Object> generator : originalGenerators) {
+                boolean generatorGroup = booleanOrDefault(generator.get("generatorGroup"), false);
+
+                if (!generatorGroup) {
+                    Map<String, Object> copy = new LinkedHashMap<>(generator);
+                    String existingId = stringOrNull(copy.get("id"));
+                    if (existingId != null && !existingId.isBlank()) {
+                        globalGeneratorIds.add(existingId.trim());
+                    }
+                    expandedGenerators.add(copy);
+                    continue;
+                }
+
+                SourceN sourceN;
+                if (sourceObj instanceof SourceN sN) {
+                    sourceN = sN;
+                } else if (sourceDefinition != null && isDbJsonBackedSource(stripNSuffix(sourceDefinition))) {
+                    sourceObj = new SourceJsonN(stripNSuffix(sourceDefinition), dbAccess);
+                    sourceN = (SourceN) sourceObj;
+                } else {
+                    String generatorId = stringOrNull(generator.get("id"));
+                    throw new IllegalArgumentException("Generator \"" + generatorId + "\" is grouped but source does not support grouped expansion.");
+                }
+
+                String normalizedType = stringOrNull(generator.get("type"));
+                String idTemplate = stringOrNull(generator.get("id"));
+
+                int fallbackIndex = 0;
+                for (Map.Entry<String, Source> subSourceEntry : sourceN.getSubSourcesIdToObjectMap().entrySet()) {
+                    String subSourceId = subSourceEntry.getKey();
+                    String resolvedId = resolveExpandedGeneratorId(idTemplate, subSourceId, globalGeneratorIds, fallbackIndex);
+                    while (globalGeneratorIds.contains(resolvedId)) {
+                        fallbackIndex++;
+                        resolvedId = resolveExpandedGeneratorId(idTemplate, Integer.toString(fallbackIndex), globalGeneratorIds, fallbackIndex);
+                    }
+                    globalGeneratorIds.add(resolvedId);
+                    fallbackIndex++;
+
+                    Map<String, Object> expandedGenerator = new LinkedHashMap<>(generator);
+                    expandedGenerator.put("type", normalizedType);
+                    expandedGenerator.put("id", resolvedId);
+                    expandedGenerator.remove("source");
+                    expandedGenerator.put("__udavSubSourceId", subSourceId);
+                    expandedGenerators.add(expandedGenerator);
+                }
+            }
+
+            newSource.put("createsGenerators", expandedGenerators);
+            expandedSources.add(newSource);
+        }
+
+        result.put("sources", expandedSources);
+        return result;
+    }
+
+    private static String resolveExpandedGeneratorId(String idTemplate, String subSourceId, Set<String> usedIds, int fallbackIndex) {
+        String safeSubSourceId = (subSourceId == null || subSourceId.isBlank()) ? Integer.toString(fallbackIndex) : subSourceId;
+        String baseId = (idTemplate == null || idTemplate.isBlank()) ? "Generator" : idTemplate.trim();
+        String candidate = baseId.contains("@ID@") ? baseId.replace("@ID@", safeSubSourceId) : baseId + "_" + safeSubSourceId;
+        if (!usedIds.contains(candidate)) {
+            return candidate;
+        }
+
+        int suffix = 0;
+        String withFallback;
+        do {
+            withFallback = baseId.contains("@ID@")
+                    ? baseId.replace("@ID@", Integer.toString(suffix))
+                    : baseId + "_" + suffix;
+            suffix++;
+        } while (usedIds.contains(withFallback));
+        return withFallback;
+    }
+
+    private static String stringOrNull(Object value) {
+        if (value == null) return null;
+        String stringValue = value.toString().trim();
+        return stringValue.isEmpty() ? null : stringValue;
+    }
+
+    private static boolean booleanOrDefault(Object value, boolean defaultValue) {
+        if (value == null) return defaultValue;
+        if (value instanceof Boolean b) return b;
+        String text = value.toString().trim();
+        if (text.isEmpty()) return defaultValue;
+        return Boolean.parseBoolean(text);
+    }
+
+    private static boolean isDbJsonBackedSource(String definition) {
+        if (definition == null) return false;
+        String normalized = definition.trim().toUpperCase();
+        return normalized.endsWith(".JSON") || normalized.endsWith(".XML");
     }
 }

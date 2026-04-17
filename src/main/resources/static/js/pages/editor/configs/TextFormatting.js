@@ -4,10 +4,11 @@ export default class TextFormatting {
   static token = "TF";
   static description = `
   A generator for storing text, including various types of formatting and colorization.
-  <br> Compatible with: <b>Highlight Text, Table</b>`;
+  <br> Compatible with: <b>Highlight Text</b>`;
   static defaultConfig = {
     name: "New TextFormatting",
     type: "TextFormatting",
+    generatorGroup: false,
     settings: {
       style: "underline",
       sofaFile: "",

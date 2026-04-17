@@ -1,51 +1,61 @@
 {
-  "id": "medial-axis",
+  "id": "9b18903f-5545-48c0-ac1d-6e9672d999f7",
+  "name": "medial-axis",
   "sources": [
     {
-      "id": "3",
       "uri": "XY_dict_single.json",
-      "createsGenerators": [
-        {
-          "id": "VoronoiMap",
-          "name": "My Voronoi",
-          "type": "MapCoordinates",
-          "settings": {
-            "keysMap": {
-              "1_0": {
-                "X": "coordinates@0",
-                "Y": "coordinates@1",
-                "Z_abs": "scale",
-                "colors_S": [
-                  "fillColor@Red",
-                  "fillColor@Green",
-                  "fillColor@Blue",
-                  "fillColor@Alpha"
-                ],
-                "colors_SE": [
-                  "strokeColor@Red",
-                  "strokeColor@Green",
-                  "strokeColor@Blue",
-                  "strokeColor@Alpha"
-                ]
-              }
-            },
-            "fixedKeys": { "outsideColor": "#ffffff" }
+      "settings": {},
+      "id": "Source-kzf0ool"
+    }
+  ],
+  "generators": [
+    {
+      "name": "My Voronoi",
+      "type": "MapCoordinates",
+      "source": "Source-kzf0ool",
+      "settings": {
+        "keysMap": {
+          "1_0": {
+            "X": "coordinates@0",
+            "Y": "coordinates@1",
+            "Z_abs": "scale",
+            "colors_S": [
+              "fillColor@Red",
+              "fillColor@Green",
+              "fillColor@Blue",
+              "fillColor@Alpha"
+            ],
+            "colors_SE": [
+              "strokeColor@Red",
+              "strokeColor@Green",
+              "strokeColor@Blue",
+              "strokeColor@Alpha"
+            ]
           }
-        }
-      ]
+        },
+        "fixedKeys": { "outsideColor": "#ffffff" }
+      },
+      "extends": [],
+      "id": "MapCoordinates-m5lxv08"
     }
   ],
   "widgets": [
     {
       "type": "VoronoiDiagram",
       "title": "Voronoi Diagram",
-      "generator": { "id": "VoronoiMap" },
-      "options": {},
-      "w": 11,
+      "generator": {
+        "id": "MapCoordinates-m5lxv08"
+      },
+      "options": {
+        "min": -1,
+        "max": 1,
+        "step": 0.5
+      },
+      "w": 8,
       "h": 6,
       "x": 12,
       "y": 0,
-      "id": "VoronoiDiagram-zj7m165"
+      "id": "VoronoiDiagram-nqmmrx6"
     },
     {
       "type": "StaticText",
@@ -62,29 +72,44 @@
       "h": 2,
       "x": 6,
       "y": 1,
-      "id": "StaticText-b7vwdkb"
+      "id": "StaticText-uatzye1"
     },
     {
       "type": "MedialAxis",
       "title": "Medial Axis",
-      "generator": { "id": "VoronoiMap" },
+      "generator": {
+        "id": "MapCoordinates-m5lxv08"
+      },
       "options": {},
-      "w": 11,
-      "h": 8,
-      "x": 1,
+      "w": 10,
+      "h": 7,
+      "x": 2,
       "y": 3,
-      "id": "MedialAxis-zj7m165"
+      "id": "MedialAxis-wsgl23h"
     },
     {
       "type": "BoundaryApproximation",
       "title": "Boundary Approximation",
-      "generator": { "id": "VoronoiMap" },
-      "options": { "gridRows": 8, "maxRadius": 35, "threshold": 0 },
-      "w": 9,
+      "generator": {
+        "id": "MapCoordinates-m5lxv08"
+      },
+      "options": {
+        "interpolate": false,
+        "spacing": 5,
+        "clustering": "quadtree",
+        "radiusMultiplier": 1,
+        "gridRows": 8,
+        "threshold": 0,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 10,
       "h": 7,
       "x": 12,
       "y": 6,
-      "id": "BoundaryApproximation-dmfnw6o"
+      "id": "BoundaryApproximation-8hxdcf0"
     }
   ]
 }
