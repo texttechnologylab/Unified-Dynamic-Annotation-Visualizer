@@ -2,7 +2,7 @@ export default class MapCoordinates {
   static token = "MC";
   static description = `
   A generator for storing labeled and color-coded positions within a map or spatial environment.
-  <br> Compatible with: <b>Line Chart, Table</b>`;
+  <br> Compatible with: <b>Line Chart, Simple Map, Network Graph, Table</b>`;
   static defaultConfig = {
     name: "New MapCoordinates",
     type: "MapCoordinates",
@@ -18,10 +18,10 @@ export default class MapCoordinates {
       type: "text",
       label: "Name",
     },
-    generatorGroup: {
-      type: "switch",
-      label: "Generator group",
-    },
+    // generatorGroup: {
+    //   type: "switch",
+    //   label: "Generator group",
+    // },
     "settings.keysMap": {
       type: "json",
       label: "Keys mapping (json)",
