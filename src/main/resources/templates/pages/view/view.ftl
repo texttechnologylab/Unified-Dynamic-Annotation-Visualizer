@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="/css/pages/view.css" />
     <link rel="stylesheet" href="/css/shared/globals.css" />
     <link rel="stylesheet" href="/css/shared/components.css" />
-    <link rel="stylesheet" href="/css/shared/chatbot.css" />
     <link rel="stylesheet" href="/css/shared/controls.css" />
     <link rel="stylesheet" href="/css/shared/chart.css" />
     <link rel="stylesheet" href="/packages/bootstrap-5.3.8/package/dist/css/bootstrap.min.css" />
@@ -21,9 +20,8 @@
   </head>
 
   <body>
-    <#include "/shared/modal.ftl"> 
-    <#include "/shared/chat.ftl"> 
-    <#include "/pages/view/viewSidebar.ftl"> 
+    <#include "/shared/modal.ftl">
+    <#include "/pages/view/viewSidebar.ftl">
     <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
@@ -33,10 +31,6 @@
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
-
-        <#if chatbot>
-          <@chat title="ChartBot" />
-        </#if>
       </main>
 
       <@modal />
@@ -52,7 +46,7 @@
 
       const config = JSON.parse("${config?json_string}");
       const view = new View(config.id);
-      
+
       view.init(config.widgets);
     </script>
   </body>
