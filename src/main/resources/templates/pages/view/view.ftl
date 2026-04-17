@@ -35,7 +35,7 @@
         <@grid />
 
         <#if chatbot>
-          <@chat />
+          <@chat title="ChartBot" />
         </#if>
       </main>
 
