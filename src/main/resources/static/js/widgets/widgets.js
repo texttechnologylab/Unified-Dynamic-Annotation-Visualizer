@@ -27,7 +27,7 @@ export default {
   HighlightText,
   SimpleMap,
   NetworkGraph,
-  VoronoiDiagram,
-  MedialAxis,
-  BoundaryApproximation,
+  // VoronoiDiagram,
+  // MedialAxis,
+  // BoundaryApproximation,
 };

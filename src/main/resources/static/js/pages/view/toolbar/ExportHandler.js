@@ -27,7 +27,7 @@ export default class ExportHandler {
       formats.png = "bi bi-image";
     }
 
-    formats.tex = "bi bi-file-earmark-font";
+    // formats.tex = "bi bi-file-earmark-font";
     formats.csv = "bi bi-table";
     formats.json = "bi bi-braces";
 
