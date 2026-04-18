@@ -61,7 +61,7 @@ export default class VoronoiDiagram extends D3Visualization {
     this.render(data[0]);
 
     this.exports.init(meta.total > 1);
-    this.pagination.init(meta.ids);
+    // this.pagination.init(meta.ids);
 
     this.controls.append([
       {
