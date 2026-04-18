@@ -157,6 +157,7 @@ public class GeneratorDataRepository {
         return dsl.select(F_TEXT)
                 .from(T)
                 .where(GEN.eq(generatorId))
+                .limit(1)
                 .fetchOptional(F_TEXT);
     }
 

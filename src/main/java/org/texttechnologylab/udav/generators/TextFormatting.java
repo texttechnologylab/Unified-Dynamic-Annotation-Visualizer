@@ -181,6 +181,12 @@ public class TextFormatting extends GeneratorUIMA {
             Field<Integer> END_SEGS = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_TYPESEGMENTS, DBConstants.TABLEATTR_GENERATORDATA_END), Integer.class);
             Field<String> CAT_SEGS = DSL.field(DSL.name(schema, DBConstants.TABLENAME_GENERATORDATA_TYPESEGMENTS, DBConstants.TABLEATTR_GENERATORDATA_CATEGORY), String.class);
 
+            // Replace previous rows for this generator to keep saves idempotent.
+            dsl.deleteFrom(T_SEGS).where(GID_SEGS.eq(id)).execute();
+            dsl.deleteFrom(T_COLOR).where(GID_COLOR.eq(id)).execute();
+            dsl.deleteFrom(T_STYLE).where(GID_STYLE.eq(id)).execute();
+            dsl.deleteFrom(T_TEXT).where(GID_TEXT.eq(id)).execute();
+
             // ---------- Insert text ----------
             dsl.insertInto(T_TEXT)
                     .columns(GID_TEXT, TXT_TEXT)
