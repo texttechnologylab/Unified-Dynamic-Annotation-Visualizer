@@ -18,10 +18,10 @@ export default class MapCoordinates {
       type: "text",
       label: "Name",
     },
-    // generatorGroup: {
-    //   type: "switch",
-    //   label: "Generator group",
-    // },
+    generatorGroup: {
+      type: "switch",
+      label: "Generator group",
+    },
     "settings.keysMap": {
       type: "json",
       label: "Keys mapping (json)",
