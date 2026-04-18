@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.texttechnologylab.udav.db.SchemaObjectNames;
+import org.texttechnologylab.udav.api.service.utils.GeneratorConverter;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -104,7 +105,8 @@ public class PipelineService {
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
 
-            return parseJson(json);
+            String normalized = GeneratorConverter.toNewFormat(json);
+            return parseJson(normalized);
         }
     }
 

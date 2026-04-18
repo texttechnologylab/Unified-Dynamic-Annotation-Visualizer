@@ -20,10 +20,10 @@ export default class View {
     sidepanels.init();
     accordions.init();
 
-    // if (document.querySelector(".dv-chat-bot")) {
-    //   const chatbot = new ChatBot(instruction);
-    //   chatbot.init();
-    // }
+    if (document.querySelector(".dv-chat-bot")) {
+      const chatbot = new ChatBot(instruction);
+      chatbot.init();
+    }
   }
 
   initSwitcher() {
