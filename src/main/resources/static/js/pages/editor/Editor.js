@@ -17,6 +17,7 @@ import Source from "./configs/Source.js";
 
 export default class Editor {
   constructor() {
+    this.showWarning = true;
     this.widgetDefaults = Object.values(widgets).map(
       (Widget) => Widget.defaultConfig,
     );
@@ -32,6 +33,14 @@ export default class Editor {
     state.id = config.id;
     loadSources(config.sources || [], config.generators || []);
     state.grid.load(config.widgets || []);
+
+    // Warn on leaving
+    window.addEventListener("beforeunload", (event) => {
+      if (this.showWarning) {
+        event.preventDefault();
+        return "";
+      }
+    });
 
     // Replace whitespaces in the id with dashes
     const input = document.querySelector("#identifier-input");
@@ -55,6 +64,7 @@ export default class Editor {
     document.querySelector("#discard-button").addEventListener("click", () => {
       state.modal.confirm("Discard Changes", "Are you sure?", async () => {
         const pipelines = await getPipelines();
+        this.showWarning = false;
 
         // Delete temp pipeline
         // TODO: api.deletePipeline(state.id);
@@ -154,12 +164,14 @@ export default class Editor {
         `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",
         async () => {
+          this.showWarning = false;
           state.modal.loading("Updating pipeline, please wait...");
           await updatePipeline(config);
           window.open("/view/" + config.id, "_self");
         },
       );
     } else if (ok) {
+      this.showWarning = false;
       state.modal.loading("Creating pipeline, please wait...");
 
       // Promote temp pipeline
