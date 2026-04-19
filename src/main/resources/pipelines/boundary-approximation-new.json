@@ -55,6 +55,19 @@
       "x": 1,
       "y": 1,
       "id": "BoundaryApproximation-gc8tns2"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "Medial Axis",
+      "generator": {
+        "id": "MapCoordinates-boundary-edges"
+      },
+      "options": {},
+      "w": 8,
+      "h": 6,
+      "x": 9,
+      "y": 1,
+      "id": "MedialAxis-9debm9c"
     }
   ]
 }
