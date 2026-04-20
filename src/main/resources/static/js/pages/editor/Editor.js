@@ -163,21 +163,38 @@ export default class Editor {
       state.modal.confirm(
         `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        async () => {
-          this.showWarning = false;
+        () => {
           state.modal.loading("Updating pipeline, please wait...");
-          await updatePipeline(config);
-          window.open("/view/" + config.id, "_self");
+
+          updatePipeline(config)
+            .then(() => {
+              this.showWarning = false;
+              window.open("/view/" + config.id, "_self");
+            })
+            .catch(() => {
+              state.modal.alert(
+                "Internal Server Error",
+                "An error occurred while updating the pipeline.",
+              );
+            });
         },
       );
     } else if (ok) {
-      this.showWarning = false;
       state.modal.loading("Creating pipeline, please wait...");
 
       // Promote temp pipeline
       // TODO: api.promotePipeline(state.id, config.name, config.widgets);
-      await createPipeline(config);
-      window.open("/view/" + config.id, "_self");
+      createPipeline(config)
+        .then(() => {
+          this.showWarning = false;
+          window.open("/view/" + config.id, "_self");
+        })
+        .catch(() => {
+          state.modal.alert(
+            "Internal Server Error",
+            "An error occurred while creating the pipeline.",
+          );
+        });
     }
   }
 }
