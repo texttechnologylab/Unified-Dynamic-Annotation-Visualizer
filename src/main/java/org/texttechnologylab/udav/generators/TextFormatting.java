@@ -73,7 +73,7 @@ public class TextFormatting extends GeneratorUIMA {
             SourceUIMA sourceUIMA = (SourceUIMA) source;
             this.UIMAsofaID = settings.getStringSettingOrDefault("sofaID", null);
             String sofaFile = settings.getStringSettingOrDefault("sofaFile", null);
-            if (sofaFile == null) {
+            if (sofaFile == null || sofaFile.isBlank()) {
                 Set<String> allFiles = sourceUIMA.determineAllSourceFiles();
                 settings.defineFilterListUniversalSetString("files", allFiles);
                 FilterList<String> filterListSourceFiles = settings.generateStringFilterList("files");
