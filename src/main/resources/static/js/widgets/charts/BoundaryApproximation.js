@@ -3,6 +3,10 @@ import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 import {
   dbscanClustering,
   quadtreeClustering,
+  voronoiClustering,
+  knnClustering,
+  delaunayClustering,
+  gaussianKdeClustering,
 } from "../../shared/modules/clustering.js";
 
 export default class BoundaryApproximation extends D3Visualization {
@@ -36,9 +40,13 @@ export default class BoundaryApproximation extends D3Visualization {
       type: "select",
       label: "Method",
       options: [
-        { label: "quadtree clustering", value: "quadtree" },
+        { label: "quadtree grid", value: "quadtree" },
         { label: "dbscan clustering", value: "dbscan" },
         { label: "kernel density estimation", value: "density" },
+        { label: "voronoi area", value: "voronoi" },
+        { label: "k-nearest neighbour", value: "knn" },
+        { label: "Delaunay edge length", value: "delaunay" },
+        { label: "Gaussian KDE", value: "gaussian" },
       ],
     },
   };
@@ -59,6 +67,12 @@ export default class BoundaryApproximation extends D3Visualization {
     // contour
     this.gridRows = 8;
     this.threshold = 0;
+
+    // knn
+    this.knnK = 5;
+
+    // Gaussian KDE
+    this.kdeBandwidth = 30;
 
     // dbscan
     this.epsilon = 10;
@@ -193,6 +207,34 @@ export default class BoundaryApproximation extends D3Visualization {
           },
         },
       ]);
+
+    if (this.clustering === "knn")
+      this.controls.append([
+        {
+          type: "range",
+          label: "kNN neighbours (k)",
+          value: this.knnK,
+          options: { min: 1, max: 20 },
+          onchange: (event) => {
+            this.knnK = +event.target.value;
+            this.rerender();
+          },
+        },
+      ]);
+
+    if (this.clustering === "gaussian")
+      this.controls.append([
+        {
+          type: "range",
+          label: "Gaussian bandwidth",
+          value: this.kdeBandwidth,
+          options: { min: 1, max: 200 },
+          onchange: (event) => {
+            this.kdeBandwidth = +event.target.value;
+            this.rerender();
+          },
+        },
+      ]);
   }
 
   render(data) {
@@ -257,10 +299,13 @@ export default class BoundaryApproximation extends D3Visualization {
       }
 
       // Calculate clusters
-      const clusterPoints =
-        this.clustering === "quadtree"
-          ? quadtreeClustering(points, rows, cols, cellSize)
-          : dbscanClustering(dataPoints, points, this.epsilon, this.minPts);
+      const clusterPoints = this.calculateClusters(
+        dataPoints,
+        points,
+        rows,
+        cols,
+        cellSize,
+      );
 
       // Get a value for each grid cell. The values are the distance
       // from the cell center to the nearest cluster boundary.
@@ -287,7 +332,7 @@ export default class BoundaryApproximation extends D3Visualization {
           "cluster",
           clusterPoints,
           "none",
-          (d) => this.radiusMultiplier * d[2].length,
+          (d) => this.radiusMultiplier * d[2],
           "teal",
         ).attr("opacity", 0.4);
       }
@@ -333,6 +378,23 @@ export default class BoundaryApproximation extends D3Visualization {
     return points;
   }
 
+  calculateClusters(dataPoints, points, rows, cols, cellSize) {
+    switch (this.clustering) {
+      case "quadtree":
+        return quadtreeClustering(points, rows, cols, cellSize);
+      case "dbscan":
+        return dbscanClustering(dataPoints, points, this.epsilon, this.minPts);
+      case "voronoi":
+        return voronoiClustering(points, this.width, this.height);
+      case "knn":
+        return knnClustering(points, this.knnK);
+      case "delaunay":
+        return delaunayClustering(points);
+      case "gaussian":
+        return gaussianKdeClustering(points, this.kdeBandwidth);
+    }
+  }
+
   calculateCellValues(points, rows, cols, cellSize) {
     const values = [];
 
@@ -346,7 +408,7 @@ export default class BoundaryApproximation extends D3Visualization {
 
         for (const p of points) {
           // Get distance from cell center to cluster boundary
-          const radius = this.radiusMultiplier * p[2].length;
+          const radius = this.radiusMultiplier * p[2];
           const distance = radius - Math.hypot(px - p[0], py - p[1]);
 
           if (distance > value) value = distance;
