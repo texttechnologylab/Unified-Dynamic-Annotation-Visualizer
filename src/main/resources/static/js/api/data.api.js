@@ -20,6 +20,12 @@ export async function getData(
         };
       }
       return { data, meta };
+    })
+    .catch(async () => {
+      return {
+        data: [await d3.json(`/data/${chartType}.json`)],
+        meta: { total: 1, ids: ["1"] },
+      };
     });
 }
 

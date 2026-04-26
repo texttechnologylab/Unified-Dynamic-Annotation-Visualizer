@@ -6,7 +6,7 @@ import {
   createWidget,
   loadSources,
 } from "./utils/editorActions.js";
-import { debounce } from "../../shared/modules/utils.js";
+import { debounce, randomId } from "../../shared/modules/utils.js";
 import {
   createPipeline,
   getPipelines,
@@ -29,10 +29,12 @@ export default class Editor {
     this.initAvailableWidgets();
     this.initGrid();
 
+    const safeArray = (value) => (Array.isArray(value) ? value : []);
+
     // Load existing data
-    state.id = config.id;
-    loadSources(config.sources || [], config.generators || []);
-    state.grid.load(config.widgets || []);
+    state.id = config.id || randomId("pipeline");
+    loadSources(safeArray(config.sources), safeArray(config.generators));
+    state.grid.load(safeArray(config.widgets));
 
     // Warn on leaving
     window.addEventListener("beforeunload", (event) => {

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.texttechnologylab.udav.api.service.PipelineService;
@@ -39,6 +41,21 @@ public class AppController {
 		return service.get(id).toString();
 	}
 
+	private String ensureValidConfig(String json) throws Exception {
+		JsonNode jsonNode = mapper.readTree(json);
+		ObjectNode objectNode;
+
+		if (jsonNode.isObject()) {
+			objectNode = (ObjectNode) jsonNode;
+		} else {
+			objectNode = mapper.createObjectNode();
+		}
+
+		objectNode.put("id", UUID.randomUUID().toString());
+
+		return mapper.writeValueAsString(objectNode);
+	}
+
 	@GetMapping("/")
 	public String index(Model model) throws Exception {
 		model.addAttribute("pipelines", getPipelines());
@@ -64,8 +81,8 @@ public class AppController {
 
 	@PostMapping("/editor")
 	public String editorFile(@RequestParam("file") MultipartFile file, Model model) throws Exception {
-		// TODO: add id if missing
-		model.addAttribute("config", new String(file.getBytes(), StandardCharsets.UTF_8));
+		String json = new String(file.getBytes(), StandardCharsets.UTF_8);
+		model.addAttribute("config", ensureValidConfig(json));
 
 		return "/pages/editor/editor";
 	}
