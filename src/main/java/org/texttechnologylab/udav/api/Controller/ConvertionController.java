@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
-import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -14,7 +13,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,9 +26,6 @@ import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
 @RestController
 @RequestMapping("/api/convertions")
 public class ConvertionController {
-
-    public record ZipFileItem(String name, String content) {}
-    public record ZipRequest(String archiveName, List<ZipFileItem> files) {}
 
     @PostMapping("/csv")
     public ResponseEntity<Map<String, String>> widgetToCsv(@RequestBody String body) throws Exception {
@@ -88,38 +86,34 @@ public class ConvertionController {
     }
 
     @PostMapping("/zip")
-    public ResponseEntity<byte[]> createZip(@RequestBody ZipRequest request) throws Exception {
-        String archiveName = (request == null || request.archiveName() == null || request.archiveName().isBlank())
-                ? "export.zip"
-                : request.archiveName().trim();
-        if (!archiveName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
-            archiveName = archiveName + ".zip";
-        }
+    public ResponseEntity<byte[]> createZip(
+            @RequestParam("files") List<MultipartFile> files) throws Exception {
 
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        try (ZipOutputStream zip = new ZipOutputStream(byteStream)) {
-            if (request != null && request.files() != null) {
-                int index = 0;
-                for (ZipFileItem item : request.files()) {
-                    if (item == null) continue;
-                    String rawName = (item.name() == null || item.name().isBlank())
-                            ? String.format(Locale.ROOT, "file-%03d.txt", index)
-                            : item.name();
-                    String safeName = rawName.replaceAll("[^a-zA-Z0-9._/-]", "_");
-                    String content = item.content() == null ? "" : item.content();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-                    zip.putNextEntry(new ZipEntry(safeName));
-                    zip.write(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    zip.closeEntry();
-                    index++;
-                }
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+            for (MultipartFile file : files) {
+                String filename = file.getOriginalFilename() != null
+                        ? file.getOriginalFilename()
+                        : "file_" + System.currentTimeMillis();
+
+                ZipEntry zipEntry = new ZipEntry(filename);
+                zipOutputStream.putNextEntry(zipEntry);
+                zipOutputStream.write(file.getBytes());
+                zipOutputStream.closeEntry();
             }
         }
 
+        byte[] zipBytes = byteArrayOutputStream.toByteArray();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"archive.zip\"");
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/zip");
+        headers.set(HttpHeaders.CONTENT_LENGTH, String.valueOf(zipBytes.length));
+
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE, "application/zip")
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + archiveName + "\"")
-                .body(byteStream.toByteArray());
+                .headers(headers)
+                .body(zipBytes);
     }
 
     private static String addMetaDataToTex(String tex, JsonNode node) {

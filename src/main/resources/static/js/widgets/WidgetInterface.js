@@ -63,4 +63,27 @@ export default class WidgetInterface {
       this.render(this.data);
     }
   }
+
+  prepareExportData(all = false) {
+    const items = [];
+
+    // TODO: fetch all datasets and create svgs
+    if (all) {
+      items.push({ json: this.data, svg: this.svg?.node() });
+      items.push({ json: this.data, svg: this.svg?.node() });
+      items.push({ json: this.data, svg: this.svg?.node() });
+      items.push({ json: this.data, svg: this.svg?.node() });
+      items.push({ json: this.data, svg: this.svg?.node() });
+    } else {
+      items.push({ json: this.data, svg: this.svg?.node() });
+    }
+
+    return {
+      items,
+      meta: {
+        corpus: state.corpusFilter.filter,
+        chart: this.filter,
+      },
+    };
+  }
 }
