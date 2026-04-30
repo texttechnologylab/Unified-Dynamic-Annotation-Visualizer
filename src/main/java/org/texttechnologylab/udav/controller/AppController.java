@@ -95,6 +95,6 @@ public class AppController {
 	public String editorEdit(@PathVariable("id") String id, Model model) throws Exception {
 		model.addAttribute("config", getConfigById(id));
 
-		return "/pages/editor/editor";
+		return lockedPipelines.contains(id) ? "/error/404" : "/pages/editor/editor";
 	}
 }
