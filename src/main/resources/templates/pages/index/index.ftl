@@ -50,13 +50,15 @@
                   <span>${pipeline.name}</span>
                 </a>
 
-                <a
-                  class="dv-btn-hidden"
-                  title="Edit configuration"
-                  href="/editor/${pipeline.id}"
-                >
-                  <i class="bi bi-pencil"></i>
-                </a>
+                <#if !lockedPipelines?seq_contains(pipeline.id)>
+                  <a
+                    class="dv-btn-hidden"
+                    title="Edit configuration"
+                    href="/editor/${pipeline.id}"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </#if>
                 <a
                   class="dv-btn-hidden"
                   title="Export configuration"

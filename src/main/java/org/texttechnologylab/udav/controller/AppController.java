@@ -16,12 +16,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.api.service.PipelineService;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 @Controller
 public class AppController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final PipelineService service;
+	private final List<String> lockedPipelines = List.of("587bf851-c89d-4bdc-a90d-dd3c1c069edf");
 
 	@Value("${app.llm.base-url}")
 	private String llmUrl;
@@ -59,6 +61,7 @@ public class AppController {
 	@GetMapping("/")
 	public String index(Model model) throws Exception {
 		model.addAttribute("pipelines", getPipelines());
+		model.addAttribute("lockedPipelines", lockedPipelines);
 
 		return "/pages/index/index";
 	}
@@ -66,6 +69,7 @@ public class AppController {
 	@GetMapping("/view/{id}")
 	public String view(@PathVariable("id") String id, Model model) throws Exception {
 		model.addAttribute("pipelines", getPipelines());
+		model.addAttribute("lockedPipelines", lockedPipelines);
 		model.addAttribute("config", getConfigById(id));
 		model.addAttribute("chatbot", !llmUrl.isEmpty() && !llmToken.isEmpty());
 
