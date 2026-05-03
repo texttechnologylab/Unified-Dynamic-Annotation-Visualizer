@@ -21,7 +21,7 @@ export default class SimpleMap extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
     "options.worldColor": {
       type: "color",
@@ -36,8 +36,11 @@ export default class SimpleMap extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    // this.pagination.init(meta.ids);
   }
 
   render(data) {

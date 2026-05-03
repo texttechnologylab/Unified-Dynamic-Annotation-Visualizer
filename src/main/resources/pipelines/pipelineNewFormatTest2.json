@@ -1,179 +1,185 @@
 {
-  "id": "newformattest2",
+  "id": "25ff293e-ae64-44fe-8b66-d64e94a2e440",
+  "name": "newformattest2",
   "sources": [
     {
-      "id": "0",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
       "settings": {
         "categoriesWhitelist": ["NOUN", "ADV", "PRON", "ADP", "VERB"],
         "sourceFilesWhitelist": ["ID21200100.xmi"]
       },
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "name": "Gen1",
-          "id": "POS_Numbers",
-          "token": "CN",
-          "settings": {},
-          "extends": []
-        },
-        {
-          "type": "TextFormatting",
-          "name": "Gen2",
-          "id": "POS_Formatting",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100.xmi",
-            "style": "underline"
-          }
-        }
-      ]
+      "id": "Source-j6jnkke"
     },
     {
-      "id": "1",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity",
       "settings": {
         "sourceFilesWhitelist": ["ID21200100.xmi"]
       },
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "name": "Gen3",
-          "id": "NE_Numbers",
-          "token": "CN",
-          "settings": {},
-          "extends": []
-        },
-        {
-          "type": "TextFormatting",
-          "name": "Gen4",
-          "id": "NE_Formatting",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100",
-            "sofaID": "_InitialView",
-            "style": "highlight"
-          }
-        }
-      ]
+      "id": "Source-p1uq71i"
     },
     {
-      "id": "2",
-      "uri": "",
-      "createsGenerators": [
-        {
-          "id": "Total_Formatting",
-          "name": "My DerivedGenerator",
-          "type": "TextFormatting",
-          "token": "TF",
-          "settings": {},
-          "extends": ["POS_Formatting", "NE_Formatting"]
-        }
-      ]
+      "uri": "uima.tcas.Annotation",
+      "settings": {},
+      "id": "Source-rhhz27m"
+    }
+  ],
+  "generators": [
+    {
+      "name": "POS_Numbers",
+      "type": "CategoryNumber",
+      "source": "Source-j6jnkke",
+      "settings": {},
+      "extends": [],
+      "id": "CategoryNumber-eky02g0"
+    },
+    {
+      "name": "POS_Formatting",
+      "type": "TextFormatting",
+      "source": "Source-j6jnkke",
+      "settings": {
+        "style": "underline",
+        "sofaFile": "ID21200100"
+      },
+      "extends": [],
+      "id": "TextFormatting-35367u8"
+    },
+    {
+      "name": "NE_Numbers",
+      "type": "CategoryNumber",
+      "source": "Source-p1uq71i",
+      "settings": {},
+      "extends": [],
+      "id": "CategoryNumber-esl7guq"
+    },
+    {
+      "name": "NE_Formatting",
+      "type": "TextFormatting",
+      "source": "Source-p1uq71i",
+      "settings": {
+        "style": "highlight",
+        "sofaID": "_InitialView",
+        "sofaFile": "ID21200100"
+      },
+      "extends": [],
+      "id": "TextFormatting-uytdce8"
+    },
+    {
+      "name": "Total_Formatting",
+      "type": "TextFormatting",
+      "source": "Source-rhhz27m",
+      "settings": {
+        "style": "underline",
+        "sofaFile": ""
+      },
+      "extends": ["TextFormatting-35367u8", "TextFormatting-uytdce8"],
+      "id": "TextFormatting-3qppt1u"
     }
   ],
   "widgets": [
     {
-      "type": "StaticText",
-      "title": "header",
-      "src": "Parts of Speech and Named Entity",
-      "options": {
-        "style": "text-center fs-2 fw-bold fst-normal text-decoration-underline"
-      },
-      "icon": "bi bi-fonts",
-      "w": 8,
-      "h": 2,
-      "x": 8,
-      "y": 0,
-      "id": "Text-3ujztrd"
-    },
-    {
       "type": "StaticImage",
-      "title": "My Logo",
-      "src": "https://placehold.co/600x400?text=My+Logo",
+      "title": "Logo",
+      "src": "https://placehold.co/600x400?text=Logo",
       "options": {},
-      "icon": "bi bi-image",
       "w": 2,
       "h": 2,
       "x": 6,
       "y": 0,
-      "id": "Image-zndq9sh"
+      "id": "StaticImage-2vqblz9"
+    },
+    {
+      "type": "StaticText",
+      "title": "Text",
+      "src": "Parts of Speech and Named Entity",
+      "options": {
+        "align": "center",
+        "size": "2",
+        "weight": "bold",
+        "style": "normal",
+        "decoration": "underline"
+      },
+      "w": 8,
+      "h": 2,
+      "x": 8,
+      "y": 0,
+      "id": "StaticText-5mptltr"
     },
     {
       "type": "BarChart",
       "title": "Parts of Speech (POS)",
       "generator": {
-        "id": "POS_Numbers"
+        "id": "CategoryNumber-eky02g0"
       },
       "options": {
         "horizontal": false
       },
-      "icon": "bi bi-bar-chart",
       "w": 8,
       "h": 6,
       "x": 0,
       "y": 4,
-      "id": "bar-chart"
+      "id": "BarChart-cspd570"
     },
     {
       "type": "HighlightText",
       "title": "POS & NE in one TextFormatting",
       "generator": {
-        "id": "Total_Formatting"
+        "id": "TextFormatting-3qppt1u"
       },
       "options": {},
-      "icon": "bi bi-card-text",
       "w": 8,
       "h": 8,
       "x": 8,
       "y": 4,
-      "id": "text"
+      "id": "HighlightText-dd4noze"
     },
     {
       "type": "BarChart",
       "title": "Named Entities (NE)",
       "generator": {
-        "id": "NE_Numbers"
+        "id": "CategoryNumber-esl7guq"
       },
       "options": {
         "horizontal": true
       },
-      "icon": "bi bi-bar-chart",
       "w": 8,
       "h": 6,
       "x": 16,
       "y": 4,
-      "id": "bar-chart2"
+      "id": "BarChart-72rt2z9"
     },
     {
       "type": "StaticText",
       "title": "Parts of Speech (POS) Caption",
       "src": "The chart above shows the distribution of the different POS categories.",
       "options": {
-        "style": "text-end fs-6 fw-normal fst-italic text-decoration-none"
+        "align": "end",
+        "size": "6",
+        "weight": "normal",
+        "style": "italic",
+        "decoration": "none"
       },
-      "icon": "bi bi-fonts",
       "w": 8,
       "h": 2,
       "x": 0,
       "y": 10,
-      "id": "Text-lwq4zbo"
+      "id": "StaticText-2ecv0fi"
     },
     {
       "type": "StaticText",
       "title": "Named Entities (NE) Caption",
       "src": "The chart above shows the distribution of the different NE categories.",
       "options": {
-        "style": "text-start fs-6 fw-normal fst-italic text-decoration-none"
+        "align": "start",
+        "size": "6",
+        "weight": "normal",
+        "style": "italic",
+        "decoration": "none"
       },
-      "icon": "bi bi-fonts",
       "w": 8,
       "h": 2,
       "x": 16,
       "y": 10,
-      "id": "Text-2smw5fr"
+      "id": "StaticText-i6z3x8e"
     }
   ]
 }

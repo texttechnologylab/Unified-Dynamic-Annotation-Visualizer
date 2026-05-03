@@ -25,7 +25,7 @@
       </a>
       
       <div class="dv-menu-title">Pipeline</div>
-      <@pipelineSwitcher pipelines=pipelines id=config.id name=config.name!config.id />
+      <@pipelineSwitcher pipelines=pipelines id=config.id name=config.name!"untitled-pipeline" />
       
       <div class="dv-menu-title">Corpus Filter</div>
       <div class="dv-corpus-filter">

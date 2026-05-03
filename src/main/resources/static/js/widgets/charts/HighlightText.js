@@ -19,7 +19,7 @@ export default class HighlightText extends WidgetInterface {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("TextFormatting"),
+      options: () => getGeneratorOptions(["TextFormatting"]),
     },
   };
 
@@ -40,14 +40,17 @@ export default class HighlightText extends WidgetInterface {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    // this.pagination.init(meta.ids);
 
     this.filter = {
       hide: [],
     };
     this.controls.append(
-      data.datasets.map(({ name }) => {
+      data[0].datasets.map(({ name }) => {
         return {
           type: "switch",
           label: name.split(".").slice(-2).join("."),

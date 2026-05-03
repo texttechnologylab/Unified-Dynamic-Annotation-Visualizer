@@ -8,7 +8,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class GeneratorConverter {
 
@@ -19,17 +23,79 @@ public final class GeneratorConverter {
     }
 
     /**
-     * old -> new (you already have this)
+     * old -> new
+     *
+     * Ensures a top-level generators array exists and all generator definitions are
+     * flattened out of sources[*].createsGenerators.
      */
     public static String toNewFormat(String oldJson) {
         try {
             JsonNode root = MAPPER.readTree(oldJson);
-            List<ObjectNode> generators = OldToNew.extractGenerators(root);
-            ObjectNode out = MAPPER.createObjectNode();
-            ArrayNode arr = MAPPER.createArrayNode();
-            generators.forEach(arr::add);
-            out.set("generators", arr);
-            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(out);
+            if (!(root instanceof ObjectNode rootObj)) {
+                throw new IllegalArgumentException("Pipeline JSON root must be an object");
+            }
+
+            ObjectNode normalized = rootObj.deepCopy();
+
+            List<ObjectNode> ordered = new ArrayList<>();
+            Map<String, ObjectNode> byId = new LinkedHashMap<>();
+            Set<String> noIdFingerprints = new LinkedHashSet<>();
+
+            // Keep existing top-level generators first and enrich them with nested data if needed.
+            JsonNode existingTopLevel = normalized.get("generators");
+            if (existingTopLevel != null && existingTopLevel.isArray()) {
+                for (JsonNode g : existingTopLevel) {
+                    if (g instanceof ObjectNode objectNode) {
+                        addOrMergeGenerator(
+                                normalizeGenerator(objectNode, null),
+                                ordered,
+                                byId,
+                                noIdFingerprints
+                        );
+                    }
+                }
+            }
+
+            JsonNode sources = normalized.get("sources");
+            if (sources != null && sources.isArray()) {
+                for (JsonNode sourceNode : sources) {
+                    if (!(sourceNode instanceof ObjectNode sourceObj)) {
+                        continue;
+                    }
+
+                    String sourceId = textOrNull(sourceObj.get("id"));
+                    OldToNew.extractFromArray(sourceObj.get("createsGenerators"), sourceId, ordered, byId, noIdFingerprints);
+                    OldToNew.extractFromArray(sourceObj.get("derivedGenerators"), sourceId, ordered, byId, noIdFingerprints);
+
+                    // Normalized GET output must not keep in-source generator definitions.
+                    sourceObj.remove("createsGenerators");
+                    sourceObj.remove("derivedGenerators");
+                }
+            }
+
+            JsonNode legacyDerived = normalized.get("derivedGenerators");
+            if (legacyDerived != null && legacyDerived.isArray()) {
+                for (JsonNode g : legacyDerived) {
+                    if (g instanceof ObjectNode objectNode) {
+                        addOrMergeGenerator(
+                                normalizeGenerator(objectNode, null),
+                                ordered,
+                                byId,
+                                noIdFingerprints
+                        );
+                    }
+                }
+            }
+
+            ArrayNode generatorsOut = MAPPER.createArrayNode();
+            for (ObjectNode generator : ordered) {
+                generatorsOut.add(generator);
+            }
+
+            normalized.set("generators", generatorsOut);
+            normalized.remove("derivedGenerators");
+
+            return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(normalized);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -163,83 +229,114 @@ public final class GeneratorConverter {
         System.out.println(toNewFormat(toOldFormat(newFormat)));
     }
 
-    /**
-     * your previous old->new helper collapsed here for completeness
-     */
-    private static final class OldToNew {
-        static List<ObjectNode> extractGenerators(JsonNode root) {
-            List<ObjectNode> result = new ArrayList<>();
-
-            JsonNode sources = root.get("sources");
-            if (sources != null && sources.isArray()) {
-                for (JsonNode sourceNode : sources) {
-                    String sourceId = sourceNode.path("id").asText(null);
-                    String sourceType = sourceNode.path("type").asText(null);
-                    collectFromNode(sourceNode, sourceId, sourceType, result);
-                }
+    private static void addOrMergeGenerator(ObjectNode candidate,
+                                            List<ObjectNode> ordered,
+                                            Map<String, ObjectNode> byId,
+                                            Set<String> noIdFingerprints) {
+        String id = textOrNull(candidate.get("id"));
+        if (id != null) {
+            ObjectNode existing = byId.get(id);
+            if (existing == null) {
+                byId.put(id, candidate);
+                ordered.add(candidate);
+                return;
             }
-
-            JsonNode derived = root.get("derivedGenerators");
-            if (derived != null && derived.isArray()) {
-                for (JsonNode d : derived) {
-                    if (d.isObject()) {
-                        result.add(((ObjectNode) d).deepCopy());
-                    }
-                }
-            }
-
-            return result;
+            mergeMissing(existing, candidate);
+            return;
         }
 
-        private static void collectFromNode(JsonNode node,
-                                            String parentSourceId,
-                                            String parentSourceType,
-                                            List<ObjectNode> target) {
+        String fingerprint = candidate.toString();
+        if (noIdFingerprints.add(fingerprint)) {
+            ordered.add(candidate);
+        }
+    }
 
-            if (node.has("type") && !node.has("sources")) {
-                target.add(buildGenerator(node, parentSourceId, parentSourceType));
-            }
-
-            JsonNode creates = node.get("createsGenerators");
-            if (creates != null && creates.isArray()) {
-                for (JsonNode child : creates) {
-                    collectFromNode(child, parentSourceId, parentSourceType, target);
-                }
-            }
-
-            JsonNode derived = node.get("derivedGenerators");
-            if (derived != null && derived.isArray()) {
-                for (JsonNode child : derived) {
-                    collectFromNode(child, parentSourceId, parentSourceType, target);
-                }
+    private static void mergeMissing(ObjectNode target, ObjectNode source) {
+        for (String fieldName : List.of("name", "type", "source", "settings")) {
+            JsonNode targetValue = target.get(fieldName);
+            JsonNode sourceValue = source.get(fieldName);
+            if (isMissing(targetValue) && !isMissing(sourceValue)) {
+                target.set(fieldName, sourceValue.deepCopy());
             }
         }
+    }
 
-        private static ObjectNode buildGenerator(JsonNode src,
-                                                 String parentSourceId,
-                                                 String parentSourceType) {
-            ObjectNode out = MAPPER.createObjectNode();
+    private static boolean isMissing(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return true;
+        }
+        if (node.isTextual()) {
+            return node.asText().isBlank();
+        }
+        return false;
+    }
 
-            String type = src.path("type").asText("Unknown");
-            String id = src.path("id").asText(null);
-            JsonNode settings = src.path("settings");
+    private static ObjectNode normalizeGenerator(ObjectNode src, String sourceId) {
+        ObjectNode out = src.deepCopy();
+        out.remove("createsGenerators");
+        out.remove("derivedGenerators");
 
+        String type = textOrNull(out.get("type"));
+        if (type != null && isMissing(out.get("name"))) {
             out.put("name", "New " + type);
-            out.put("type", type);
+        }
 
-            // mapping, adjust as needed
-            String mappedSource = (parentSourceType != null)
-                    ? parentSourceType
-                    : (parentSourceId != null ? parentSourceId : "uima.tcas.Annotation");
-            out.put("source", mappedSource);
+        if (type != null && out.get("settings") == null && !out.has("fromGenerators")) {
+            out.set("settings", MAPPER.createObjectNode());
+        }
 
-            if (settings != null && !settings.isMissingNode() && !settings.isNull()) {
-                out.set("settings", settings.deepCopy());
-            } else {
-                out.set("settings", MAPPER.createObjectNode());
+        // For extracted source-nested generators, always reference source by source id.
+        if (sourceId != null && !sourceId.isBlank() && !out.has("fromGenerators")) {
+            out.put("source", sourceId);
+        }
+
+        return out;
+    }
+
+    private static String textOrNull(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        String value = node.asText(null);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value;
+    }
+
+    private static final class OldToNew {
+        static void extractFromArray(JsonNode nodes,
+                                     String sourceId,
+                                     List<ObjectNode> ordered,
+                                     Map<String, ObjectNode> byId,
+                                     Set<String> noIdFingerprints) {
+            if (nodes == null || !nodes.isArray()) {
+                return;
+            }
+            for (JsonNode node : nodes) {
+                if (node instanceof ObjectNode objectNode) {
+                    extractFromNode(objectNode, sourceId, ordered, byId, noIdFingerprints);
+                }
+            }
+        }
+
+        private static void extractFromNode(ObjectNode node,
+                                            String sourceId,
+                                            List<ObjectNode> ordered,
+                                            Map<String, ObjectNode> byId,
+                                            Set<String> noIdFingerprints) {
+            boolean isGeneratorDefinition = node.has("type") || node.has("fromGenerators");
+            if (isGeneratorDefinition) {
+                addOrMergeGenerator(
+                        normalizeGenerator(node, sourceId),
+                        ordered,
+                        byId,
+                        noIdFingerprints
+                );
             }
 
-            return out;
+            extractFromArray(node.get("createsGenerators"), sourceId, ordered, byId, noIdFingerprints);
+            extractFromArray(node.get("derivedGenerators"), sourceId, ordered, byId, noIdFingerprints);
         }
     }
 }

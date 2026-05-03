@@ -1,8 +1,10 @@
 import getter from "../../widgets/widgets.js";
 import sidepanels from "../../shared/modules/sidepanels.js";
 import accordions from "../../shared/modules/accordions.js";
+import ChatBot from "../../shared/classes/ChatBot.js";
 import state from "./utils/viewState.js";
 import { createTemplateElement } from "../../shared/modules/utils.js";
+import { instruction } from "../../shared/modules/instruction.js";
 
 export default class View {
   constructor(pipeline) {
@@ -17,6 +19,11 @@ export default class View {
     state.corpusFilter.init();
     sidepanels.init();
     accordions.init();
+
+    if (document.querySelector(".dv-chat-bot")) {
+      const chatbot = new ChatBot(instruction);
+      chatbot.init();
+    }
   }
 
   initSwitcher() {
@@ -79,7 +86,7 @@ export default class View {
         const widget = new Widget(root, { pipeline: this.pipeline, ...item });
         widget.init();
 
-        if (!item.src) {
+        if (!item.type.startsWith("Static")) {
           state.charts.push(widget);
         }
       });

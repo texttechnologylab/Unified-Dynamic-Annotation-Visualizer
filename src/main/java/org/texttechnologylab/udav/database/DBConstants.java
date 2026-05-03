@@ -20,6 +20,7 @@ public final class DBConstants {
 
     // Generator: MapCoordinates
     public static final String TABLENAME_GENERATORDATA_MAPCOORDINATES = "GENERATORDATA_MAPCOORDINATES";
+    public static final String TABLENAME_GENERATORDATA_MAPCOORDINATES_EDGES = "GENERATORDATA_MAPCOORDINATES_EDGES";
 
     // General table attributes (also used in Generatordata tables)
     public static final String TABLEATTR_PIPELINEID = "PIPELINEID";
@@ -45,6 +46,10 @@ public final class DBConstants {
     public static final String TABLEATTR_GENERATORDATA_BEGIN = "BEGIN";
     public static final String TABLEATTR_GENERATORDATA_END = "_END";
 
+    // Generatordata table attributes: MapCoordinates edges
+    public static final String TABLEATTR_GENERATORDATA_EDGE_FROM   = "EDGE_FROM";
+    public static final String TABLEATTR_GENERATORDATA_EDGE_TO     = "EDGE_TO";
+    public static final String TABLEATTR_GENERATORDATA_EDGE_NUMBER = "EDGE_NUMBER";
 
     // Other, technical attributes
     public static final int DEFAULTSIZE_VARCHAR = 255;

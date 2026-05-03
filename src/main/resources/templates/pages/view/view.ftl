@@ -5,12 +5,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${config_json.name!config_json.id} - Dynamic Visualizations</title>
+    <title>${config_json.name} | UDAV</title>
+    <meta name="description" content="UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.">
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/pages/view.css" />
     <link rel="stylesheet" href="/css/shared/globals.css" />
     <link rel="stylesheet" href="/css/shared/components.css" />
+    <link rel="stylesheet" href="/css/shared/chatbot.css" />
     <link rel="stylesheet" href="/css/shared/controls.css" />
     <link rel="stylesheet" href="/css/shared/chart.css" />
     <link rel="stylesheet" href="/packages/bootstrap-5.3.8/package/dist/css/bootstrap.min.css" />
@@ -19,8 +21,9 @@
   </head>
 
   <body>
-    <#include "/shared/modal.ftl">
-    <#include "/pages/view/viewSidebar.ftl">
+    <#include "/shared/modal.ftl"> 
+    <#include "/shared/chat.ftl"> 
+    <#include "/pages/view/viewSidebar.ftl"> 
     <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
@@ -30,6 +33,10 @@
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
+
+        <!-- <#if chatbot>
+          <@chat title="ChartBot" />
+        </#if> -->
       </main>
 
       <@modal />
@@ -45,7 +52,7 @@
 
       const config = JSON.parse("${config?json_string}");
       const view = new View(config.id);
-
+      
       view.init(config.widgets);
     </script>
   </body>

@@ -21,7 +21,7 @@ export default class ScrollTable extends WidgetInterface {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions(),
+      options: () => getGeneratorOptions(["CategoryNumber", "MapCoordinates"]),
     },
     "options.numbers": {
       type: "switch",
@@ -50,10 +50,13 @@ export default class ScrollTable extends WidgetInterface {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
 
-    const values = Object.values(data[0]);
+    this.exports.init(meta.total > 1);
+    // this.pagination.init(meta.ids);
+
+    const values = Object.values(data[0][0]);
 
     this.filter = {
       sort: values[0],

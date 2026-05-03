@@ -1,6 +1,6 @@
 import Multiselect from "../classes/Multiselect.js";
 import Searchselect from "../classes/Searchselect.js";
-import { createElement } from "./utils.js";
+import { createElement, isJson } from "./utils.js";
 
 export default {
   text(key, value, _, onchange) {
@@ -156,5 +156,43 @@ export default {
       className: "dv-color-input",
       onchange,
     });
+  },
+
+  json(
+    key,
+    value,
+    { rows = 1, validator = () => true, message = "Invalid json" },
+    onchange,
+  ) {
+    const json = JSON.stringify(value, null, 2);
+
+    const input = createElement("textarea", {
+      name: key,
+      value: json,
+      className: "dv-text-input dv-resize-none font-monospace",
+      rows,
+      onchange,
+    });
+    const feedback = createElement("div", {
+      className: "dv-invalid-feedback",
+      textContent: message,
+    });
+
+    input.addEventListener("input", (e) => {
+      if (isJson(e.target.value) && validator(JSON.parse(e.target.value))) {
+        feedback.style.removeProperty("display", "block");
+      } else {
+        feedback.style.setProperty("display", "block");
+      }
+    });
+
+    input.addEventListener("change", (e) => {
+      if (!isJson(e.target.value) || !validator(JSON.parse(e.target.value))) {
+        input.value = json;
+        feedback.style.removeProperty("display", "block");
+      }
+    });
+
+    return createElement("div", {}, [input, feedback]);
   },
 };

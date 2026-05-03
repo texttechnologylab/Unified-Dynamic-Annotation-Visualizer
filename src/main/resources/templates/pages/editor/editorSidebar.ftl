@@ -63,18 +63,21 @@
           <p>
             Add new widgets by dragging them into the grid area to the right.
           </p>
-          <div class="dv-available-widgets-container">
-            <template id="available-widget-template">
-              <div class="dv-available-widget">
-                <div class="dv-available-widget-draggable">
-                  <i></i>
-                </div>
-                <span class="dv-available-widget-title"></span>
-              </div>
-            </template>
-          </div>
+          <div class="dv-container-title">Static widgets</div>
+          <div class="dv-static-widgets-container"></div>
+          <div class="dv-container-title">Interactive widgets</div>
+          <div class="dv-dynamic-widgets-container"></div>
         </div>
       </div>
+
+      <template id="available-widget-template">
+        <div class="dv-available-widget">
+          <div class="dv-available-widget-draggable">
+            <i></i>
+          </div>
+          <span class="dv-available-widget-title"></span>
+        </div>
+      </template>
 
       <template id="source-card-template">
         <div class="dv-source-card">

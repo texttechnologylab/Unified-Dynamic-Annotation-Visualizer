@@ -1,91 +1,63 @@
 {
-  "id": "newformattest",
+  "id": "4ad53eff-70b8-4bd3-adf0-df6ae752f1ed",
+  "name": "newformattest",
   "sources": [
     {
-      "id": "0",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "id": "total",
-          "name": "Gen1",
-          "token": "CN",
-          "extends": [],
-          "settings": {
-            "categoriesWhitelist": []
-          }
-        },
-        {
-          "type": "TextFormatting",
-          "id": "text-color",
-          "name": "Gen2",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100.xmi",
-            "style": "underline"
-          }
-        }
-      ]
+      "settings": {},
+      "id": "Source-igyg18r"
+    }
+  ],
+  "generators": [
+    {
+      "name": "CategoryNumber",
+      "type": "CategoryNumber",
+      "source": "Source-igyg18r",
+      "settings": {},
+      "extends": [],
+      "id": "CategoryNumber-kyvfyr1"
     },
     {
-      "id": "1",
-      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "id": "total",
-          "name": "Gen3",
-          "token": "CN",
-          "extends": [],
-          "settings": {
-            "categoriesWhitelist": []
-          }
-        },
-        {
-          "type": "TextFormatting",
-          "id": "text-color",
-          "name": "Gen4",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100.xmi",
-            "style": "underline"
-          }
-        }
-      ]
+      "name": "TextFormatting",
+      "type": "TextFormatting",
+      "source": "Source-igyg18r",
+      "settings": {
+        "style": "underline",
+        "sofaFile": "ID21200100"
+      },
+      "extends": [],
+      "id": "TextFormatting-mhi6gqc"
     }
   ],
   "widgets": [
     {
-      "id": "text",
-      "x": 4,
-      "y": 2,
-      "w": 8,
-      "h": 8,
       "type": "HighlightText",
       "title": "TextFormatting",
       "generator": {
-        "id": "text-color"
+        "id": "TextFormatting-mhi6gqc"
       },
       "options": {},
-      "icon": "bi bi-card-text"
-    },
-    {
-      "id": "bar-chart2",
-      "x": 12,
-      "y": 2,
       "w": 8,
       "h": 8,
+      "x": 4,
+      "y": 2,
+      "id": "HighlightText-7g3mrgi"
+    },
+    {
       "type": "PieChart",
       "title": "CategoryNumber diagram",
       "generator": {
-        "id": "total"
+        "id": "CategoryNumber-kyvfyr1"
       },
       "options": {
-        "hole": 50
+        "hole": 40,
+        "legend": true
       },
-      "icon": "bi bi-bar-chart"
+      "w": 8,
+      "h": 8,
+      "x": 12,
+      "y": 2,
+      "id": "PieChart-tywwfvq"
     }
   ]
 }

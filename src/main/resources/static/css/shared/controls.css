@@ -396,3 +396,9 @@ output {
     outline: 1px solid var(--primary);
   }
 }
+
+.dv-invalid-feedback {
+  display: none;
+  color: var(--danger);
+  font-size: var(--font-size-sm);
+}

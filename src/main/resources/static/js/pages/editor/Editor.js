@@ -117,7 +117,8 @@ export default class Editor {
   }
 
   initAvailableWidgets() {
-    const container = document.querySelector(".dv-available-widgets-container");
+    const staticCont = document.querySelector(".dv-static-widgets-container");
+    const dynamicCont = document.querySelector(".dv-dynamic-widgets-container");
     const template = document.querySelector("#available-widget-template");
 
     this.widgetDefaults.forEach((widget) => {
@@ -128,7 +129,11 @@ export default class Editor {
       element.querySelector("span").textContent = widget.title;
       delete widget.icon;
 
-      container.append(element);
+      if (widget.type.startsWith("Static")) {
+        staticCont.append(element);
+      } else {
+        dynamicCont.append(element);
+      }
     });
   }
 

@@ -23,7 +23,7 @@ export default class LineChart extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
     "options.points": {
       type: "switch",
@@ -49,14 +49,17 @@ export default class LineChart extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    // this.pagination.init(meta.ids);
 
     this.filter = {
       hide: [],
     };
     this.controls.append(
-      data.map(({ name }) => {
+      data[0].map(({ name }) => {
         return {
           type: "switch",
           label: name,

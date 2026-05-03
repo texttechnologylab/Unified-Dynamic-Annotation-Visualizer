@@ -229,21 +229,28 @@
   }
 }
 
-.dv-available-widgets-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
+.dv-container-title {
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.dv-static-widgets-container,
+.dv-dynamic-widgets-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 .dv-available-widget {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0.3rem;
+  overflow: hidden;
 }
 
 .dv-available-widget-draggable {
-  width: 5rem;
-  height: 5rem;
+  width: 100%;
+  aspect-ratio: 1/1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -269,7 +276,7 @@
 }
 
 .dv-available-widget-title {
-  width: 5rem;
+  width: 100%;
   font-size: var(--font-size-sm);
   text-align: center;
   overflow: hidden;
