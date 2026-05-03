@@ -43,18 +43,23 @@ public abstract class GeneratorUIMA extends Generator {
             for (String c : extraCandidates) if (c != null && !c.isBlank()) candidates.add(c.trim());
         }
 
+        // Importer writes feature columns as "<tableHash>_f_<sanitizedShortName>_<8-hex-of-feature-FQN>"
+        // (see JooqDatabaseWriter.featColName). Fetch the table's columns once and match in Java so we
+        // don't have to deal with LIKE-escaping the underscores in the prefix.
+        org.jooq.Field<String> COL = DSL.field(DSL.name("column_name"), String.class);
+        java.util.List<String> columns = dsl.select(COL)
+                .from(DSL.table(DSL.name("information_schema", "columns")))
+                .where(DSL.field(DSL.name("table_schema"), String.class).eq(schema))
+                .and(DSL.field(DSL.name("table_name"), String.class).eq(tableHash))
+                .fetch(COL);
+        java.util.regex.Pattern hex8 = java.util.regex.Pattern.compile("[0-9a-f]{8}");
         for (String shortName : candidates) {
-            String physical = SourceUIMA.sanitize(tableHash + "_f_" + shortName);
-            boolean exists = dsl.fetchExists(
-                    DSL.selectOne()
-                            .from(DSL.table(DSL.name("information_schema", "columns")))
-                            .where(DSL.field(DSL.name("table_schema"), String.class).eq(schema))
-                            .and(DSL.field(DSL.name("table_name"),  String.class).eq(tableHash))
-                            .and(DSL.field(DSL.name("column_name"), String.class).eq(physical))
-            );
-            if (exists) {
-                tempFeatureName = shortName;
-                return DSL.field(DSL.name(schema, tableHash, physical), String.class);
+            String prefix = SourceUIMA.sanitize(tableHash + "_f_" + shortName) + "_";
+            for (String col : columns) {
+                if (col.startsWith(prefix) && hex8.matcher(col.substring(prefix.length())).matches()) {
+                    tempFeatureName = shortName;
+                    return DSL.field(DSL.name(schema, tableHash, col), String.class);
+                }
             }
         }
 

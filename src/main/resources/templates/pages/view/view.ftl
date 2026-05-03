@@ -27,7 +27,7 @@
     <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar pipelines=pipelines?eval_json config=config_json />
+      <@sidebar pipelines=pipelines?eval_json lockedPipelines=lockedPipelines config=config_json />
 
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>

@@ -1,0 +1,73 @@
+{
+  "id": "dbde7551-943c-409e-a755-kaj9wehfwif",
+  "name": "boundary-approx-new",
+  "sources": [
+    {
+      "uri": "BoundaryApproximation.json",
+      "settings": {},
+      "id": "Source-boundary-edges"
+    }
+  ],
+  "generators": [
+    {
+      "name": "Boundary Edge Points",
+      "type": "MapCoordinates",
+      "source": "Source-boundary-edges",
+      "settings": {
+        "inputFormat": "edgePairs",
+        "scale": 0.1,
+        "keysMap": {
+          "0": {
+            "x": "from@0",
+            "y": "from@1"
+          },
+          "1": {
+            "x": "to@0",
+            "y": "to@1"
+          },
+          "2": {
+            "label": "label",
+            "number": "number",
+            "color": "color"
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-boundary-edges"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "BoundaryApproximation",
+      "title": "Boundary Approximation",
+      "generator": {
+        "id": "MapCoordinates-boundary-edges"
+      },
+      "options": {
+        "interpolate": false,
+        "clustering": "quadtree"
+      },
+      "w": 8,
+      "h": 6,
+      "x": 1,
+      "y": 1,
+      "id": "BoundaryApproximation-gc8tns2"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "Medial Axis",
+      "generator": {
+        "id": "MapCoordinates-boundary-edges"
+      },
+      "options": {},
+      "w": 8,
+      "h": 6,
+      "x": 9,
+      "y": 1,
+      "id": "MedialAxis-9debm9c"
+    }
+  ]
+}

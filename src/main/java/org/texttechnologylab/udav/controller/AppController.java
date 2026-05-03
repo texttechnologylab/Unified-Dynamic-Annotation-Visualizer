@@ -9,17 +9,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.texttechnologylab.udav.api.service.PipelineService;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 @Controller
 public class AppController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final PipelineService service;
+	private final List<String> lockedPipelines = List.of("587bf851-c89d-4bdc-a90d-dd3c1c069edf");
 
 	@Value("${app.llm.base-url}")
 	private String llmUrl;
@@ -39,9 +43,25 @@ public class AppController {
 		return service.get(id).toString();
 	}
 
+	private String ensureValidConfig(String json) throws Exception {
+		JsonNode jsonNode = mapper.readTree(json);
+		ObjectNode objectNode;
+
+		if (jsonNode.isObject()) {
+			objectNode = (ObjectNode) jsonNode;
+		} else {
+			objectNode = mapper.createObjectNode();
+		}
+
+		objectNode.put("id", UUID.randomUUID().toString());
+
+		return mapper.writeValueAsString(objectNode);
+	}
+
 	@GetMapping("/")
 	public String index(Model model) throws Exception {
 		model.addAttribute("pipelines", getPipelines());
+		model.addAttribute("lockedPipelines", lockedPipelines);
 
 		return "/pages/index/index";
 	}
@@ -49,6 +69,7 @@ public class AppController {
 	@GetMapping("/view/{id}")
 	public String view(@PathVariable("id") String id, Model model) throws Exception {
 		model.addAttribute("pipelines", getPipelines());
+		model.addAttribute("lockedPipelines", lockedPipelines);
 		model.addAttribute("config", getConfigById(id));
 		model.addAttribute("chatbot", !llmUrl.isEmpty() && !llmToken.isEmpty());
 
@@ -64,8 +85,8 @@ public class AppController {
 
 	@PostMapping("/editor")
 	public String editorFile(@RequestParam("file") MultipartFile file, Model model) throws Exception {
-		// TODO: add id if missing
-		model.addAttribute("config", new String(file.getBytes(), StandardCharsets.UTF_8));
+		String json = new String(file.getBytes(), StandardCharsets.UTF_8);
+		model.addAttribute("config", ensureValidConfig(json));
 
 		return "/pages/editor/editor";
 	}
@@ -74,6 +95,6 @@ public class AppController {
 	public String editorEdit(@PathVariable("id") String id, Model model) throws Exception {
 		model.addAttribute("config", getConfigById(id));
 
-		return "/pages/editor/editor";
+		return lockedPipelines.contains(id) ? "/error/404" : "/pages/editor/editor";
 	}
 }

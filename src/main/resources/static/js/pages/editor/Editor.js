@@ -6,7 +6,7 @@ import {
   createWidget,
   loadSources,
 } from "./utils/editorActions.js";
-import { debounce } from "../../shared/modules/utils.js";
+import { debounce, randomId } from "../../shared/modules/utils.js";
 import {
   createPipeline,
   getPipelines,
@@ -17,6 +17,7 @@ import Source from "./configs/Source.js";
 
 export default class Editor {
   constructor() {
+    this.showWarning = true;
     this.widgetDefaults = Object.values(widgets).map(
       (Widget) => Widget.defaultConfig,
     );
@@ -28,10 +29,20 @@ export default class Editor {
     this.initAvailableWidgets();
     this.initGrid();
 
+    const safeArray = (value) => (Array.isArray(value) ? value : []);
+
     // Load existing data
-    state.id = config.id;
-    loadSources(config.sources || [], config.generators || []);
-    state.grid.load(config.widgets || []);
+    state.id = config.id || randomId("pipeline");
+    loadSources(safeArray(config.sources), safeArray(config.generators));
+    state.grid.load(safeArray(config.widgets));
+
+    // Warn on leaving
+    window.addEventListener("beforeunload", (event) => {
+      if (this.showWarning) {
+        event.preventDefault();
+        return "";
+      }
+    });
 
     // Replace whitespaces in the id with dashes
     const input = document.querySelector("#identifier-input");
@@ -55,6 +66,7 @@ export default class Editor {
     document.querySelector("#discard-button").addEventListener("click", () => {
       state.modal.confirm("Discard Changes", "Are you sure?", async () => {
         const pipelines = await getPipelines();
+        this.showWarning = false;
 
         // Delete temp pipeline
         // TODO: api.deletePipeline(state.id);
@@ -153,10 +165,20 @@ export default class Editor {
       state.modal.confirm(
         `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        async () => {
+        () => {
           state.modal.loading("Updating pipeline, please wait...");
-          await updatePipeline(config);
-          window.open("/view/" + config.id, "_self");
+
+          updatePipeline(config)
+            .then(() => {
+              this.showWarning = false;
+              window.open("/view/" + config.id, "_self");
+            })
+            .catch(() => {
+              state.modal.alert(
+                "Internal Server Error",
+                "An error occurred while updating the pipeline.",
+              );
+            });
         },
       );
     } else if (ok) {
@@ -164,8 +186,17 @@ export default class Editor {
 
       // Promote temp pipeline
       // TODO: api.promotePipeline(state.id, config.name, config.widgets);
-      await createPipeline(config);
-      window.open("/view/" + config.id, "_self");
+      createPipeline(config)
+        .then(() => {
+          this.showWarning = false;
+          window.open("/view/" + config.id, "_self");
+        })
+        .catch(() => {
+          state.modal.alert(
+            "Internal Server Error",
+            "An error occurred while creating the pipeline.",
+          );
+        });
     }
   }
 }
