@@ -29,19 +29,15 @@ export default class WidgetInterface {
     this.root.select(".dv-toolbar-title").attr("title", title).text(title);
   }
 
-  async fetch() {
+  async fetch(all = false) {
     const { pipeline, generator, type } = this.config;
+    const page = all ? 1 : this.pagination.currentPage;
+    const size = all ? this.pagination.elements.length : 1;
 
-    return await getData(
-      pipeline,
-      generator.id,
-      type,
-      this.pagination.currentPage,
-      {
-        corpus: state.corpusFilter.filter,
-        chart: this.filter,
-      },
-    );
+    return await getData(pipeline, generator.id, type, page, size, {
+      corpus: state.corpusFilter.filter,
+      chart: this.filter,
+    });
   }
 
   clear() {
@@ -62,5 +58,23 @@ export default class WidgetInterface {
     } else {
       this.render(this.data);
     }
+  }
+
+  async export(all = false) {
+    let items = [{ json: this.data, svg: this.svg?.node() }];
+
+    if (all) {
+      const { data } = await this.fetch(true);
+
+      items = data.map((d) => ({ json: d.data, svg: this.svg?.node() }));
+    }
+
+    return {
+      items,
+      meta: {
+        corpus: state.corpusFilter.filter,
+        chart: this.filter,
+      },
+    };
   }
 }

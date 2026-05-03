@@ -1,7 +1,7 @@
 <#include "/shared/accordion.ftl">
 <#include "/shared/pipelineSwitcher.ftl">
 
-<#macro sidebar pipelines config>
+<#macro sidebar pipelines lockedPipelines config>
   <aside class="dv-sidebar">
     <a class="dv-sidebar-header" href="/">
       <img src="/img/logo.png" alt="Logo">
@@ -16,13 +16,15 @@
         <i class="bi bi-list"></i>
         <span>Menu</span>
       </a>
-      <a 
-        class="dv-btn dv-menu-link"
-        href="/editor/${config.id}"
-      >
-        <i class="bi bi-pencil"></i>
-        <span>Edit Pipeline</span>
-      </a>
+      <#if !lockedPipelines?seq_contains(config.id)>
+        <a 
+          class="dv-btn dv-menu-link"
+          href="/editor/${config.id}"
+        >
+          <i class="bi bi-pencil"></i>
+          <span>Edit Pipeline</span>
+        </a>
+      </#if>
       
       <div class="dv-menu-title">Pipeline</div>
       <@pipelineSwitcher pipelines=pipelines id=config.id name=config.name!"untitled-pipeline" />
