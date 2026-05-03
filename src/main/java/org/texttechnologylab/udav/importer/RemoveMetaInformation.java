@@ -7,6 +7,7 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.TOP;
 import org.texttechnologylab.annotation.SpacyAnnotatorMetaData;
+import org.texttechnologylab.annotation.AnnotatorMetaData;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +20,10 @@ public class RemoveMetaInformation extends JCasAnnotator_ImplBase {
         Set<TOP> acRemove = new HashSet<>(JCasUtil.select(jCas, SpacyAnnotatorMetaData.class));
 
         acRemove.forEach(FeatureStructureImplC::removeFromIndexes);
+
+        Set<TOP> acRemove2 = new HashSet<>(JCasUtil.select(jCas, AnnotatorMetaData.class));
+
+        acRemove2.forEach(FeatureStructureImplC::removeFromIndexes);
 
     }
 }
