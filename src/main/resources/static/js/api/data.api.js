@@ -5,11 +5,12 @@ export async function getData(
   generatorId,
   chartType,
   page,
+  size,
   filter,
 ) {
   return await api
     .post(
-      `/data?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&page=${page}`,
+      `/data?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&page=${page}&size=${size}`,
       filter,
     )
     .then(async ({ data, meta }) => {
@@ -27,18 +28,4 @@ export async function getData(
         meta: { total: 1, ids: ["1"] },
       };
     });
-}
-
-export async function exportData(
-  pipelineId,
-  generatorId,
-  chartType,
-  format,
-  filter,
-) {
-  return await api.post(
-    `/data/export?pipelineId=${pipelineId}&generatorId=${generatorId}&chartType=${chartType}&format=${format}`,
-    filter,
-    "blob",
-  );
 }

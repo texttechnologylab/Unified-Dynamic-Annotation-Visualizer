@@ -29,19 +29,15 @@ export default class WidgetInterface {
     this.root.select(".dv-toolbar-title").attr("title", title).text(title);
   }
 
-  async fetch() {
+  async fetch(all = false) {
     const { pipeline, generator, type } = this.config;
+    const page = all ? 1 : this.pagination.currentPage;
+    const size = all ? this.pagination.elements.length : 1;
 
-    return await getData(
-      pipeline,
-      generator.id,
-      type,
-      this.pagination.currentPage,
-      {
-        corpus: state.corpusFilter.filter,
-        chart: this.filter,
-      },
-    );
+    return await getData(pipeline, generator.id, type, page, size, {
+      corpus: state.corpusFilter.filter,
+      chart: this.filter,
+    });
   }
 
   clear() {
@@ -64,18 +60,13 @@ export default class WidgetInterface {
     }
   }
 
-  prepareExportData(all = false) {
-    const items = [];
+  async export(all = false) {
+    let items = [{ json: this.data, svg: this.svg?.node() }];
 
-    // TODO: fetch all datasets and create svgs
     if (all) {
-      items.push({ json: this.data, svg: this.svg?.node() });
-      items.push({ json: this.data, svg: this.svg?.node() });
-      items.push({ json: this.data, svg: this.svg?.node() });
-      items.push({ json: this.data, svg: this.svg?.node() });
-      items.push({ json: this.data, svg: this.svg?.node() });
-    } else {
-      items.push({ json: this.data, svg: this.svg?.node() });
+      const { data } = await this.fetch(true);
+
+      items = data.map((d) => ({ json: d.data, svg: this.svg?.node() }));
     }
 
     return {

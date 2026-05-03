@@ -21,6 +21,7 @@
           type="button"
           title="Exports"
           data-bs-toggle="dropdown"
+          data-bs-popper-config='{"strategy":"fixed"}'
         >
           <i class="bi bi-download"></i>
         </button>

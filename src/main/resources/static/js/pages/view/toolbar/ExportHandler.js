@@ -30,8 +30,7 @@ export default class ExportHandler {
 
     Object.entries(formats).forEach(([format, icon]) => {
       const button = createButton(icon, "Export as " + format, () => {
-        const data = this.widget.prepareExportData();
-        this.startExport(data, format);
+        this.startExport(format, false);
       });
 
       dropdown.append(button);
@@ -42,8 +41,7 @@ export default class ExportHandler {
 
       Object.entries(formats).forEach(([format, icon]) => {
         const button = createButton(icon, "Export all as " + format, () => {
-          const data = this.widget.prepareExportData(true);
-          this.startExport(data, format);
+          this.startExport(format, true);
         });
 
         dropdown.append(button);
@@ -51,13 +49,13 @@ export default class ExportHandler {
     }
   }
 
-  startExport(data, format) {
+  startExport(format, bulk) {
     const exporters = {
-      svg: () => this.svgExport(data),
-      png: () => this.pngExport(data),
-      tex: () => this.texExport(data),
-      csv: () => this.csvExport(data),
-      json: () => this.jsonExport(data),
+      svg: () => this.widget.export(bulk).then((d) => this.svgExport(d)),
+      png: () => this.widget.export(bulk).then((d) => this.pngExport(d)),
+      tex: () => this.widget.export(bulk).then((d) => this.texExport(d)),
+      csv: () => this.widget.export(bulk).then((d) => this.csvExport(d)),
+      json: () => this.widget.export(bulk).then((d) => this.jsonExport(d)),
     };
 
     exporters[format]();

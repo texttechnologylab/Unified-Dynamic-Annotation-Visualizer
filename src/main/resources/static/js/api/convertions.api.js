@@ -12,7 +12,7 @@ export async function createZip(blobs, type) {
   const formData = new FormData();
   blobs.forEach((blob, i) => formData.append("files", blob, `${i}.${type}`));
 
-  return await fetch("/api/convertions/zip", {
+  return await fetch(api.baseUrl + "/convertions/zip", {
     method: "POST",
     body: formData,
   }).then((response) => response.blob());
