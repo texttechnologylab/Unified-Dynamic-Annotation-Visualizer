@@ -8,6 +8,22 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 - Visual editor
 - Different export options
 
+## Widgets
+
+UDAV currently contains the following widgets:
+
+- Text (static)
+- Image (static)
+- Video (static)
+- Inline Frame (static)
+- Table
+- Bar Chart
+- Pie Chart
+- Line Chart
+- Highlight Text
+- Simple Map
+- Network Graph
+
 ### Demo
 
 You can find a demo [here](udav/demo) where you can play around a little.
@@ -135,7 +151,7 @@ The only exception is the data API, which uses a custom ChartHandler to support 
 
 # Webpage
 
-The frontend uses [Freemarker](https://freemarker.apache.org/) to render the html templates, [d3.js](https://d3js.org/) for some of the visualization components, [gridstack.js](https://gridstackjs.com/) for the draggable grid in the editor and [Bootstrap](https://getbootstrap.com/) for icons and styling.
+The frontend uses [Freemarker](https://freemarker.apache.org/) to render the html templates, [d3.js](https://d3js.org/) for some of the visualization components, [gridstack.js](https://gridstackjs.com/) for the draggable grid in the editor, [Floating UI](https://floating-ui.com/) for some UI components and [Bootstrap](https://getbootstrap.com/) for icons and styling.
 
 ## Structure
 
@@ -154,6 +170,7 @@ Global CSS variables are defined in `variables.css`. The widgets are registered 
 │  │  ├─ 📁 pages
 │  │  ├─ 📁 shared
 │  │  └─ 📄 variables.css
+│  ├─ 📁 data
 │  ├─ 📁 img
 │  ├─ 📁 js
 │  │  ├─ 📁 api
@@ -176,16 +193,17 @@ Global CSS variables are defined in `variables.css`. The widgets are registered 
 │  │  │  ├─ 📁 charts
 │  │  │  ├─ 📁 static
 │  │  │  ├─ 📄 D3Visualization.js
+│  │  │  ├─ 📄 WidgetInterface.js
 │  │  │  └─ 📄 widgets.js
 │  ├─ 📁 packages
 │  └─ 📄 favicon.ico
 └─ 📁 templates
+   ├─ 📁 error
    ├─ 📁 pages
    │  ├─ 📁 editor
    │  │  ├─ 📄 editor.ftl
    │  │  ├─ 📄 editorGrid.ftl
    │  │  └─ 📄 editorSidebar.ftl
-   │  ├─ 📁 error
    │  ├─ 📁 index
    │  └─ 📁 view
    └─ 📁 shared
@@ -217,17 +235,16 @@ To add a new chart widget, follow these steps:
    - label: The label displayed to the user.
    - options (optional): Additional configuration for the input.
 
-4. To support the controls sidepanel and export functionality of the chart's toolbar, create a ControlsHandler and an ExportHandler in the constructor.
-
-5. Provide a `data` property, an `init` and a `render` method.
-   - The data property is used to cache the latest data which allows re-rendering the chart without fetching the data again.
+4. Extend the `WidgetInterface` class and implement a `init` and a `render` method.
    - The init method will be called once after creation of the widget and should contain the first data fetch and rendering as well as the configuration of the controls.
    - The render method will be called every time the chart data changes, for example after a filter is applied.
+  
+5. If your new widget uses d3.js to create an svg, you can extend the `D3Visualization` class instead. This class already provides helpful functions for svg initialization and resizing, tooltips or axis creation.
 
 6. You can use this template as a starting point:
 
    ```js
-   export default class NewChart {
+   export default class NewChart extends WidgetInterface {
      static defaultConfig = {
        type: "NewChart",
        title: "New Chart",
@@ -249,16 +266,23 @@ To add a new chart widget, follow these steps:
        },
      };
 
-     constructor(root, getData, options) {
-       this.controls = new ControlsHandler(this);
-       this.exports = new ExportHandler(this);
+     constructor(root, config) {
+       super(root, config);
+     }
 
-       this.data;
+     clear() {
+       // Clear and set-up chart inside chart area
      }
 
      init() {
-       const data = this.getData();
-       this.render(data);
+       const { data, meta } = await this.fetch();
+       this.render(data[0]);
+
+       // Initialize export options
+       this.exports.init(meta.total > 1);
+       this.filter = {
+         // Initialize filter
+       };
 
        // Add controls ...
      }
@@ -266,7 +290,6 @@ To add a new chart widget, follow these steps:
      render(data) {
        this.clear();
 
-       // Append svg to root
        // Render chart data ...
 
        this.data = data;
@@ -339,6 +362,12 @@ To add a new generator, follow these steps:
      NewGenerator,
    };
    ```
+
+### Formular configuration
+
+The widget controls and option modals in the editor are defined through a JSON structure. This structure is used by the `ControlsHandler` for widgets, as well as by the `formConfig` parameter of widgets, source and generator configurations. It defines the form input fields, including their types, labels, and available options.
+
+Available input types are implemented in inputFactories.js, which acts as a central registry for creating the form inputs. If additional input types are needed, they can be easily extended by adding new implementations to inputFactories.js.
 
 ## Screenshots
 
