@@ -22,6 +22,25 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 - Widget pagination
 - LLM ChatBot
 
+### Widgets
+
+UDAV currently contains the following widgets:
+
+- Text (static)
+- Image (static)
+- Video (static)
+- Inline Frame (static)
+- Table
+- Bar Chart
+- Pie Chart
+- Line Chart
+- Highlight Text
+- Simple Map
+- Network Graph
+- Voronoi Diagram
+- Medial Axis
+- Boundary Approximation
+
 ## Getting Started
 
 > [!TIP]
