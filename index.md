@@ -26,7 +26,7 @@ UDAV currently contains the following widgets:
 
 ### Demo
 
-You can find a demo [here](udav/demo) where you can play around a little.
+You can find a demo [here](https://demo.udav.texttechnologylab.org/) where you can play around a little.
 
 ## Architecture
 
