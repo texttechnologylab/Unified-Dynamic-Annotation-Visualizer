@@ -18,7 +18,9 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 - Dynamic and interactive charts
 - Visual editor
-- Different export options
+- Different export options: svg, png, tex, csv, json
+- Widget pagination
+- LLM ChatBot
 
 ## Getting Started
 
@@ -74,7 +76,7 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 4. Start the `App.java` file
 
 > [!NOTE]
-> The webpage, by deafult, is reachable under: [http://localhost:8080](http://localhost:8080/). If you're looking for a small demo without creating it yourself, please check our [open demo](udav/demo).
+> The webpage, by deafult, is reachable under: [http://localhost:8080](http://localhost:8080/). If you're looking for a small demo without creating it yourself, please check our [open demo](https://demo.udav.texttechnologylab.org/).
 
 ## License
 
