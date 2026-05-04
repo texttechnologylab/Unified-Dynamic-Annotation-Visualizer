@@ -6,7 +6,9 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 - Dynamic and interactive charts
 - Visual editor
-- Different export options
+- Different export options: svg, png, tex, csv, json
+- Widget pagination
+- LLM ChatBot
 
 ## Widgets
 
@@ -23,6 +25,9 @@ UDAV currently contains the following widgets:
 - Highlight Text
 - Simple Map
 - Network Graph
+- Voronoi Diagram
+- Medial Axis
+- Boundary Approximation
 
 ### Demo
 
@@ -151,7 +156,7 @@ The only exception is the data API, which uses a custom ChartHandler to support 
 
 # Webpage
 
-The frontend uses [Freemarker](https://freemarker.apache.org/) to render the html templates, [d3.js](https://d3js.org/) for some of the visualization components, [gridstack.js](https://gridstackjs.com/) for the draggable grid in the editor, [Floating UI](https://floating-ui.com/) for some UI components and [Bootstrap](https://getbootstrap.com/) for icons and styling.
+The frontend uses [Freemarker](https://freemarker.apache.org/) to render the html templates, [d3.js](https://d3js.org/) for some of the visualization components, [gridstack.js](https://gridstackjs.com/) for the draggable grid in the editor, [Floating UI](https://floating-ui.com/) for some UI components, [DOMPurify](https://github.com/cure53/DOMPurify) and [Marked](https://marked.js.org/) for markdown rendering in the LLM chat and [Bootstrap](https://getbootstrap.com/) for icons and styling.
 
 ## Structure
 
@@ -278,8 +283,9 @@ To add a new chart widget, follow these steps:
        const { data, meta } = await this.fetch();
        this.render(data[0]);
 
-       // Initialize export options
+       // Initialize export options and pagination
        this.exports.init(meta.total > 1);
+       this.pagination.init(meta.ids);
        this.filter = {
          // Initialize filter
        };
