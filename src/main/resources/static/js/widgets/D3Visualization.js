@@ -1,5 +1,6 @@
 import { debounce, randomId } from "../shared/modules/utils.js";
 import WidgetInterface from "./WidgetInterface.js";
+import state from "../pages/view/utils/viewState.js";
 
 export default class D3Visualization extends WidgetInterface {
   constructor(root, config, margin) {
@@ -47,6 +48,36 @@ export default class D3Visualization extends WidgetInterface {
     this.plotArea = this.svg
       .append("g")
       .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
+  }
+
+  async export(all = false) {
+    let items = [{ json: this.data, svg: this.svg.node() }];
+
+    if (all) {
+      // Save current state
+      const snapshot = { svg: this.svg, data: this.data };
+      const { data } = await this.fetch(true);
+
+      // Render new svgs in background
+      items = data.map((dataset) => {
+        this.svg = d3.create("svg");
+        this.render(dataset.data[0]);
+
+        return { json: this.data, svg: this.svg.node() };
+      });
+
+      // Restore current state
+      this.svg = snapshot.svg;
+      this.data = snapshot.data;
+    }
+
+    return {
+      items,
+      meta: {
+        corpus: state.corpusFilter.filter,
+        chart: this.filter,
+      },
+    };
   }
 
   mouseover(event) {
