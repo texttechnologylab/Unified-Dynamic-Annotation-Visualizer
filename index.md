@@ -6,7 +6,7 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 - Dynamic and interactive charts
 - Visual editor
-- Different export options
+- Different export options: svg, png, csv, json
 
 ## Widgets
 
