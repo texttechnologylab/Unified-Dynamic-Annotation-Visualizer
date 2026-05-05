@@ -59,6 +59,18 @@ public class PipelineService {
     }
 
     @Transactional(readOnly = true)
+    public List<String> listAllIds() throws Exception {
+        try (Connection c = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(c);
+            var fieldId = DSL.field(DSL.name(COL_ID), String.class);
+            return dsl.select(fieldId)
+                    .from(DSL.table(DSL.name(schema, TABLE)))
+                    .orderBy(fieldId.asc())
+                    .fetch(fieldId);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public List<String> listIds(int page, int size, String q) throws Exception {
         return listSummaries(page, size, q).stream()
                 .map(summary -> summary.get("id"))
@@ -75,7 +87,7 @@ public class PipelineService {
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
                     : fieldId.likeIgnoreCase("%" + q + "%")
-                            .or(fieldName.likeIgnoreCase("%" + q + "%"));
+                    .or(fieldName.likeIgnoreCase("%" + q + "%"));
             return dsl.select(fieldId, fieldName, fieldJson)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
@@ -127,9 +139,9 @@ public class PipelineService {
             if (exists) throw new ResponseStatusException(CONFLICT, "Pipeline already exists");
 
             dsl.insertInto(DSL.table(DSL.name(schema, TABLE)),
-                    DSL.field(DSL.name(COL_ID)),
-                    DSL.field(DSL.name(COL_NAME)),
-                    DSL.field(DSL.name(COL_JSON)))
+                            DSL.field(DSL.name(COL_ID)),
+                            DSL.field(DSL.name(COL_NAME)),
+                            DSL.field(DSL.name(COL_JSON)))
                     .values(id, name, jsonStr)
                     .execute();
 
