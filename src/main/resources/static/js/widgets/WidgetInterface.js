@@ -61,12 +61,12 @@ export default class WidgetInterface {
   }
 
   async export(all = false) {
-    let items = [{ json: this.data, svg: this.svg?.node() }];
+    let items = [{ json: this.data }];
 
     if (all) {
       const { data } = await this.fetch(true);
 
-      items = data.map((d) => ({ json: d.data, svg: this.svg?.node() }));
+      items = data.map((dataset) => ({ json: dataset.data[0] }));
     }
 
     return {

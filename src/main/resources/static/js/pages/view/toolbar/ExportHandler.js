@@ -99,14 +99,15 @@ export default class ExportHandler {
         img.onload = () => {
           URL.revokeObjectURL(url);
 
-          const bbox = svg.getBBox();
+          const width = svg.width.baseVal.value;
+          const height = svg.height.baseVal.value;
 
           const canvas = document.createElement("canvas");
-          canvas.width = bbox.width;
-          canvas.height = bbox.height;
+          canvas.width = width;
+          canvas.height = height;
 
           const context = canvas.getContext("2d");
-          context.drawImage(img, 0, 0, bbox.width, bbox.height);
+          context.drawImage(img, 0, 0, width, height);
 
           canvas.toBlob((b) => resolve(b), "image/png");
         };

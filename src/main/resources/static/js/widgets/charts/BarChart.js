@@ -49,6 +49,7 @@ export default class BarChart extends D3Visualization {
       desc: true,
       min: 0,
       max: max,
+      limit: 100
     };
     this.controls.append([
       {
@@ -78,6 +79,16 @@ export default class BarChart extends D3Visualization {
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
+          this.rerender(true);
+        },
+      },
+      {
+        type: "number",
+        label: "Limit",
+        value: this.filter.limit,
+        options: { min: 0, max: 10000 },
+        onchange: (event) => {
+          this.filter.limit = event.target.value;
           this.rerender(true);
         },
       },
