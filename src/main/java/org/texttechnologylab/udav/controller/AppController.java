@@ -23,7 +23,7 @@ import java.util.UUID;
 public class AppController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private final PipelineService service;
-	private final List<String> lockedPipelines = List.of("20e5b7b5-80ae-4001-8130-25682d324e64");
+	private final List<String> lockedPipelines = List.of("0c1953d4-843b-4de4-a44e-1c607ed5a584=");
 
 	@Value("${app.llm.base-url}")
 	private String llmUrl;

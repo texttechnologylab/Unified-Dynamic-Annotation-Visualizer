@@ -15,8 +15,8 @@ import org.texttechnologylab.udav.api.service.PipelineService;
 import java.io.InputStream;
 import java.util.List;
 
-//@Component
-//@ConditionalOnProperty(name = "app.pipeline-reset.enabled", havingValue = "true")
+@Component
+@ConditionalOnProperty(name = "app.pipeline-reset.enabled", havingValue = "true")
 public class DemoPipelineResetScheduler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoPipelineResetScheduler.class);
@@ -25,7 +25,7 @@ public class DemoPipelineResetScheduler {
     private final ObjectMapper objectMapper;
     private final ResourceLoader resourceLoader;
 
-    @Value("${app.pipeline-reset.demo-file:pipelines/simple-demo.json}")
+    @Value("${app.pipeline-reset.demo-file:pipelines/demo.json}")
     private String demoFile;
 
     public DemoPipelineResetScheduler(PipelineService pipelineService,

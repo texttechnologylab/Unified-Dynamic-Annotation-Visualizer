@@ -87,7 +87,7 @@ public class PipelineService {
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
                     : fieldId.likeIgnoreCase("%" + q + "%")
-                            .or(fieldName.likeIgnoreCase("%" + q + "%"));
+                    .or(fieldName.likeIgnoreCase("%" + q + "%"));
             return dsl.select(fieldId, fieldName, fieldJson)
                     .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
@@ -139,9 +139,9 @@ public class PipelineService {
             if (exists) throw new ResponseStatusException(CONFLICT, "Pipeline already exists");
 
             dsl.insertInto(DSL.table(DSL.name(schema, TABLE)),
-                    DSL.field(DSL.name(COL_ID)),
-                    DSL.field(DSL.name(COL_NAME)),
-                    DSL.field(DSL.name(COL_JSON)))
+                            DSL.field(DSL.name(COL_ID)),
+                            DSL.field(DSL.name(COL_NAME)),
+                            DSL.field(DSL.name(COL_JSON)))
                     .values(id, name, jsonStr)
                     .execute();
 
