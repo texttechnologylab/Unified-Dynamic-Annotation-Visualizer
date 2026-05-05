@@ -58,6 +58,7 @@ export default class PieChart extends D3Visualization {
     this.filter = {
       min: 0,
       max: max,
+      limit: 100
     };
     this.controls.append([
       {
@@ -68,6 +69,15 @@ export default class PieChart extends D3Visualization {
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
+          this.rerender(true);
+        },
+      },
+      {
+        type: "number",
+        label: "Limit",
+        value: this.filter.limit,
+        onchange: (event) => {
+          this.filter.limit = event.target.value;
           this.rerender(true);
         },
       },
