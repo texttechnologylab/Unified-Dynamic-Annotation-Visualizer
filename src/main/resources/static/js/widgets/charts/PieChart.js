@@ -76,6 +76,7 @@ export default class PieChart extends D3Visualization {
         type: "number",
         label: "Limit",
         value: this.filter.limit,
+        options: { min: 0, max: 10000 },
         onchange: (event) => {
           this.filter.limit = event.target.value;
           this.rerender(true);
