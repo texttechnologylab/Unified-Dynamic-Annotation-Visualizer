@@ -27,6 +27,13 @@
   white-space: nowrap;
 }
 
+.dv-text-truncate-left {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
 .dv-divider {
   padding-bottom: 0.2rem;
   border-bottom: 1px solid var(--border-color);

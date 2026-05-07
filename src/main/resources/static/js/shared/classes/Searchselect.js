@@ -76,7 +76,7 @@ export default class Searchselect {
 
   createResult(item) {
     const label = createElement("span", {
-      className: "dv-text-truncate",
+      className: "dv-text-truncate-left",
       textContent: item[this.keys[0]] || item,
     });
 
