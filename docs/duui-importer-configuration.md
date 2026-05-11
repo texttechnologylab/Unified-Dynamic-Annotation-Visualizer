@@ -197,28 +197,6 @@ DUUI_IMPORTER_PREPARE_DB_SCHEMA=true
 
 ---
 
-### `DUUI_IMPORTER_STORE_COVERED_TEXT`
-
-| | |
-|---|---|
-| **Type** | boolean |
-| **Default** | `false` |
-
-When `true`, the text span covered by each annotation (`begin`–`end`) is extracted from the sofa and stored in a `covered_text` column in every annotation table.
-
-**Trade-offs:**
-- Enables text-based queries without joining the `sofas` table.
-- Significantly increases database storage size for large corpora.
-- Slightly increases import time and memory usage.
-
-> **Note:** Changing this setting on an existing import changes the pipeline hash and causes all documents to be re-imported.
-
-```env
-DUUI_IMPORTER_STORE_COVERED_TEXT=false
-```
-
----
-
 ## Database Settings
 
 These settings configure the database connection used by the DUUI importer's `JooqDatabaseWriter`. They are shared with the main UDAV application.
@@ -460,7 +438,7 @@ JAVA_OPTS=-Xmx10G -Xms1024m
 
 ---
 
-### High-throughput import — gzip corpus, explicit type system, text storage enabled
+### High-throughput import — gzip corpus, explicit type system
 
 ```env
 DUUI_IMPORTER=true
@@ -472,7 +450,6 @@ DUUI_IMPORTER_CAS_POOL_SIZE=16
 DUUI_IMPORTER_READER_BATCH_SIZE=20
 DUUI_IMPORTER_DB_WORKERS=2
 DUUI_IMPORTER_PREPARE_DB_SCHEMA=true
-DUUI_IMPORTER_STORE_COVERED_TEXT=true
 
 DB_URL=jdbc:postgresql://postgres:5432/udav
 DB_USER=postgres
