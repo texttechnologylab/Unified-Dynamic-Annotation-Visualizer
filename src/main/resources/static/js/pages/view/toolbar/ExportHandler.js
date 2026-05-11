@@ -1,189 +1,178 @@
-import { getTikz } from "../../../api/convertions.api.js";
-import { applyStyles, createElement } from "../../../shared/modules/utils.js";
-import state from "../utils/viewState.js";
+import { createZip, getCsv, getTikz } from "../../../api/convertions.api.js";
+import {
+  createButton,
+  createElement,
+  safeFilename,
+} from "../../../shared/modules/utils.js";
 
 export default class ExportHandler {
   constructor(widget) {
     this.serializer = new XMLSerializer();
     this.widget = widget;
+    this.filename = safeFilename(widget.config.title);
+  }
 
-    const root = widget.root.node ? widget.root.node() : widget.root;
+  init(bulkExports = false) {
+    const root = this.widget.root.node
+      ? this.widget.root.node()
+      : this.widget.root;
     const dropdown = root.querySelector(".dv-dropdown-menu");
+    const formats = {};
 
-    this.filename = "chart";
-
-    const formats = {
-      tex: "bi bi-file-earmark-font",
-      csv: "bi bi-table",
-      json: "bi bi-braces",
-    };
-
-    if (widget.svg) {
+    if (this.widget.svg) {
       formats.svg = "bi bi-file-earmark-code";
       formats.png = "bi bi-image";
     }
 
-    if (dropdown) {
+    formats.tex = "bi bi-file-earmark-font";
+    formats.csv = "bi bi-table";
+    formats.json = "bi bi-braces";
+
+    Object.entries(formats).forEach(([format, icon]) => {
+      const button = createButton(icon, "Export as " + format, () => {
+        this.startExport(format, false);
+      });
+
+      dropdown.append(button);
+    });
+
+    if (bulkExports) {
+      dropdown.append(createElement("div", { className: "dv-divider" }));
+
       Object.entries(formats).forEach(([format, icon]) => {
-        const button = createElement(
-          "button",
-          {
-            className: "dv-btn",
-            type: "button",
-            onclick: () => this.prepareExport(format),
-          },
-          [
-            createElement("i", { className: icon }),
-            createElement("span", { textContent: "Export as " + format }),
-          ],
-        );
+        const button = createButton(icon, "Export all as " + format, () => {
+          this.startExport(format, true);
+        });
+
         dropdown.append(button);
       });
     }
   }
 
-  getJSON() {
-    return this.widget.data || [];
+  startExport(format, bulk) {
+    const exporters = {
+      svg: () => this.widget.export(bulk).then((d) => this.svgExport(d)),
+      png: () => this.widget.export(bulk).then((d) => this.pngExport(d)),
+      tex: () => this.widget.export(bulk).then((d) => this.texExport(d)),
+      csv: () => this.widget.export(bulk).then((d) => this.csvExport(d)),
+      json: () => this.widget.export(bulk).then((d) => this.jsonExport(d)),
+    };
+
+    exporters[format]();
   }
 
-  getSVG() {
-    return this.widget.svg?.node ? this.widget.svg.node() : this.widget.svg;
-  }
-
-  getMetadata() {
-    return { ...state.corpusFilter.filter, ...this.widget.filter };
-  }
-
-  prepareExport(format) {
-    switch (format) {
-      case "svg":
-        this.exportSVG();
-        break;
-      case "png":
-        this.exportPNG();
-        break;
-      case "tex":
-        this.exportTEX();
-        break;
-      case "csv":
-        this.exportCSV();
-        break;
-      case "json":
-        this.exportJSON();
-        break;
-    }
-  }
-
-  exportSVG() {
+  async svgExport({ items, meta }) {
     const namespace = "http://www.w3.org/2000/svg";
+    const header = '<?xml version="1.0" standalone="no"?>\r\n';
     const metadata = document.createElementNS(namespace, "metadata");
-    const entries = Object.entries(this.getMetadata());
 
-    for (const [key, value] of entries) {
+    // Prepare metadata node
+    for (const [key, value] of Object.entries(meta)) {
       const node = document.createElementNS(namespace, key);
       node.textContent = value;
       metadata.appendChild(node);
     }
-    const svg = this.getSVG().cloneNode(true);
-    svg.prepend(metadata);
 
-    const header = '<?xml version="1.0" standalone="no"?>\r\n';
-    const str = this.serializer.serializeToString(svg);
-    const url = this.createURL(header + str, "image/svg+xml");
+    // Create blobs
+    const blobs = items.map(({ svg }) => {
+      const clone = svg.cloneNode(true);
+      clone.prepend(metadata.cloneNode(true));
 
-    this.downloadURL(url, `${this.filename}.svg`);
+      const str = this.serializer.serializeToString(clone);
+
+      return new Blob([header + str], { type: "image/svg+xml" });
+    });
+
+    await this.downloadBlobs(blobs, "svg");
   }
 
-  exportPNG() {
-    const str = this.serializer.serializeToString(this.getSVG());
-    const url = this.createURL(str, "image/svg+xml");
-    const img = new Image();
+  async pngExport({ items }) {
+    const blobs = items.map(async ({ svg }) => {
+      const str = this.serializer.serializeToString(svg);
+      const url = URL.createObjectURL(
+        new Blob([str], { type: "image/svg+xml" }),
+      );
 
-    img.onload = () => {
-      const bbox = this.getSVG().getBBox();
+      const img = new Image();
 
-      const canvas = document.createElement("canvas");
-      canvas.width = bbox.width;
-      canvas.height = bbox.height;
+      return await new Promise((resolve) => {
+        img.onload = () => {
+          URL.revokeObjectURL(url);
 
-      const context = canvas.getContext("2d");
-      context.drawImage(img, 0, 0, bbox.width, bbox.height);
+          const width = svg.width.baseVal.value;
+          const height = svg.height.baseVal.value;
 
-      this.downloadURL(canvas.toDataURL(), `${this.filename}.png`);
-    };
-    img.src = url;
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+
+          const context = canvas.getContext("2d");
+          context.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((b) => resolve(b), "image/png");
+        };
+
+        img.src = url;
+      });
+    });
+
+    await this.downloadBlobs(await Promise.all(blobs), "png");
   }
 
-  async exportTEX() {
-    let str = "";
+  async texExport({ items, meta }) {
+    const type = this.widget.config.type;
 
-    // Prepare svg if one exists
-    if (this.widget.svg) {
-      let svg = this.getSVG().cloneNode(true);
+    const blobs = items.map(async ({ svg, json }) => {
+      const str = svg ? this.serializer.serializeToString(svg) : "";
 
-      svg = applyStyles(svg, [
-        { selector: '[stroke="currentColor"]', styles: { stroke: "black" } },
-        { selector: '[fill="currentColor"]', styles: { fill: "black" } },
-        { selector: '[stroke="transparent"]', styles: { stroke: "none" } },
-        { selector: '[fill="transparent"]', styles: { fill: "none" } },
-      ]);
+      const data = await getTikz(type, str, json, {
+        metadata: meta,
+        options: this.widget.config.options,
+      });
 
-      str = this.serializer.serializeToString(svg);
+      return new Blob([data.content], { type: "application/x-tex" });
+    });
+
+    await this.downloadBlobs(await Promise.all(blobs), "tex");
+  }
+
+  async csvExport({ items, meta }) {
+    const type = this.widget.config.type;
+
+    const blobs = items.map(async ({ json }) => {
+      const data = await getCsv(type, json, meta);
+
+      return new Blob([data.content], { type: "text/csv" });
+    });
+
+    await this.downloadBlobs(await Promise.all(blobs), "csv");
+  }
+
+  async jsonExport({ items, meta }) {
+    const blobs = items.map(({ json }) => {
+      const str = JSON.stringify({ metadata: meta, data: json }, null, 2);
+
+      return new Blob([str], { type: "application/json" });
+    });
+
+    await this.downloadBlobs(blobs, "json");
+  }
+
+  async downloadBlobs(blobs, type) {
+    if (blobs.length > 1) {
+      const zip = await createZip(blobs, type);
+      this.downloadSingleBlob(zip, `${this.filename}.zip`);
+    } else {
+      this.downloadSingleBlob(blobs[0], `${this.filename}.${type}`);
     }
-
-    const type = this.widget.constructor.defaultConfig.type;
-    const json = this.getJSON();
-    const meta = {
-      metadata: this.getMetadata(),
-      options: this.widget.config.options,
-    };
-
-    const data = await getTikz(type, str, json, meta);
-    const url = this.createURL(data.content, "application/x-tex");
-
-    this.downloadURL(url, `${this.filename}.tex`);
   }
 
-  exportCSV() {
-    const json = this.getJSON();
-    const keys = Object.keys(json[0]);
-    const entries = Object.entries(this.getMetadata());
-
-    const escape = (value) => {
-      const str = String(value);
-      return /[",\n]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
-    };
-
-    const metadata = entries.map(([k, v]) => `# ${k}: ${v}`);
-    const header = keys.join(",");
-    const rows = json.map((o) => keys.map((k) => escape(o[k])).join(","));
-
-    const str = [...metadata, header, ...rows].join("\r\n");
-    const url = this.createURL(str, "text/csv");
-
-    this.downloadURL(url, `${this.filename}.csv`);
-  }
-
-  exportJSON() {
-    const json = {
-      metadata: this.getMetadata(),
-      data: this.getJSON(),
-    };
-    const str = JSON.stringify(json, null, 2);
-    const url = this.createURL(str, "application/json");
-
-    this.downloadURL(url, `${this.filename}.json`);
-  }
-
-  createURL(str, type) {
-    return URL.createObjectURL(new Blob([str], { type }));
-  }
-
-  downloadURL(url, name) {
+  downloadSingleBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+
     a.href = url;
     a.download = name;
-
     a.click();
 
     a.remove();

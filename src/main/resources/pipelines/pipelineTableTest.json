@@ -1,0 +1,66 @@
+{
+  "id": "f1a99db0-4912-4475-88b4-ff04c326f9ea",
+  "name": "tabletest1",
+  "sources": [
+    {
+      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+      "settings": {},
+      "id": "Source-ck7s0uv"
+    }
+  ],
+  "generators": [
+    {
+      "name": "POS_Numbers",
+      "type": "CategoryNumber",
+      "source": "Source-ck7s0uv",
+      "settings": {},
+      "extends": [],
+      "id": "CategoryNumber-v10bwfu"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "StaticIFrame",
+      "title": "Inline Frame",
+      "src": "https://example.com/",
+      "options": {
+        "border": true
+      },
+      "w": 8,
+      "h": 6,
+      "x": 1,
+      "y": 2,
+      "id": "StaticIFrame-nlli5b0"
+    },
+    {
+      "type": "BarChart",
+      "title": "POS Chart",
+      "generator": {
+        "id": "CategoryNumber-v10bwfu"
+      },
+      "options": {
+        "horizontal": true
+      },
+      "w": 8,
+      "h": 6,
+      "x": 9,
+      "y": 2,
+      "id": "BarChart-7fwebxl"
+    },
+    {
+      "type": "ScrollTable",
+      "title": "POS Table",
+      "generator": {
+        "id": "CategoryNumber-v10bwfu"
+      },
+      "options": {
+        "numbers": true
+      },
+      "w": 6,
+      "h": 6,
+      "x": 17,
+      "y": 2,
+      "id": "ScrollTable-y75imz5"
+    }
+  ]
+}

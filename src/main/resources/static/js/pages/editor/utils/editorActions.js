@@ -10,8 +10,8 @@ export function loadSources(sources, generators) {
   for (const config of sources) {
     const controller = createSource(config);
 
-    container.prepend(controller.root);
-    controller.init(generators);
+    container.append(controller.root);
+    controller.init(generators.filter((gen) => gen.source === config.id));
   }
 }
 
@@ -53,8 +53,10 @@ export function createWidget(item) {
   return new WidgetController(item);
 }
 
-export function getGeneratorOptions(type) {
-  const configs = state.generators.filter((config) => config.type === type);
+export function getGeneratorOptions(types) {
+  const configs = types
+    ? state.generators.filter((config) => types.includes(config.type))
+    : state.generators;
 
   return configs.map((generator) => {
     return { label: generator.name, value: generator.id };

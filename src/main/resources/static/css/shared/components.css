@@ -131,29 +131,32 @@ body.modal-open {
 
 .dv-modal {
   position: absolute;
+  display: flex;
+  flex-direction: column;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 25rem;
+  max-height: 80vh;
   background-color: var(--bg-color);
+  padding: 0.5rem;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
-  padding: 1rem;
 }
 
 .dv-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  padding: 0.5rem;
 }
 
 .dv-modal-body {
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
-  margin-bottom: 1rem;
-  overflow: auto;
+  height: 100%;
+  padding: 0.5rem;
+  overflow-y: auto;
 }
 
 .dv-modal-body-spinner {
@@ -163,13 +166,13 @@ body.modal-open {
   justify-content: center;
   gap: 1rem;
   font-weight: bold;
-  margin-top: 1rem;
 }
 
 .dv-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  padding: 0.5rem;
 }
 
 .dv-dropdown-container {

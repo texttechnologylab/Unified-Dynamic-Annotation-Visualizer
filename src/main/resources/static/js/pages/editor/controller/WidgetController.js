@@ -6,7 +6,9 @@ import { createTemplateElement } from "../../../shared/modules/utils.js";
 export default class WidgetController {
   constructor(item) {
     this.root = createTemplateElement(
-      item.src ? "#static-widget-template" : "#chart-widget-template",
+      item.type.startsWith("Static")
+        ? "#static-widget-template"
+        : "#chart-widget-template",
     );
     this.item = item;
     this.widget = null;
@@ -15,6 +17,11 @@ export default class WidgetController {
   setTitle(title) {
     this.item.title = title;
     if (this.widget.setTitle) this.widget.setTitle(title);
+  }
+
+  setGenerator(generator) {
+    this.item.generator = generator;
+    this.widget.rerender(true);
   }
 
   setSrc(src) {
@@ -39,15 +46,16 @@ export default class WidgetController {
     );
     const buttons = this.root.querySelectorAll("button");
 
-    this.widget = new Widget(this.root, this.item);
-    this.widget.render(Widget.previewData || this.item.src);
+    this.widget = new Widget(this.root, { pipeline: state.id, ...this.item });
+    this.widget.rerender(true);
 
     buttons[0].addEventListener("click", () => {
       const { title, generator, src, options } = this.item;
+      const defaultOptions = Widget.defaultConfig.options;
 
       const config = generator
-        ? { title, generator, options }
-        : { title, src, options };
+        ? { title, generator, options: { ...defaultOptions, ...options } }
+        : { title, src, options: { ...defaultOptions, ...options } };
 
       builder.buildForm(config, ({ title, generator, src, options }) => {
         this.setTitle(title);
@@ -58,7 +66,7 @@ export default class WidgetController {
         }
         this.setOptions(options);
 
-        this.widget.render(Widget.previewData || this.item.src);
+        this.widget.rerender(true);
       });
     });
     buttons[1].addEventListener("click", () => {

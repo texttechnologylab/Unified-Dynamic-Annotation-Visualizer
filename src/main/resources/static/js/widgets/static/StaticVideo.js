@@ -35,8 +35,8 @@ export default class StaticVideo {
     this.config = config;
 
     this.src = config.src || "";
-    this.controls = config.options.controls || true;
-    this.autoplay = config.options.autoplay || false;
+    this.controls = config.options.controls || false;
+    this.autoplay = config.options.autoplay || true;
   }
 
   clear() {
@@ -59,5 +59,9 @@ export default class StaticVideo {
       .property("autoplay", this.autoplay);
 
     this.root.classed("overflow-hidden", true);
+  }
+
+  rerender() {
+    this.render(this.src);
   }
 }

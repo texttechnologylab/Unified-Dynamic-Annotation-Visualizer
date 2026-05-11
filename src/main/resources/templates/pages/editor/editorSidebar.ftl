@@ -1,4 +1,4 @@
-<#macro sidebar id>
+<#macro sidebar name>
   <aside class="dv-sidebar">
     <a class="dv-sidebar-header" href="/">
       <img src="/img/logo.png" alt="Logo">
@@ -10,7 +10,7 @@
 
       <label class="dv-label w-100 my-4">
         <span>Identifier:</span>
-        <input id="identifier-input" type="text" class="dv-text-input" value="${id}" />
+        <input id="identifier-input" type="text" class="dv-text-input" value="${name}" />
       </label>
 
       <ul class="nav nav-tabs nav-justified" role="tablist">
@@ -52,30 +52,32 @@
             They keep record of all the data that is relevant for the charts.
           </p>
           
-          <div class="dv-sources-container">
-            <button class="dv-add-source-button">
-              <i class="bi bi-plus-lg"></i>
-              <span>New source</span>
-            </button>
-          </div>
+          <div class="dv-sources-container"></div>
+          
+          <button class="dv-add-source-button">
+            <i class="bi bi-plus-lg"></i>
+            <span>New source</span>
+          </button>
         </div>
         <div class="tab-pane fade" id="widgets-tab-pane" role="tabpanel" tabindex="0">
           <p>
-            Add new widgets by dragging them into the grid area to the right.<br>
-            <strong>Note:</strong> Dynamic widgets in the editor will display sample data for preview purposes.
+            Add new widgets by dragging them into the grid area to the right.
           </p>
-          <div class="dv-available-widgets-container">
-            <template id="available-widget-template">
-              <div class="dv-available-widget">
-                <div class="dv-available-widget-draggable">
-                  <i></i>
-                </div>
-                <span class="dv-available-widget-title"></span>
-              </div>
-            </template>
-          </div>
+          <div class="dv-container-title">Static widgets</div>
+          <div class="dv-static-widgets-container"></div>
+          <div class="dv-container-title">Interactive widgets</div>
+          <div class="dv-dynamic-widgets-container"></div>
         </div>
       </div>
+
+      <template id="available-widget-template">
+        <div class="dv-available-widget">
+          <div class="dv-available-widget-draggable">
+            <i></i>
+          </div>
+          <span class="dv-available-widget-title"></span>
+        </div>
+      </template>
 
       <template id="source-card-template">
         <div class="dv-source-card">
@@ -98,28 +100,32 @@
               </button>
             </div>
           </div>
-          <div class="dv-source-card-body"></div>
+          <div class="dv-source-card-body">
+            <div class="dv-source-card-hint">
+              Add generators via the plus
+            </div>
+          </div>
         </div>
       </template>
 
       <template id="generator-card-template">
         <div class="dv-generator-card">
-          <div class="dv-generator-card-title">
-            <div>
-              <div class="dv-generator-card-token"></div>
-            </div>
-            <div class="overflow-hidden">
+          <div class="dv-generator-card-header">
+            <div class="dv-generator-card-title">
+              <div><div class="dv-generator-card-token"></div></div>
               <div class="dv-generator-card-type"></div>
-              <div class="dv-generator-card-name"></div>
+            </div>
+            <div>
+              <button class="dv-btn" type="button" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="dv-btn" type="button" title="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>
             </div>
           </div>
-          <div class="dv-generator-card-buttons">
-            <button class="dv-btn" type="button" title="Edit">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="dv-btn" type="button" title="Remove">
-              <i class="bi bi-x-lg"></i>
-            </button>
+          <div class="dv-generator-card-body">
+            <div class="dv-generator-card-name"></div>
           </div>
         </div>
       </template>

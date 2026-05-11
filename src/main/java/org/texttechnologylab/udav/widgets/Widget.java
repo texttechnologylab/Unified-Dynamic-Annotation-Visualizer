@@ -15,8 +15,17 @@ public abstract class Widget implements ChartHandler {
     protected final GeneratorDataRepository repo;
     protected final ObjectMapper mapper;
 
+
+    protected String resolveGeneratorType(String schema, String generatorId) {
+        if (repo == null) return null;
+        return repo.loadGeneratorType(schema, generatorId).orElse(null);
+    }
+
     // Overwrite if diagram should have a custom tex definition
     public String toTex(JsonNode jsonNode) { return null; }
+
+    // Overwrite if diagram should have a custom csv definition
+    public String toCsv(JsonNode jsonNode) { return null; }
 
     public static Widget constructWidget(String className, GeneratorDataRepository repo, ObjectMapper mapper) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (className.contains(".")) {

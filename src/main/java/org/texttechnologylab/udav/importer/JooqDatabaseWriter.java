@@ -19,12 +19,18 @@ import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
+import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +40,6 @@ import java.util.function.Supplier;
 import static org.jooq.impl.DSL.*;
 
 public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
-
     public static final String PARAM_JDBC_URL = "jdbcUrl";
     public static final String PARAM_DB_USER = "dbUser";
     public static final String PARAM_DB_PASS = "dbPass";
@@ -42,45 +47,64 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
     public static final String PARAM_BATCH_SIZE = "batchSize";
     public static final String PARAM_MAX_IDENT = "maxIdentifierLength";
     public static final String PARAM_SQL_DIALECT = "sqlDialect";
-
+    public static final String PARAM_PIPELINE_HASH = "pipelineHash";
+    public static final String PARAM_STORE_COVERED_TEXT = "storeCoveredText";
+    public static final String PARAM_ALLOW_DDL = "allowDdl";
+    public static final String PARAM_PREPARE_SCHEMA_ONLY = "prepareSchemaOnly";
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqDatabaseWriter.class);
-
-    private static final Map<String, DataType<?>> UIMA_PRIMITIVE_TO_SQL = Map.of(
-            "uima.cas.String", SQLDataType.CLOB,
-            "uima.cas.Integer", SQLDataType.INTEGER,
-            "uima.cas.Float", SQLDataType.REAL,
-            "uima.cas.Double", SQLDataType.DOUBLE,
-            "uima.cas.Boolean", SQLDataType.BOOLEAN,
-            "uima.cas.Long", SQLDataType.BIGINT,
-            "uima.cas.Short", SQLDataType.SMALLINT,
-            "uima.cas.Byte", SQLDataType.SMALLINT
-    );
-
-    private static final int TABLE_HASH_LEN = 16;
-
-    private static final Set<String> seenTsFingerprints = ConcurrentHashMap.newKeySet();
-    private static final Object DDL_LOCK = new Object();
-    private static final AtomicBoolean REGISTRY_READY = new AtomicBoolean(false);
-
+    private static final Map<String, DataType<?>> UIMA_PRIMITIVE_TO_SQL = Map.of("uima.cas.String", SQLDataType.CLOB, "uima.cas.Integer", SQLDataType.INTEGER, "uima.cas.Float", SQLDataType.REAL, "uima.cas.Double", SQLDataType.DOUBLE, "uima.cas.Boolean", SQLDataType.BOOLEAN, "uima.cas.Long", SQLDataType.BIGINT, "uima.cas.Short", SQLDataType.SMALLINT, "uima.cas.Byte", SQLDataType.SMALLINT);
+    private static final int TABLE_HASH_LEN = 8;
+    private static final int COPY_FLUSH_CHARS = 16 * 1024 * 1024;
+    private static final Map<RegistryKey, AtomicBoolean> REGISTRY_READY = new ConcurrentHashMap<>();
+    private static final Map<RegistryKey, Object> DDL_LOCKS = new ConcurrentHashMap<>();
+    private static final Map<RegistryKey, Set<String>> SEEN_TS_FINGERPRINTS = new ConcurrentHashMap<>();
+    private static final ThreadLocal<MessageDigest> SHA256 = ThreadLocal.withInitial(() -> {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    });
+    private static final char[] HEX = "0123456789abcdef".toCharArray();
     private final Map<String, String> typeToTable = new ConcurrentHashMap<>();
     private final Set<String> createdTables = ConcurrentHashMap.newKeySet();
-
+    @ConfigurationParameter(name = PARAM_JDBC_URL, mandatory = true)
+    private String jdbcUrl;
+    @ConfigurationParameter(name = PARAM_DB_USER, mandatory = false)
+    private String dbUser;
+    @ConfigurationParameter(name = PARAM_DB_PASS, mandatory = false)
+    private String dbPass;
+    @ConfigurationParameter(name = PARAM_SQL_DIALECT, mandatory = false)
+    private String sqlDialectName;
     @ConfigurationParameter(name = PARAM_SCHEMA, mandatory = false, defaultValue = "public")
-    private String schema;
-
-    @ConfigurationParameter(name = PARAM_BATCH_SIZE, mandatory = false, defaultValue = "1000")
-    private int batchSize;
-
+    private String schema = "public";
+    @ConfigurationParameter(name = PARAM_BATCH_SIZE, mandatory = false, defaultValue = "10000")
+    private int batchSize = 10000;
     @ConfigurationParameter(name = PARAM_MAX_IDENT, mandatory = false, defaultValue = "63")
-    private int maxIdentifierLength;
-
+    private int maxIdentifierLength = 63;
+    @ConfigurationParameter(name = PARAM_PIPELINE_HASH, mandatory = false, defaultValue = "unknown")
+    private String pipelineHash = "unknown";
+    @ConfigurationParameter(name = PARAM_STORE_COVERED_TEXT, mandatory = false, defaultValue = "false")
+    private boolean storeCoveredText = false;
+    @ConfigurationParameter(name = PARAM_ALLOW_DDL, mandatory = false, defaultValue = "true")
+    private boolean allowDdl = true;
+    @ConfigurationParameter(name = PARAM_PREPARE_SCHEMA_ONLY, mandatory = false, defaultValue = "false")
+    private boolean prepareSchemaOnly = false;
     private DSLContext dsl;
     private HikariDataSource dataSource;
+    private TypeSystem cachedTs;
+    private TsCache tsCache;
 
-    private static Iterable<Type> iterable(Iterator<Type> it) {
-        List<Type> out = new ArrayList<>();
-        while (it.hasNext()) out.add(it.next());
-        return out;
+    private static void updateHash(MessageDigest md, String key, String value) {
+        md.update(key.getBytes(StandardCharsets.UTF_8));
+        md.update((byte) '=');
+        md.update((value == null ? "" : value).getBytes(StandardCharsets.UTF_8));
+        md.update((byte) 0);
+    }
+
+    private static String featSortName(Feature f) {
+        String s = f.getShortName();
+        return s != null ? s : f.getName();
     }
 
     private static DocumentMetaData getOrCreateDocumentMeta(JCas jCas) {
@@ -88,7 +112,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             return DocumentMetaData.get(jCas);
         } catch (IllegalArgumentException e) {
             DocumentMetaData md = new DocumentMetaData(jCas);
-            md.setDocumentId(UUID.randomUUID().toString());
+            md.setDocumentId(deterministicTextId(jCas));
             md.setDocumentTitle("unknown");
             md.setDocumentUri(null);
             md.addToIndexes();
@@ -101,9 +125,44 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         if (v != null && !(v instanceof String s && s.isBlank())) return v;
         for (Supplier<T> fb : fallbacks) {
             T t = fb.get();
-            if (t != null && (!(t instanceof String) || !((String) t).isBlank())) return t;
+            if (t != null && (!(t instanceof String) || !((String) t).isBlank())) {
+                return t;
+            }
         }
         return null;
+    }
+
+    private static String deterministicDocumentId(JCas jCas, DocumentMetaData md) {
+        if (md != null) {
+            if (!isBlank(md.getDocumentId())) return stripXmiSuffix(md.getDocumentId());
+            if (!isBlank(md.getDocumentUri())) return DigestUtils.sha256Hex("uri:" + md.getDocumentUri());
+            if (!isBlank(md.getDocumentTitle())) return DigestUtils.sha256Hex("title:" + md.getDocumentTitle());
+        }
+        return deterministicTextId(jCas);
+    }
+
+    // ".xmi" is a serialization-format suffix, not part of a logical document identity.
+    // Stripping it here keeps doc_id consistent across docs whose upstream readers happen
+    // to set DocumentMetaData.documentId with or without the extension.
+    private static String stripXmiSuffix(String id) {
+        String s = id.trim();
+        if (s.length() > 4 && s.regionMatches(true, s.length() - 4, ".xmi", 0, 4)) {
+            return s.substring(0, s.length() - 4);
+        }
+        return s;
+    }
+
+    private static String deterministicTextId(JCas jCas) {
+        String text = null;
+        try {
+            text = jCas.getDocumentText();
+        } catch (Throwable ignored) {
+        }
+        return DigestUtils.sha256Hex("text:" + (text == null ? "" : text));
+    }
+
+    private static String emptyToNull(String s) {
+        return (s == null || s.isEmpty()) ? null : s;
     }
 
     private static boolean isBlank(String s) {
@@ -131,588 +190,631 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         return SQLDialect.DEFAULT;
     }
 
-    private static String emptyToNull(String s) {
-        return (s == null || s.isEmpty()) ? null : s;
+    private static int hardIdentifierLimitForDialect(SQLDialect dialect) {
+        return switch (dialect.family()) {
+            case POSTGRES -> 63;
+            case MYSQL, MARIADB -> 64;
+            default -> 63;
+        };
+    }
+
+    private static int normalizeIdentifierLimit(Integer configured, SQLDialect dialect) {
+        int hardLimit = hardIdentifierLimitForDialect(dialect);
+        int requested = configured == null || configured <= 0 ? hardLimit : configured;
+        return Math.max(16, Math.min(requested, hardLimit));
+    }
+
+    private static boolean isPgTypeCreateRace(DataAccessException e) {
+        String msg = e.getMessage();
+        return msg != null && msg.contains("pg_type_typname_nsp_index");
+    }
+
+    private static String rootMsg(Throwable t) {
+        Throwable c = t;
+        while (c.getCause() != null && c.getCause() != c) {
+            c = c.getCause();
+        }
+        return c.getMessage();
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        char[] out = new char[bytes.length * 2];
+        for (int i = 0, j = 0; i < bytes.length; i++) {
+            int b = bytes[i] & 0xff;
+            out[j++] = HEX[b >>> 4];
+            out[j++] = HEX[b & 0x0f];
+        }
+        return new String(out);
+    }
+
+    private static long advisoryLockKey(String key) {
+        MessageDigest md = SHA256.get();
+        md.reset();
+        byte[] digest = md.digest(key.getBytes(StandardCharsets.UTF_8));
+        return ByteBuffer.wrap(digest).getLong();
+    }
+
+    private static <T> Set<T> newIdentitySet() {
+        return Collections.newSetFromMap(new IdentityHashMap<>());
+    }
+
+    private static String stringParam(UimaContext context, String name, String fallback) {
+        Object v = context.getConfigParameterValue(name);
+        if (v == null) return fallback;
+        String s = String.valueOf(v);
+        return s.isBlank() ? fallback : s;
+    }
+
+    private static int intParam(UimaContext context, String name, int fallback) {
+        Object v = context.getConfigParameterValue(name);
+        if (v == null) return fallback;
+        if (v instanceof Number n) return n.intValue();
+        return Integer.parseInt(String.valueOf(v));
+    }
+
+    private static boolean booleanParam(UimaContext context, String name, boolean fallback) {
+        Object v = context.getConfigParameterValue(name);
+        if (v == null) return fallback;
+        if (v instanceof Boolean b) return b;
+        return Boolean.parseBoolean(String.valueOf(v));
     }
 
     @Override
     public void initialize(UimaContext context) throws ResourceInitializationException {
         super.initialize(context);
-
-        String jdbcUrl = (String) context.getConfigParameterValue(PARAM_JDBC_URL);
-        String dbUser = (String) context.getConfigParameterValue(PARAM_DB_USER);
-        String dbPass = (String) context.getConfigParameterValue(PARAM_DB_PASS);
-
-        this.schema = (String) context.getConfigParameterValue(PARAM_SCHEMA);
-        this.batchSize = (Integer) context.getConfigParameterValue(PARAM_BATCH_SIZE);
-        this.maxIdentifierLength = (Integer) context.getConfigParameterValue(PARAM_MAX_IDENT);
-        String sqlDialectName = (String) context.getConfigParameterValue(PARAM_SQL_DIALECT);
-
+        this.jdbcUrl = stringParam(context, PARAM_JDBC_URL, this.jdbcUrl);
+        this.dbUser = stringParam(context, PARAM_DB_USER, this.dbUser);
+        this.dbPass = stringParam(context, PARAM_DB_PASS, this.dbPass);
+        this.schema = stringParam(context, PARAM_SCHEMA, this.schema);
+        this.sqlDialectName = stringParam(context, PARAM_SQL_DIALECT, this.sqlDialectName);
+        this.pipelineHash = stringParam(context, PARAM_PIPELINE_HASH, this.pipelineHash);
+        this.batchSize = intParam(context, PARAM_BATCH_SIZE, this.batchSize);
+        this.maxIdentifierLength = intParam(context, PARAM_MAX_IDENT, this.maxIdentifierLength);
+        this.storeCoveredText = booleanParam(context, PARAM_STORE_COVERED_TEXT, this.storeCoveredText);
+        this.allowDdl = booleanParam(context, PARAM_ALLOW_DDL, this.allowDdl);
+        this.prepareSchemaOnly = booleanParam(context, PARAM_PREPARE_SCHEMA_ONLY, this.prepareSchemaOnly);
         if (isBlank(jdbcUrl)) {
-            throw new ResourceInitializationException(
-                    new IllegalArgumentException("JooqDatabaseWriter: jdbcUrl missing."));
+            throw new ResourceInitializationException(new IllegalArgumentException("JooqDatabaseWriter: jdbcUrl missing."));
         }
-
+        if (batchSize <= 0) {
+            throw new ResourceInitializationException(new IllegalArgumentException("batchSize must be > 0."));
+        }
+        if (prepareSchemaOnly && !allowDdl) {
+            throw new ResourceInitializationException(new IllegalArgumentException("prepareSchemaOnly=true requires allowDdl=true."));
+        }
         SQLDialect dialect = resolveDialect(sqlDialectName, jdbcUrl);
+        if (dialect.family() != SQLDialect.POSTGRES) {
+            throw new ResourceInitializationException(new IllegalArgumentException("JooqDatabaseWriter currently supports PostgreSQL only. Detected: " + dialect));
+        }
+        this.maxIdentifierLength = normalizeIdentifierLimit(this.maxIdentifierLength, dialect);
         this.schema = normalizeSchemaForDialect(this.schema, dialect);
-
         HikariConfig cfg = new HikariConfig();
         cfg.setJdbcUrl(jdbcUrl);
-        cfg.setUsername(dbUser);
-        cfg.setPassword(dbPass);
-
-        // scale writers -> need enough DB connections for batching + DDL + metadata
-        cfg.setMaximumPoolSize(16);
-        cfg.setMinimumIdle(1);
-
-        // one transaction per document, no auto-commit
+        if (!isBlank(dbUser)) {
+            cfg.setUsername(dbUser);
+        }
+        if (dbPass != null) {
+            cfg.setPassword(dbPass);
+        }
+        cfg.setMaximumPoolSize(1);
+        cfg.setMinimumIdle(0);
         cfg.setAutoCommit(false);
-
-        cfg.setPoolName("JooqWriterPool");
-
+        cfg.setPoolName("JooqWriterPool-" + Integer.toHexString(System.identityHashCode(this)));
+        cfg.addDataSourceProperty("reWriteBatchedInserts", "true");
+        cfg.addDataSourceProperty("ApplicationName", "udav-duui-importer");
         try {
             this.dataSource = new HikariDataSource(cfg);
         } catch (IllegalArgumentException e) {
             throw new ResourceInitializationException(e);
         }
-
-        // Reduce quoting overhead; still safe if you keep identifiers sane.
         Settings settings = new Settings().withRenderQuotedNames(RenderQuotedNames.EXPLICIT_DEFAULT_QUOTED);
         this.dsl = DSL.using(this.dataSource, dialect, settings);
-
-        ensureRegistryTablesOnce();
-    }
-
-    private void ensureRegistryTablesOnce() {
-        if (REGISTRY_READY.get()) return;
-        synchronized (DDL_LOCK) {
-            if (REGISTRY_READY.get()) return;
-
-            // Run all DDL on a single dedicated connection with autoCommit=true so that
-            // each statement is immediately visible to the next one on the same connection.
-            // This avoids the "relation does not exist" error that occurs when DDL and the
-            // subsequent CREATE INDEX run on different pool connections with autoCommit=false.
-            dsl.connection(conn -> {
-                boolean prevAutoCommit = conn.getAutoCommit();
-                conn.setAutoCommit(true);
-                try {
-                    DSLContext ddl = DSL.using(conn, dsl.dialect(), dsl.settings());
-
-                    ddl.createSchemaIfNotExists(DSL.name(schema)).execute();
-
-                    ddl.createTableIfNotExists(DSL.name(schema, "uima_type_registry"))
-                            .column("id", SQLDataType.BIGINT.identity(true))
-                            .column("uima_type_uri", SQLDataType.CLOB.nullable(false))
-                            .column("table_name", SQLDataType.CLOB.nullable(false))
-                            .column("row_count", SQLDataType.BIGINT.defaultValue(0L))
-                            .column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(DSL.currentOffsetDateTime()))
-                            .constraints(
-                                    DSL.constraint(DSL.name(cut("pk_uima_type_registry"))).primaryKey("id"),
-                                    DSL.constraint(DSL.name(cut("uq_type_uri"))).unique("uima_type_uri"),
-                                    DSL.constraint(DSL.name(cut("uq_table_name"))).unique("table_name")
-                            )
-                            .execute();
-
-                    ddl.createTableIfNotExists(DSL.name(schema, "documents"))
-                            .column("doc_id", SQLDataType.CLOB.nullable(false))
-                            .column("uri", SQLDataType.CLOB.nullable(true))
-                            .column("language", SQLDataType.CLOB.nullable(true))
-                            .column("content_hash", SQLDataType.VARCHAR(64).nullable(true))
-                            .column("ts_hash", SQLDataType.VARCHAR(64).nullable(true))
-                            .constraints(DSL.constraint(DSL.name(cut("pk_documents"))).primaryKey("doc_id"))
-                            .execute();
-
-                    ddl.createTableIfNotExists(DSL.name(schema, "type_system_fingerprints"))
-                            .column("ts_hash", SQLDataType.CLOB.nullable(false))
-                            .column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(DSL.currentOffsetDateTime()))
-                            .constraints(DSL.constraint(DSL.name(cut("pk_ts_fingerprint"))).primaryKey("ts_hash"))
-                            .execute();
-
-                    ddl.createTableIfNotExists(DSL.name(schema, "sofas"))
-                            .column("doc_id", SQLDataType.CLOB.nullable(false))
-                            .column("sofa_id", SQLDataType.VARCHAR(128).nullable(false))
-                            .column("sofa_num", SQLDataType.INTEGER.nullable(true))
-                            .column("mime_type", SQLDataType.CLOB.nullable(true))
-                            .column("sofa_uri", SQLDataType.CLOB.nullable(true))
-                            .column("sofa_string", SQLDataType.CLOB.nullable(true))
-                            .column("sofa_hash", SQLDataType.VARCHAR(64).nullable(true))
-                            .column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(DSL.currentOffsetDateTime()))
-                            .constraints(
-                                    DSL.constraint(DSL.name(cut("pk_sofas"))).primaryKey("doc_id", "sofa_id")
-                            )
-                            .execute();
-
-                    ddl.createIndexIfNotExists(DSL.name(cut("idx_sofas_doc_id")))
-                            .on(DSL.table(DSL.name(schema, "sofas")), DSL.field(DSL.name("doc_id")))
-                            .execute();
-
-                    ensureRowCountColumn(ddl);
-                } finally {
-                    conn.setAutoCommit(prevAutoCommit);
-                }
-            });
-
-            REGISTRY_READY.set(true);
-        }
-    }
-
-    private void ensureRowCountColumn(DSLContext ctx) {
-        try {
-            ctx.select(field(name("row_count")))
-                    .from(table(name(schema, "uima_type_registry")))
-                    .limit(1)
-                    .fetch();
-        } catch (DataAccessException e) {
-            if (e.getMessage() != null && e.getMessage().contains("does not exist")) {
-                try {
-                    String alterSql = String.format(
-                            "ALTER TABLE \"%s\".\"uima_type_registry\" ADD COLUMN \"row_count\" BIGINT DEFAULT 0",
-                            schema);
-                    ctx.execute(alterSql);
-                } catch (DataAccessException ignore) {
-                }
-            }
+        if (allowDdl) {
+            ensureRegistryTablesOnce();
         }
     }
 
     @Override
     public void process(JCas jCas) {
-        // one transaction per document
+        long t0 = System.nanoTime();
+        TypeSystem ts = jCas.getTypeSystem();
+        TsCache cache = getOrBuildTsCache(ts);
+        ensureTablesForTypeSystem(cache);
+        long t1 = System.nanoTime();
+        if (prepareSchemaOnly) {
+            LOGGER.debug("[schema-prep] TypeSystem prepared. tsHash={} ddlMs={}", cache.tsHash, (t1 - t0) / 1_000_000);
+            return;
+        }
+        DocumentMetaData md = getOrCreateDocumentMeta(jCas);
+        final String docId = deterministicDocumentId(jCas, md);
+        final String uri = safe(md.getDocumentUri(), md::getDocumentTitle, () -> docId);
+        final String lang = jCas.getDocumentLanguage();
+        final Map<String, SofaData> sofas = collectSofas(jCas);
+        final String contentHash = computeContentHashFromSofas(sofas);
+        long t2 = System.nanoTime();
+        DocumentState documentState = getDocumentState(dsl, docId, cache.tsHash, contentHash, pipelineHash);
+        if (documentState.upToDate()) {
+            LOGGER.info("[skip] Document '{}' is up-to-date, skipping.", docId);
+            return;
+        }
+        long t3 = System.nanoTime();
+        LOGGER.info("[process] Document '{}' needs (re)import. ddlMs={} extractMs={} skipCheckMs={}", docId, (t1 - t0) / 1_000_000, (t2 - t1) / 1_000_000, (t3 - t2) / 1_000_000);
+        final Map<String, SofaData> sofasBySofaId = sofas;
+        final List<TypeMeta> typeMetas = cache.types;
         dsl.transaction(conf -> {
             DSLContext tx = DSL.using(conf);
-
-            TypeSystem ts = jCas.getTypeSystem();
-            ensureTablesForTypeSystem(tx, ts);
-
-            DocumentMetaData md = getOrCreateDocumentMeta(jCas);
-            String docId = safe(md.getDocumentId(), md::getDocumentUri, md::getDocumentTitle, () -> UUID.randomUUID().toString());
-            String uri = safe(md.getDocumentUri(), md::getDocumentTitle, () -> docId);
-            String lang = jCas.getDocumentLanguage();
-
-            String tsHash = computeTypeSystemHash(ts);
-
-            // collect sofa data from the CAS in-memory — no DB writes yet.
-            Map<String, SofaData> sofas = collectSofas(jCas);
-            String contentHash = computeContentHashFromSofas(tsHash, sofaHashMap(sofas));
-
-            LOGGER.debug("[skip-check] docId='{}' tsHash='{}' contentHash='{}'", docId, tsHash, contentHash);
-            if (isDocumentUpToDate(tx, docId, tsHash, contentHash)) {
-                LOGGER.info("[skip] Document '{}' is up-to-date, skipping.", docId);
+            acquireDocumentLock(tx, docId);
+            DocumentState lockedState = getDocumentState(tx, docId, cache.tsHash, contentHash, pipelineHash);
+            if (lockedState.upToDate()) {
+                LOGGER.info("[skip] Document '{}' became up-to-date after lock, skipping.", docId);
                 return;
             }
-            LOGGER.info("[process] Document '{}' needs (re)import.", docId);
-
-            // only write to the DB if the document actually needs (re)importing.
+            if (lockedState.exists()) {
+                deleteExistingRowsForDocument(tx, docId);
+            }
             upsertSofas(tx, docId, sofas);
-            upsertDocument(tx, docId, uri, lang, tsHash, contentHash);
-
-            for (Type t : iterable(ts.getTypeIterator())) {
-                if (isSkippableType(t)) continue;
-
-                String tableNameHash = typeToTable.get(t.getName());
-                if (tableNameHash == null) continue;
-
-                String colRowHash = sysColName(tableNameHash, "row_hash");
-                String colDocId = sysColName(tableNameHash, "doc_id");
-                String colSofaId = sysColName(tableNameHash, "sofa_id");
-                String colBegin = sysColName(tableNameHash, "fs_begin");
-                String colEnd = sysColName(tableNameHash, "fs_end");
-                String colText = sysColName(tableNameHash, "covered_text");
-                String colFsJson = sysColName(tableNameHash, "fs_json");
-
-                boolean isAnno = ts.subsumes(ts.getType("uima.tcas.Annotation"), t);
-
-                if (isAnno) {
-                    var idx = jCas.getCas().getAnnotationIndex(t);
-                    if (idx == null || idx.isEmpty()) continue;
-
-                    String docText = jCas.getDocumentText();
-                    int docLength = docText != null ? docText.length() : 0;
-
-                    List<Query> batch = new ArrayList<>(Math.min(idx.size(), batchSize));
-                    for (AnnotationFS fs : idx) {
-                        String sofaId = sofaIdForFs(fs);
-
-                        Map<Field<?>, Object> values = new LinkedHashMap<>();
-                        values.put(field(name(colRowHash)), computeRowHash(ts, t, docId, tableNameHash, fs));
-                        values.put(field(name(colDocId)), docId);
-                        values.put(field(name(colSofaId)), sofaId);
-                        values.put(field(name(colBegin)), fs.getBegin());
-                        values.put(field(name(colEnd)), fs.getEnd());
-                        values.put(field(name(colText)), safeCoveredText(docText, docLength, fs.getBegin(), fs.getEnd()));
-
-                        for (Feature f : t.getFeatures()) {
-                            if (!isPrimitive(f)) continue;
-                            values.putIfAbsent(field(name(featColName(tableNameHash, f))),
-                                    FeatureJsonSerializer.readPrimitive(fs, f));
+            upsertDocument(tx, docId, uri, lang, cache.tsHash, contentHash, pipelineHash);
+            org.apache.uima.cas.CAS base = jCas.getCas();
+            List<org.apache.uima.cas.CAS> views = new ArrayList<>();
+            for (Iterator<org.apache.uima.cas.CAS> vit = base.getViewIterator(); vit.hasNext(); ) {
+                views.add(vit.next());
+            }
+            for (TypeMeta meta : typeMetas) {
+                if (meta.tableNameHash == null) continue;
+                long typeStart = System.nanoTime();
+                int rowsForType = 0;
+                CopyBatch copy = new CopyBatch(tx, meta.tableNameHash, copyColumnNames(meta.tableNameHash, meta.isAnno, meta.primFeats));
+                Object[] row = new Object[meta.bindCount];
+                Object[] featValues = new Object[meta.primFeats.size()];
+                Set<AnnotationFS> seenAnnoFs = meta.isAnno ? newIdentitySet() : null;
+                Set<org.apache.uima.cas.FeatureStructure> seenGenericFs = meta.isAnno ? null : newIdentitySet();
+                for (org.apache.uima.cas.CAS view : views) {
+                    if (meta.isAnno) {
+                        var idx = view.getAnnotationIndex(meta.type);
+                        if (idx == null || idx.size() == 0) continue;
+                        SofaData sd = sofaDataForView(sofasBySofaId, view);
+                        String docText = sd != null ? sd.text() : view.getDocumentText();
+                        int docLength = docText != null ? docText.length() : 0;
+                        for (AnnotationFS fs : idx) {
+                            if (!fs.getType().getName().equals(meta.typeName)) continue;
+                            if (!seenAnnoFs.add(fs)) continue;
+                            for (int i = 0; i < meta.primFeats.size(); i++) {
+                                featValues[i] = FeatureJsonSerializer.readPrimitive(fs, meta.primFeats.get(i));
+                            }
+                            String fsViewName = sofaIdForFs(fs);
+                            int begin = fs.getBegin();
+                            int end = fs.getEnd();
+                            row[0] = docId;
+                            row[1] = fsViewName;
+                            row[2] = begin;
+                            row[3] = end;
+                            int offset;
+                            if (storeCoveredText) {
+                                row[4] = safeCoveredText(docText, docLength, begin, end);
+                                offset = 5;
+                            } else {
+                                offset = 4;
+                            }
+                            for (int i = 0; i < meta.primFeats.size(); i++) {
+                                row[offset + i] = featValues[i];
+                            }
+                            copy.add(row);
+                            rowsForType++;
                         }
-
-                        values.put(field(name(colFsJson)), FeatureJsonSerializer.toJsonPrimitivesOnly(fs));
-
-                        batch.add(insertIgnore(tx, tableNameHash, values, colRowHash));
-                        if (batch.size() >= batchSize) {
-                            tx.batch(batch).execute();
-                            batch.clear();
+                    } else {
+                        var it = view.getIndexRepository().getAllIndexedFS(meta.type);
+                        if (it == null) continue;
+                        while (it.hasNext()) {
+                            org.apache.uima.cas.FeatureStructure fs = it.next();
+                            if (!fs.getType().getName().equals(meta.typeName)) continue;
+                            if (!seenGenericFs.add(fs)) continue;
+                            for (int i = 0; i < meta.primFeats.size(); i++) {
+                                featValues[i] = FeatureJsonSerializer.readPrimitive(fs, meta.primFeats.get(i));
+                            }
+                            String fsViewName = sofaIdForFs(fs);
+                            row[0] = docId;
+                            row[1] = fsViewName;
+                            for (int i = 0; i < meta.primFeats.size(); i++) {
+                                row[2 + i] = featValues[i];
+                            }
+                            copy.add(row);
+                            rowsForType++;
                         }
                     }
-                    if (!batch.isEmpty()) tx.batch(batch).execute();
-
-                } else {
-                    var it = jCas.getCas().getIndexRepository().getAllIndexedFS(t);
-                    if (it == null) continue;
-
-                    List<Query> batch = new ArrayList<>(batchSize);
-                    it.forEachRemaining(fs -> {
-                        String sofaId = sofaIdForFs(fs);
-
-                        Map<Field<?>, Object> values = new LinkedHashMap<>();
-                        values.put(field(name(colRowHash)), computeRowHash(ts, t, docId, tableNameHash, fs));
-                        values.put(field(name(colDocId)), docId);
-                        values.put(field(name(colSofaId)), sofaId);
-
-                        for (Feature f : t.getFeatures()) {
-                            if (!isPrimitive(f)) continue;
-                            values.put(field(name(featColName(tableNameHash, f))),
-                                    FeatureJsonSerializer.readPrimitive(fs, f));
-                        }
-                        values.put(field(name(colFsJson)), FeatureJsonSerializer.toJsonPrimitivesOnly(fs));
-
-                        batch.add(insertIgnore(tx, tableNameHash, values, colRowHash));
-                        if (batch.size() >= batchSize) {
-                            tx.batch(batch).execute();
-                            batch.clear();
-                        }
-                    });
-                    if (!batch.isEmpty()) tx.batch(batch).execute();
+                }
+                copy.flush();
+                if (rowsForType > 0) {
+                    LOGGER.debug("[type-import-copy] doc={} type={} table={} rows={} ms={}", docId, meta.typeName, meta.tableNameHash, rowsForType, (System.nanoTime() - typeStart) / 1_000_000);
                 }
             }
         });
+        LOGGER.info("[done] Document '{}' imported in {}ms.", docId, (System.nanoTime() - t0) / 1_000_000);
     }
 
-    private void ensureTablesForTypeSystem(DSLContext ctx, TypeSystem ts) {
-        String tsHash = computeTypeSystemHash(ts);
-        if (seenTsFingerprints.contains(tsHash)) return;
-
-        synchronized (DDL_LOCK) {
-            if (seenTsFingerprints.contains(tsHash)) return;
-
-            if (fingerprintExists(ctx, tsHash)) {
-                preloadTypeToTableFromRegistry(ctx, ts);
-                seenTsFingerprints.add(tsHash);
-                return;
+    private void appendCopyTextValue(StringBuilder sb, Object value) {
+        if (value == null) {
+            sb.append("\\N");
+            return;
+        }
+        String s;
+        if (value instanceof Boolean b) {
+            s = b ? "true" : "false";
+        } else {
+            s = String.valueOf(value);
+        }
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '\\' -> sb.append("\\\\");
+                case '\t' -> sb.append("\\t");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\0' -> {
+                }
+                default -> sb.append(c);
             }
-
-            for (Type t : iterable(ts.getTypeIterator())) {
-                if (isSkippableType(t)) continue;
-
-                String uimaType = t.getName();
-                String tableNameHash = typeToTable.computeIfAbsent(uimaType, this::toSafeTableName);
-                if (createdTables.contains(tableNameHash)) continue;
-
-                String pkCol = pkColName(tableNameHash);
-                String colRowH = sysColName(tableNameHash, "row_hash");
-                String colDoc = sysColName(tableNameHash, "doc_id");
-                String colSofa = sysColName(tableNameHash, "sofa_id");
-                String colBegin = sysColName(tableNameHash, "fs_begin");
-                String colEnd = sysColName(tableNameHash, "fs_end");
-                String colText = sysColName(tableNameHash, "covered_text");
-                String colFsJs = sysColName(tableNameHash, "fs_json");
-
-                List<Field<?>> cols = new ArrayList<>();
-                cols.add(field(name(pkCol), SQLDataType.BIGINT.identity(true)));
-                cols.add(field(name(colRowH), SQLDataType.VARCHAR(64).nullable(false)));
-                cols.add(field(name(colDoc), SQLDataType.CLOB.nullable(false)));
-                cols.add(field(name(colSofa), SQLDataType.VARCHAR(128).nullable(false)));
-
-                boolean isAnno = ts.subsumes(ts.getType("uima.tcas.Annotation"), t);
-                if (isAnno) {
-                    cols.add(field(name(colBegin), SQLDataType.INTEGER.nullable(false)));
-                    cols.add(field(name(colEnd), SQLDataType.INTEGER.nullable(false)));
-                    cols.add(field(name(colText), SQLDataType.CLOB.nullable(true)));
-                }
-
-                for (Feature f : t.getFeatures()) {
-                    if (!isPrimitive(f)) continue;
-
-                    DataType<?> dt = mapPrimitiveType(f.getRange().getName()).nullable(true);
-                    cols.add(field(name(featColName(tableNameHash, f)), dt));
-                }
-
-                cols.add(field(name(colFsJs), SQLDataType.JSON.nullable(true)));
-
-                ctx.createTableIfNotExists(name(schema, tableNameHash))
-                        .columns(cols)
-                        .constraints(
-                                constraint(name(cut("pk_" + tableNameHash))).primaryKey(field(name(pkCol))),
-                                constraint(name(cut("uq_" + tableNameHash + "_rowhash"))).unique(field(name(colRowH)))
-                        )
-                        .execute();
-
-                if (isAnno) {
-                    ctx.createIndexIfNotExists(name(cut("idx_" + tableNameHash + "_doc_sofa_begin")))
-                            .on(table(name(schema, tableNameHash)),
-                                    field(name(colDoc)), field(name(colSofa)), field(name(colBegin)))
-                            .execute();
-                } else {
-                    ctx.createIndexIfNotExists(name(cut("idx_" + tableNameHash + "_doc_sofa")))
-                            .on(table(name(schema, tableNameHash)),
-                                    field(name(colDoc)), field(name(colSofa)))
-                            .execute();
-                }
-
-                upsertTypeRegistry(ctx, uimaType, tableNameHash);
-                createdTables.add(tableNameHash);
-            }
-
-            insertFingerprint(ctx, tsHash);
-            seenTsFingerprints.add(tsHash);
         }
     }
 
-    private boolean isSkippableType(Type t) {
-        String n = t.getName();
-        return n.startsWith("uima.cas.") && !n.equals("uima.tcas.Annotation");
+    private List<String> copyColumnNames(String tableNameHash, boolean isAnno, List<Feature> primFeats) {
+        List<String> cols = new ArrayList<>();
+        cols.add(sysColName(tableNameHash, "doc_id"));
+        cols.add(sysColName(tableNameHash, "sofa_id"));
+        if (isAnno) {
+            cols.add(sysColName(tableNameHash, "fs_begin"));
+            cols.add(sysColName(tableNameHash, "fs_end"));
+            if (storeCoveredText) {
+                cols.add(sysColName(tableNameHash, "covered_text"));
+            }
+        }
+        for (Feature f : primFeats) {
+            cols.add(featColName(tableNameHash, f));
+        }
+        return cols;
     }
 
-    private boolean isPrimitive(Feature f) {
-        return UIMA_PRIMITIVE_TO_SQL.containsKey(f.getRange().getName());
+    private void acquireDocumentLock(DSLContext tx, String docId) {
+        tx.execute("SELECT pg_advisory_xact_lock(?)", advisoryLockKey("uima-doc:" + docId));
+    }
+
+    private void deleteExistingRowsForDocument(DSLContext tx, String docId) {
+        for (String tableName : existingRegisteredTypeTables(tx)) {
+            Field<Object> docField = field(name(sysColName(tableName, "doc_id")));
+            tx.deleteFrom(table(name(schema, tableName))).where(docField.eq(docId)).execute();
+        }
+        tx.deleteFrom(table(name(schema, "sofas"))).where(field(name("doc_id")).eq(docId)).execute();
+    }
+
+    private Set<String> existingRegisteredTypeTables(DSLContext ctx) {
+        Set<String> registered = new TreeSet<>();
+        try {
+            List<String> registryTables = ctx.select(field(name("table_name"), String.class)).from(table(name(schema, "uima_type_registry"))).fetch(field(name("table_name"), String.class));
+            registered.addAll(registryTables);
+        } catch (DataAccessException e) {
+            if (!allowDdl) {
+                throw new IllegalStateException("DDL is disabled and uima_type_registry cannot be read.", e);
+            }
+            throw e;
+        }
+        registered.addAll(typeToTable.values());
+        if (registered.isEmpty()) {
+            return registered;
+        }
+        return new TreeSet<>(ctx.select(field(name("table_name"), String.class)).from(table(name("information_schema", "tables"))).where(field(name("table_schema"), String.class).eq(schema)).and(field(name("table_name"), String.class).in(registered)).fetch(field(name("table_name"), String.class)));
+    }
+
+    private RegistryKey registryKey() {
+        return new RegistryKey(jdbcUrl, schema);
+    }
+
+    private Object ddlLock() {
+        return DDL_LOCKS.computeIfAbsent(registryKey(), ignored -> new Object());
+    }
+
+    private Set<String> seenTsFingerprints() {
+        return SEEN_TS_FINGERPRINTS.computeIfAbsent(registryKey(), ignored -> ConcurrentHashMap.newKeySet());
+    }
+
+    private AtomicBoolean registryReadyFlag() {
+        return REGISTRY_READY.computeIfAbsent(registryKey(), ignored -> new AtomicBoolean(false));
+    }
+
+    private void ensureRegistryTablesOnce() {
+        AtomicBoolean ready = registryReadyFlag();
+        if (ready.get()) return;
+        synchronized (ddlLock()) {
+            if (ready.get()) return;
+            dsl.connection(conn -> {
+                boolean prevAutoCommit = conn.getAutoCommit();
+                conn.setAutoCommit(true);
+                try {
+                    DSLContext ddl = DSL.using(conn, dsl.dialect(), dsl.settings());
+                    ddl.createSchemaIfNotExists(DSL.name(schema)).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "uima_type_registry")).column("id", SQLDataType.BIGINT.identity(true)).column("uima_type_uri", SQLDataType.CLOB.nullable(false)).column("table_name", SQLDataType.VARCHAR(maxIdentifierLength).nullable(false)).column("row_count", SQLDataType.BIGINT.defaultValue(0L)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_uima_type_registry"))).primaryKey("id"), constraint(DSL.name(cutWithHash("uq_type_uri"))).unique("uima_type_uri"), constraint(DSL.name(cutWithHash("uq_table_name"))).unique("table_name")).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "documents")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("uri", SQLDataType.CLOB.nullable(true)).column("language", SQLDataType.VARCHAR(32).nullable(true)).column("content_hash", SQLDataType.VARCHAR(64).nullable(true)).column("ts_hash", SQLDataType.VARCHAR(64).nullable(true)).column("pipeline_hash", SQLDataType.VARCHAR(64).nullable(true)).constraints(constraint(DSL.name(cutWithHash("pk_documents"))).primaryKey("doc_id")).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "type_system_fingerprints")).column("ts_hash", SQLDataType.VARCHAR(64).nullable(false)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_ts_fingerprint"))).primaryKey("ts_hash")).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "sofas")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("sofa_id", SQLDataType.VARCHAR(128).nullable(false)).column("sofa_num", SQLDataType.INTEGER.nullable(true)).column("mime_type", SQLDataType.CLOB.nullable(true)).column("sofa_uri", SQLDataType.CLOB.nullable(true)).column("sofa_string", SQLDataType.CLOB.nullable(true)).column("sofa_hash", SQLDataType.VARCHAR(64).nullable(true)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_sofas"))).primaryKey("doc_id", "sofa_id")).execute();
+                    ddl.createIndexIfNotExists(DSL.name(cutWithHash("idx_sofas_doc_id"))).on(DSL.table(DSL.name(schema, "sofas")), DSL.field(DSL.name("doc_id"))).execute();
+                    ensureCompatibilityColumns(ddl);
+                } finally {
+                    conn.setAutoCommit(prevAutoCommit);
+                }
+            });
+            ready.set(true);
+        }
+    }
+
+    private void ensureCompatibilityColumns(DSLContext ctx) {
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q("uima_type_registry") + " ADD COLUMN IF NOT EXISTS " + q("row_count") + " BIGINT DEFAULT 0");
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q("documents") + " ADD COLUMN IF NOT EXISTS " + q("pipeline_hash") + " VARCHAR(64)");
+    }
+
+    private void ensureTablesForTypeSystem(TsCache cache) {
+        Set<String> seenTs = seenTsFingerprints();
+        if (!allowDdl) {
+            preloadTypeToTableFromRegistry(dsl, cache);
+            seenTs.add(cache.tsHash);
+            resolveTableHashesIntoCache(cache, true);
+            return;
+        }
+        if (seenTs.contains(cache.tsHash) && hasTableMappingsForAllTypes(cache)) {
+            resolveTableHashesIntoCache(cache, false);
+            return;
+        }
+        synchronized (ddlLock()) {
+            if (seenTs.contains(cache.tsHash) && hasTableMappingsForAllTypes(cache)) {
+                resolveTableHashesIntoCache(cache, false);
+                return;
+            }
+            dsl.connection(conn -> {
+                boolean prevAutoCommit = conn.getAutoCommit();
+                conn.setAutoCommit(true);
+                try {
+                    DSLContext ctx = DSL.using(conn, dsl.dialect(), dsl.settings());
+                    acquireSchemaDdlLock(ctx);
+                    try {
+                        runTypeSystemDDL(ctx, cache);
+                    } finally {
+                        releaseSchemaDdlLock(ctx);
+                    }
+                } finally {
+                    conn.setAutoCommit(prevAutoCommit);
+                }
+            });
+            resolveTableHashesIntoCache(cache, true);
+        }
+    }
+
+    private boolean hasTableMappingsForAllTypes(TsCache cache) {
+        for (TypeMeta meta : cache.types) {
+            if (meta.tableNameHash == null && !typeToTable.containsKey(meta.typeName)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void acquireSchemaDdlLock(DSLContext ctx) {
+        ctx.execute("SELECT pg_advisory_lock(?)", advisoryLockKey("uima-ddl:" + schema));
+    }
+
+    private void releaseSchemaDdlLock(DSLContext ctx) {
+        ctx.execute("SELECT pg_advisory_unlock(?)", advisoryLockKey("uima-ddl:" + schema));
+    }
+
+    private void resolveTableHashesIntoCache(TsCache cache, boolean requireAll) {
+        if (cache.types.isEmpty()) return;
+        List<TypeMeta> resolved = new ArrayList<>(cache.types.size());
+        List<String> missing = new ArrayList<>();
+        for (TypeMeta meta : cache.types) {
+            String hash = meta.tableNameHash != null ? meta.tableNameHash : typeToTable.get(meta.typeName);
+            if (hash == null) {
+                if (requireAll) missing.add(meta.typeName);
+                continue;
+            }
+            if (Objects.equals(meta.tableNameHash, hash)) {
+                resolved.add(meta);
+            } else {
+                resolved.add(new TypeMeta(meta.type, meta.isAnno, meta.primFeats, hash, storeCoveredText));
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException("DDL is disabled or schema registry is incomplete. Missing DB table mappings for UIMA types. Examples: " + missing.stream().limit(10).toList());
+        }
+        cache.types.clear();
+        cache.types.addAll(resolved);
+    }
+
+    private void runTypeSystemDDL(DSLContext ctx, TsCache cache) {
+        Set<String> seenTs = seenTsFingerprints();
+        if (fingerprintExists(ctx, cache.tsHash)) {
+            preloadTypeToTableFromRegistry(ctx, cache);
+            seenTs.add(cache.tsHash);
+            return;
+        }
+        for (TypeMeta meta : cache.types) {
+            String uimaType = meta.typeName;
+            String tableNameHash = typeToTable.computeIfAbsent(uimaType, this::toSafeTableName);
+            String colDoc = sysColName(tableNameHash, "doc_id");
+            String colSofa = sysColName(tableNameHash, "sofa_id");
+            String colBegin = sysColName(tableNameHash, "fs_begin");
+            String colEnd = sysColName(tableNameHash, "fs_end");
+            String colText = sysColName(tableNameHash, "covered_text");
+            if (!createdTables.contains(tableNameHash)) {
+                List<Field<?>> cols = new ArrayList<>();
+                cols.add(field(name(colDoc), SQLDataType.VARCHAR(512).nullable(false)));
+                cols.add(field(name(colSofa), SQLDataType.VARCHAR(128).nullable(false)));
+                if (meta.isAnno) {
+                    cols.add(field(name(colBegin), SQLDataType.INTEGER.nullable(false)));
+                    cols.add(field(name(colEnd), SQLDataType.INTEGER.nullable(false)));
+                    if (storeCoveredText) {
+                        cols.add(field(name(colText), SQLDataType.CLOB.nullable(true)));
+                    }
+                }
+                for (Feature f : meta.primFeats) {
+                    DataType<?> dt = mapPrimitiveType(f.getRange().getName()).nullable(true);
+                    cols.add(field(name(featColName(tableNameHash, f)), dt));
+                }
+                try {
+                    ctx.createTableIfNotExists(name(schema, tableNameHash)).columns(cols).execute();
+                } catch (DataAccessException e) {
+                    if (!isPgTypeCreateRace(e)) throw e;
+                    LOGGER.debug("Ignoring PostgreSQL CREATE TABLE type race for table {}: {}", tableNameHash, rootMsg(e));
+                }
+            }
+            ensureTypeCompatibilityColumns(ctx, tableNameHash, meta);
+            // Secondary indexes (idx_*_doc_sofa[_begin]) are intentionally NOT created here.
+            // PostImportIndexBuilder builds them once after all COPY work finishes — bulk-built
+            // btrees are denser and faster than maintaining them incrementally during COPY.
+            upsertTypeRegistry(ctx, uimaType, tableNameHash);
+            createdTables.add(tableNameHash);
+        }
+        insertFingerprint(ctx, cache.tsHash);
+        seenTs.add(cache.tsHash);
+    }
+
+    private void ensureTypeCompatibilityColumns(DSLContext ctx, String tableNameHash, TypeMeta meta) {
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(sysColName(tableNameHash, "doc_id")) + " VARCHAR(512)");
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(sysColName(tableNameHash, "sofa_id")) + " VARCHAR(128)");
+        if (meta.isAnno) {
+            ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(sysColName(tableNameHash, "fs_begin")) + " INTEGER");
+            ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(sysColName(tableNameHash, "fs_end")) + " INTEGER");
+            if (storeCoveredText) {
+                ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(sysColName(tableNameHash, "covered_text")) + " TEXT");
+            }
+        }
+        for (Feature f : meta.primFeats) {
+            ctx.execute("ALTER TABLE " + q(schema) + "." + q(tableNameHash) + " ADD COLUMN IF NOT EXISTS " + q(featColName(tableNameHash, f)) + " " + postgresTypeSql(f.getRange().getName()));
+        }
+    }
+
+    private String postgresTypeSql(String rangeName) {
+        return switch (rangeName) {
+            case "uima.cas.String" -> "TEXT";
+            case "uima.cas.Integer" -> "INTEGER";
+            case "uima.cas.Float" -> "REAL";
+            case "uima.cas.Double" -> "DOUBLE PRECISION";
+            case "uima.cas.Boolean" -> "BOOLEAN";
+            case "uima.cas.Long" -> "BIGINT";
+            case "uima.cas.Short", "uima.cas.Byte" -> "SMALLINT";
+            default -> "TEXT";
+        };
     }
 
     private DataType<?> mapPrimitiveType(String rangeName) {
         return UIMA_PRIMITIVE_TO_SQL.getOrDefault(rangeName, SQLDataType.CLOB);
     }
 
-    private String toSafeTableName(String uimaTypeName) {
-        return tableHash(uimaTypeName);
-    }
-
-    private String normalizeSchemaForDialect(String schema, SQLDialect dialect) {
-        String s = (schema == null || schema.isBlank()) ? "public" : schema;
-        if (dialect.family() == SQLDialect.H2 && "public".equalsIgnoreCase(s)) return "PUBLIC";
-        if (dialect.family() == SQLDialect.POSTGRES) return s.toLowerCase(Locale.ROOT);
-        return s;
-    }
-
-    private String sanitizeIdent(String s) {
-        return (s == null ? "" : s.replaceAll("[^A-Za-z0-9_]", "_").toLowerCase(Locale.ROOT));
-    }
-
-    private String cut(String s) {
-        return s.length() <= maxIdentifierLength ? s : s.substring(0, maxIdentifierLength);
-    }
-
-    private String tableHash(String uimaTypeName) {
-        String h = DigestUtils.sha256Hex(uimaTypeName).toLowerCase(Locale.ROOT);
-        return cut(h.substring(0, Math.min(TABLE_HASH_LEN, h.length())));
-    }
-
-    private String pkColName(String tableHash) {
-        return cut(tableHash + "_row_id");
-    }
-
-    private String sysColName(String tableHash, String base) {
-        return cut(tableHash + "_" + sanitizeIdent(base));
-    }
-
-    private String featColName(String tableHash, Feature f) {
-        String base = sanitizeIdent(f.getShortName() != null ? f.getShortName() : f.getName());
-        return cut(tableHash + "_f_" + base);
-    }
-
-    private String computeTypeSystemHash(TypeSystem ts) {
-        List<String> parts = new ArrayList<>();
-        for (Type t : iterable(ts.getTypeIterator())) {
-            if (isSkippableType(t)) continue;
-
-            boolean isAnno = ts.subsumes(ts.getType("uima.tcas.Annotation"), t);
-            List<String> feats = new ArrayList<>();
-            for (Feature f : t.getFeatures()) {
-                String rn = f.getRange().getName();
-                if (!UIMA_PRIMITIVE_TO_SQL.containsKey(rn)) continue;
-                String fname = (f.getShortName() != null ? f.getShortName() : f.getName());
-                feats.add(fname + ":" + rn);
-            }
-            Collections.sort(feats);
-            parts.add(t.getName() + "|" + (isAnno ? "A" : "F") + "|" + String.join(",", feats));
-        }
-        Collections.sort(parts);
-        return DigestUtils.sha256Hex(String.join("\n", parts));
-    }
-
     private boolean fingerprintExists(DSLContext ctx, String tsHash) {
-        Integer cnt = ctx.selectCount()
-                .from(table(name(schema, "type_system_fingerprints")))
-                .where(field("ts_hash").eq(tsHash))
-                .fetchOne(0, Integer.class);
+        Integer cnt = ctx.selectCount().from(table(name(schema, "type_system_fingerprints"))).where(field(name("ts_hash")).eq(tsHash)).fetchOne(0, Integer.class);
         return cnt != null && cnt > 0;
     }
 
     private void insertFingerprint(DSLContext ctx, String tsHash) {
-        if (ctx.dialect().family() == SQLDialect.POSTGRES) {
-            ctx.insertInto(table(name(schema, "type_system_fingerprints")))
-                    .columns(field("ts_hash"))
-                    .values(tsHash)
-                    .onConflict(field("ts_hash")).doNothing()
-                    .execute();
-        } else {
-            try {
-                ctx.insertInto(table(name(schema, "type_system_fingerprints")))
-                        .columns(field("ts_hash"))
-                        .values(tsHash)
-                        .execute();
-            } catch (DataAccessException ignore) {
-            }
-        }
+        ctx.insertInto(table(name(schema, "type_system_fingerprints"))).columns(field(name("ts_hash"))).values(tsHash).onConflict(field(name("ts_hash"))).doNothing().execute();
     }
 
-    private void preloadTypeToTableFromRegistry(DSLContext ctx, TypeSystem ts) {
-        List<String> typeNames = new ArrayList<>();
-        for (Type t : iterable(ts.getTypeIterator())) if (!isSkippableType(t)) typeNames.add(t.getName());
-        if (typeNames.isEmpty()) return;
-
-        var r = ctx.select(field("uima_type_uri", String.class), field("table_name", String.class))
-                .from(table(name(schema, "uima_type_registry")))
-                .where(field("uima_type_uri").in(typeNames))
-                .fetch();
-
-        for (var rec : r) {
-            String uri = rec.get(0, String.class);
-            String tbl = rec.get(1, String.class);
-            if (uri != null && tbl != null) typeToTable.put(uri, tbl);
+    private void preloadTypeToTableFromRegistry(DSLContext ctx, TsCache cache) {
+        if (cache.types.isEmpty()) return;
+        List<String> typeNames = new ArrayList<>(cache.types.size());
+        for (TypeMeta meta : cache.types) {
+            typeNames.add(meta.typeName);
         }
-    }
-
-    private boolean isDocumentUpToDate(DSLContext ctx, String docId, String tsHash, String contentHash) {
-        var rec = ctx.select(field("ts_hash", String.class), field("content_hash", String.class))
-                .from(table(name(schema, "documents")))
-                .where(field("doc_id").eq(docId))
-                .fetchOne();
-        if (rec == null) {
-            LOGGER.debug("[skip-check] docId='{}' → not found in documents table.", docId);
-            return false;
-        }
-        String storedTs = rec.get(0, String.class);
-        String storedContent = rec.get(1, String.class);
-        boolean match = Objects.equals(tsHash, storedTs) && Objects.equals(contentHash, storedContent);
-        LOGGER.debug("[skip-check] docId='{}' stored ts='{}' content='{}' → match={}",
-                docId, storedTs, storedContent, match);
-        return match;
-    }
-
-    private void upsertDocument(DSLContext ctx, String docId, String uri, String lang, String tsHash, String contentHash) {
-        switch (ctx.dialect().family()) {
-            case POSTGRES -> ctx.insertInto(table(name(schema, "documents")))
-                    .columns(field("doc_id"), field("uri"), field("language"), field("ts_hash"), field("content_hash"))
-                    .values(docId, uri, lang, tsHash, contentHash)
-                    .onConflict(field("doc_id")).doUpdate()
-                    .set(field("uri"), uri)
-                    .set(field("language"), lang)
-                    .set(field("ts_hash"), tsHash)
-                    .set(field("content_hash"), contentHash)
-                    .execute();
-            default -> {
-                try {
-                    ctx.insertInto(table(name(schema, "documents")))
-                            .columns(field("doc_id"), field("uri"), field("language"), field("ts_hash"), field("content_hash"))
-                            .values(docId, uri, lang, tsHash, contentHash)
-                            .execute();
-                } catch (DataAccessException e) {
-                    ctx.update(table(name(schema, "documents")))
-                            .set(field("uri"), uri)
-                            .set(field("language"), lang)
-                            .set(field("ts_hash"), tsHash)
-                            .set(field("content_hash"), contentHash)
-                            .where(field("doc_id").eq(docId))
-                            .execute();
-                }
+        List<Record2<String, String>> records = ctx.select(field(name("uima_type_uri"), String.class), field(name("table_name"), String.class)).from(table(name(schema, "uima_type_registry"))).where(field(name("uima_type_uri")).in(typeNames)).fetch();
+        for (Record2<String, String> rec : records) {
+            String uri = rec.value1();
+            String tbl = rec.value2();
+            if (uri != null && tbl != null) {
+                typeToTable.put(uri, tbl);
             }
         }
     }
 
     private void upsertTypeRegistry(DSLContext ctx, String uimaType, String tableNameHash) {
-        if (ctx.dialect().family() == SQLDialect.POSTGRES) {
-            ctx.insertInto(table(name(schema, "uima_type_registry")))
-                    .columns(field("uima_type_uri"), field("table_name"))
-                    .values(uimaType, tableNameHash)
-                    .onConflict(field("uima_type_uri")).doUpdate()
-                    .set(field("table_name"), tableNameHash)
-                    .execute();
-        } else {
-            try {
-                ctx.insertInto(table(name(schema, "uima_type_registry")))
-                        .columns(field("uima_type_uri"), field("table_name"))
-                        .values(uimaType, tableNameHash)
-                        .execute();
-            } catch (DataAccessException e) {
-                ctx.update(table(name(schema, "uima_type_registry")))
-                        .set(field("table_name"), tableNameHash)
-                        .where(field("uima_type_uri").eq(uimaType))
-                        .execute();
-            }
-        }
+        Table<?> tbl = table(name(schema, "uima_type_registry"));
+        ctx.insertInto(tbl).columns(field(name("uima_type_uri")), field(name("table_name"))).values(uimaType, tableNameHash).onConflict(field(name("uima_type_uri"))).doUpdate().set(field(name("table_name")), tableNameHash).execute();
         typeToTable.put(uimaType, tableNameHash);
     }
 
-    private Query insertIgnore(DSLContext ctx, String tableNameHash, Map<Field<?>, Object> values, String colRowHash) {
-        return switch (ctx.dialect().family()) {
-            case POSTGRES, SQLITE -> ctx.insertInto(table(name(schema, tableNameHash)))
-                    .set(values)
-                    .onConflict(field(name(colRowHash))).doNothing();
-            case MARIADB, MYSQL -> ctx.insertInto(table(name(schema, tableNameHash)))
-                    .set(values)
-                    .onDuplicateKeyIgnore();
-            default -> ctx.insertInto(table(name(schema, tableNameHash))).set(values);
-        };
+    private DocumentState getDocumentState(DSLContext ctx, String docId, String tsHash, String contentHash, String pipelineHash) {
+        var rec = ctx.select(field(name("ts_hash"), String.class), field(name("content_hash"), String.class), field(name("pipeline_hash"), String.class)).from(table(name(schema, "documents"))).where(field(name("doc_id")).eq(docId)).fetchOne();
+        if (rec == null) {
+            return new DocumentState(false, false);
+        }
+        boolean upToDate = Objects.equals(tsHash, rec.get(0, String.class)) && Objects.equals(contentHash, rec.get(1, String.class)) && Objects.equals(pipelineHash, rec.get(2, String.class));
+        return new DocumentState(true, upToDate);
     }
 
-    private record SofaData(String sofaId, Integer sofaNum, String mime, String uri, String text, String textHash) {}
+    private void upsertDocument(DSLContext ctx, String docId, String uri, String lang, String tsHash, String contentHash, String pipelineHash) {
+        Table<?> tbl = table(name(schema, "documents"));
+        ctx.insertInto(tbl).columns(field(name("doc_id")), field(name("uri")), field(name("language")), field(name("ts_hash")), field(name("content_hash")), field(name("pipeline_hash"))).values(docId, uri, lang, tsHash, contentHash, pipelineHash).onConflict(field(name("doc_id"))).doUpdate().set(field(name("uri")), uri).set(field(name("language")), lang).set(field(name("ts_hash")), tsHash).set(field(name("content_hash")), contentHash).set(field(name("pipeline_hash")), pipelineHash).execute();
+    }
 
     private Map<String, SofaData> collectSofas(JCas jCas) {
         Map<String, SofaData> result = new TreeMap<>();
         org.apache.uima.cas.CAS base = jCas.getCas();
-
         for (Iterator<org.apache.uima.cas.CAS> it = base.getViewIterator(); it.hasNext(); ) {
             org.apache.uima.cas.CAS view = it.next();
-
             String sofaId = null;
             Integer sofaNum = null;
-            String mime = null, uri = null, text = null;
-
+            String mime = null;
+            String uri = null;
+            String text = null;
             try {
                 var sfs = view.getSofa();
                 if (sfs != null) {
                     sofaId = emptyToNull(sfs.getSofaID());
                     mime = sfs.getSofaMime();
                     uri = sfs.getSofaURI();
-                    try { sofaNum = sfs.getSofaNum(); } catch (Throwable ignore) {}
+                    try {
+                        sofaNum = sfs.getSofaNum();
+                    } catch (Throwable ignore) {
+                    }
                 }
-            } catch (Throwable ignore) {}
-
+            } catch (Throwable ignore) {
+            }
             if (sofaId == null) {
-                try { sofaId = emptyToNull(view.getViewName()); } catch (Throwable ignore) {}
+                try {
+                    sofaId = emptyToNull(view.getViewName());
+                } catch (Throwable ignore) {
+                }
             }
             if (sofaId == null) sofaId = "_InitialView";
-
-            try { text = view.getDocumentText(); } catch (Throwable ignore) {}
+            try {
+                text = view.getDocumentText();
+            } catch (Throwable ignore) {
+            }
             String textHash = DigestUtils.sha256Hex(text == null ? "" : text);
-
             result.put(sofaId, new SofaData(sofaId, sofaNum, mime, uri, text, textHash));
         }
         return result;
     }
 
-    // Write collected SOFAs to the DB
+    private SofaData sofaDataForView(Map<String, SofaData> sofasBySofaId, org.apache.uima.cas.CAS view) {
+        String sofaId = null;
+        try {
+            var sofa = view.getSofa();
+            if (sofa != null) sofaId = emptyToNull(sofa.getSofaID());
+        } catch (Throwable ignore) {
+        }
+        if (sofaId != null && sofasBySofaId.containsKey(sofaId)) {
+            return sofasBySofaId.get(sofaId);
+        }
+        String viewName = null;
+        try {
+            viewName = emptyToNull(view.getViewName());
+        } catch (Throwable ignore) {
+        }
+        if (viewName != null) {
+            return sofasBySofaId.get(viewName);
+        }
+        return sofasBySofaId.get("_InitialView");
+    }
+
     private void upsertSofas(DSLContext ctx, String docId, Map<String, SofaData> sofas) {
         for (SofaData s : sofas.values()) {
             upsertSofa(ctx, docId, s.sofaId(), s.sofaNum(), s.mime(), s.uri(), s.text(), s.textHash());
         }
-    }
-
-    // Convenience: sofa_id -> hash map from collected data (used for content hash)
-    private Map<String, String> sofaHashMap(Map<String, SofaData> sofas) {
-        Map<String, String> hashes = new TreeMap<>();
-        sofas.forEach((id, s) -> hashes.put(id, s.textHash()));
-        return hashes;
     }
 
     private void upsertSofa(DSLContext ctx, String docId, String sofaId, Integer sofaNum, String mime, String uri, String text, String textHash) {
@@ -724,44 +826,21 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         Field<Object> fUri = field(name("sofa_uri"));
         Field<Object> fStr = field(name("sofa_string"));
         Field<Object> fHash = field(name("sofa_hash"));
-
-        if (ctx.dialect().family() == SQLDialect.POSTGRES) {
-            ctx.insertInto(tbl)
-                    .columns(fDoc, fId, fNum, fMime, fUri, fStr, fHash)
-                    .values(docId, sofaId, sofaNum, mime, uri, text, textHash)
-                    .onConflict(fDoc, fId).doUpdate()
-                    .set(fNum, sofaNum)
-                    .set(fMime, mime)
-                    .set(fUri, uri)
-                    .set(fStr, text)
-                    .set(fHash, textHash)
-                    .execute();
-        } else {
-            try {
-                ctx.insertInto(tbl)
-                        .columns(fDoc, fId, fNum, fMime, fUri, fStr, fHash)
-                        .values(docId, sofaId, sofaNum, mime, uri, text, textHash)
-                        .execute();
-            } catch (DataAccessException e) {
-                ctx.update(tbl)
-                        .set(fNum, sofaNum)
-                        .set(fMime, mime)
-                        .set(fUri, uri)
-                        .set(fStr, text)
-                        .set(fHash, textHash)
-                        .where(fDoc.eq(docId).and(fId.eq(sofaId)))
-                        .execute();
-            }
-        }
+        ctx.insertInto(tbl).columns(fDoc, fId, fNum, fMime, fUri, fStr, fHash).values(docId, sofaId, sofaNum, mime, uri, text, textHash).onConflict(fDoc, fId).doUpdate().set(fNum, sofaNum).set(fMime, mime).set(fUri, uri).set(fStr, text).set(fHash, textHash).execute();
     }
 
-    private String computeContentHashFromSofas(String tsHash, Map<String, String> sofaHashes) {
+    private String computeContentHashFromSofas(Map<String, SofaData> sofas) {
         MessageDigest md = DigestUtils.getSha256Digest();
-        md.update(("ts=" + tsHash + "\n").getBytes(StandardCharsets.UTF_8));
-        for (var e : sofaHashes.entrySet()) {
-            md.update((e.getKey() + "=" + e.getValue() + "\n").getBytes(StandardCharsets.UTF_8));
+        for (var e : sofas.entrySet()) {
+            SofaData s = e.getValue();
+            updateHash(md, "sofa_id", s.sofaId());
+            updateHash(md, "sofa_num", s.sofaNum() == null ? null : String.valueOf(s.sofaNum()));
+            updateHash(md, "mime", s.mime());
+            updateHash(md, "uri", s.uri());
+            updateHash(md, "text_hash", s.textHash());
+            md.update((byte) '\n');
         }
-        return DigestUtils.sha256Hex(md.digest());
+        return bytesToHex(md.digest());
     }
 
     private String safeCoveredText(String docText, int docLength, int begin, int end) {
@@ -773,8 +852,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
     private String sofaIdForFs(org.apache.uima.cas.FeatureStructure fs) {
         String id = null;
         try {
-            org.apache.uima.cas.SofaFS s =
-                    (fs instanceof AnnotationFS a) ? a.getView().getSofa() : fs.getCAS().getSofa();
+            org.apache.uima.cas.SofaFS s = (fs instanceof AnnotationFS a) ? a.getView().getSofa() : fs.getCAS().getSofa();
             if (s != null) id = emptyToNull(s.getSofaID());
         } catch (Throwable ignore) {
         }
@@ -788,78 +866,139 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         return id != null ? id : "_InitialView";
     }
 
-    // Cheaper per-row hash: no covered-text hashing (avoid substring allocations)
-    private String computeRowHash(TypeSystem ts, Type t, String docId, String tableNameHash, org.apache.uima.cas.FeatureStructure fs) {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            return DigestUtils.sha256Hex(t.getName() + "|" + docId + "|" + tableNameHash);
+    private TsCache getOrBuildTsCache(TypeSystem ts) {
+        if (cachedTs == ts && tsCache != null) return tsCache;
+        Type annoSuper = ts.getType("uima.tcas.Annotation");
+        List<TypeMeta> metas = new ArrayList<>();
+        List<String> hashParts = new ArrayList<>();
+        hashParts.add("__writer_storeCoveredText=" + storeCoveredText);
+        for (Iterator<Type> it = ts.getTypeIterator(); it.hasNext(); ) {
+            Type t = it.next();
+            if (isSkippableType(t)) continue;
+            boolean isAnno = annoSuper != null && ts.subsumes(annoSuper, t);
+            List<Feature> primFeats = new ArrayList<>();
+            List<String> featParts = new ArrayList<>();
+            for (Feature f : t.getFeatures()) {
+                String shortName = f.getShortName();
+                if (isAnno && ("begin".equals(shortName) || "end".equals(shortName))) {
+                    continue;
+                }
+                String rn = f.getRange().getName();
+                if (!UIMA_PRIMITIVE_TO_SQL.containsKey(rn)) continue;
+                primFeats.add(f);
+                featParts.add(featSortName(f) + ":" + rn);
+            }
+            primFeats.sort(Comparator.comparing(JooqDatabaseWriter::featSortName));
+            Collections.sort(featParts);
+            String tableNameHash = typeToTable.get(t.getName());
+            metas.add(new TypeMeta(t, isAnno, primFeats, tableNameHash, storeCoveredText));
+            hashParts.add(t.getName() + "|" + (isAnno ? "A" : "F") + "|" + String.join(",", featParts));
         }
+        Collections.sort(hashParts);
+        String tsHash = DigestUtils.sha256Hex(String.join("\n", hashParts));
+        TsCache c = new TsCache(tsHash, metas);
+        this.cachedTs = ts;
+        this.tsCache = c;
+        return c;
+    }
 
-        md.update(("tbl=" + tableNameHash + "|").getBytes(StandardCharsets.UTF_8));
-        md.update(("type=" + t.getName() + "|").getBytes(StandardCharsets.UTF_8));
-        md.update(("doc=" + (docId == null ? "" : docId) + "|").getBytes(StandardCharsets.UTF_8));
+    private boolean isSkippableType(Type t) {
+        String n = t.getName();
+        if (n.startsWith("uima.cas.")) return true;
+        return n.equals("uima.tcas.Annotation");
+    }
 
-        try {
-            String viewName = (fs instanceof AnnotationFS a) ? a.getView().getViewName() : fs.getCAS().getViewName();
-            if (viewName != null) md.update(("view=" + viewName + "|").getBytes(StandardCharsets.UTF_8));
-        } catch (Exception ignore) {
+    private String toSafeTableName(String uimaTypeName) {
+        String sanitized = sanitizeIdent(uimaTypeName).replace("org_texttechnologylab_", "").replace("de_tudarmstadt_ukp_dkpro_core_api_", "").replace("type_", "");
+        if (sanitized.length() > Math.max(12, maxIdentifierLength - TABLE_HASH_LEN - 1)) {
+            sanitized = sanitized.substring(0, Math.max(12, maxIdentifierLength - TABLE_HASH_LEN - 1));
         }
+        String hash = DigestUtils.sha256Hex(uimaTypeName).substring(0, TABLE_HASH_LEN);
+        return cutWithHash(sanitized + "_" + hash);
+    }
 
-        if (ts.subsumes(ts.getType("uima.tcas.Annotation"), t) && fs instanceof AnnotationFS a) {
-            md.update(("b=" + a.getBegin() + "|e=" + a.getEnd() + "|").getBytes(StandardCharsets.UTF_8));
-        }
+    private String normalizeSchemaForDialect(String schema, SQLDialect dialect) {
+        String s = (schema == null || schema.isBlank()) ? "public" : schema;
+        if (dialect.family() == SQLDialect.H2 && "public".equalsIgnoreCase(s)) return "PUBLIC";
+        if (dialect.family() == SQLDialect.POSTGRES) return s.toLowerCase(Locale.ROOT);
+        return s;
+    }
 
-        List<Feature> feats = new ArrayList<>();
-        for (Feature f : t.getFeatures()) if (isPrimitive(f)) feats.add(f);
-        feats.sort(Comparator.comparing(f -> {
-            String s = f.getShortName();
-            return s != null ? s : f.getName();
-        }));
+    private String sanitizeIdent(String s) {
+        return (s == null ? "" : s.replaceAll("[^A-Za-z0-9_]", "_").toLowerCase(Locale.ROOT));
+    }
 
-        for (Feature f : feats) {
-            String fname = f.getShortName() != null ? f.getShortName() : f.getName();
-            Object v = FeatureJsonSerializer.readPrimitive(fs, f);
-            if (v == null) continue;
-            md.update(("f=" + fname + "=" + v + "|").getBytes(StandardCharsets.UTF_8));
-        }
+    private String cutWithHash(String s) {
+        if (s == null) return "";
+        if (s.length() <= maxIdentifierLength) return s;
+        String hash = DigestUtils.sha256Hex(s).substring(0, 8);
+        int keep = Math.max(1, maxIdentifierLength - hash.length() - 1);
+        return s.substring(0, keep) + "_" + hash;
+    }
 
-        return DigestUtils.sha256Hex(md.digest());
+    private String sysColName(String tableHash, String base) {
+        return cutWithHash(tableHash + "_" + sanitizeIdent(base));
+    }
+
+    private String featColName(String tableHash, Feature f) {
+        String base = sanitizeIdent(f.getShortName() != null ? f.getShortName() : f.getName());
+        String hash = DigestUtils.sha256Hex(f.getName()).substring(0, 8);
+        return cutWithHash(tableHash + "_f_" + base + "_" + hash);
+    }
+
+    private String q(String identifier) {
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 
     @Override
     public void destroy() {
         try {
-            if (dataSource != null && !dataSource.isClosed()) dataSource.close();
+            if (dataSource != null && !dataSource.isClosed()) {
+                dataSource.close();
+            }
         } catch (Exception ignore) {
         }
         super.destroy();
     }
 
-    static final class FeatureJsonSerializer {
+    private record RegistryKey(String jdbcUrl, String schema) {
+    }
 
-        static String toJsonPrimitivesOnly(org.apache.uima.cas.FeatureStructure fs) {
-            Type t = fs.getType();
-            StringBuilder sb = new StringBuilder(128);
-            sb.append("{");
-            boolean first = true;
+    private static final class TypeMeta {
+        final Type type;
+        final String typeName;
+        final boolean isAnno;
+        final List<Feature> primFeats;
+        final String tableNameHash;
+        final int bindCount;
 
-            for (Feature f : t.getFeatures()) {
-                Object v = readPrimitive(fs, f);
-                if (v == null) continue;
-
-                if (!first) sb.append(",");
-                first = false;
-
-                String k = f.getShortName() != null ? f.getShortName() : f.getName();
-                sb.append("\"").append(escape(k)).append("\":").append(primitiveToJson(v));
-            }
-
-            sb.append("}");
-            return sb.toString();
+        TypeMeta(Type type, boolean isAnno, List<Feature> primFeats, String tableNameHash, boolean storeCoveredText) {
+            this.type = type;
+            this.typeName = type.getName();
+            this.isAnno = isAnno;
+            this.primFeats = primFeats;
+            this.tableNameHash = tableNameHash;
+            this.bindCount = (isAnno ? (storeCoveredText ? 5 : 4) : 2) + primFeats.size();
         }
+    }
 
+    private static final class TsCache {
+        final String tsHash;
+        final List<TypeMeta> types;
+
+        TsCache(String tsHash, List<TypeMeta> types) {
+            this.tsHash = tsHash;
+            this.types = types;
+        }
+    }
+
+    private record SofaData(String sofaId, Integer sofaNum, String mime, String uri, String text, String textHash) {
+    }
+
+    private record DocumentState(boolean exists, boolean upToDate) {
+    }
+
+    static final class FeatureJsonSerializer {
         static Object readPrimitive(org.apache.uima.cas.FeatureStructure fs, Feature f) {
             String rn = f.getRange().getName();
             return switch (rn) {
@@ -874,16 +1013,61 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 default -> null;
             };
         }
+    }
 
-        private static String primitiveToJson(Object v) {
-            if (v == null) return "null";
-            if (v instanceof Number || v instanceof Boolean) return v.toString();
-            return "\"" + escape(v.toString()) + "\"";
+    private final class CopyBatch {
+        private final DSLContext tx;
+        private final String tableName;
+        private final List<String> columns;
+        private final StringBuilder buffer = new StringBuilder(1024 * 1024);
+        private int pending = 0;
+
+        private CopyBatch(DSLContext tx, String tableName, List<String> columns) {
+            this.tx = tx;
+            this.tableName = tableName;
+            this.columns = columns;
         }
 
-        private static String escape(String s) {
-            if (s == null) return "";
-            return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+        void add(Object[] row) {
+            for (int i = 0; i < row.length; i++) {
+                if (i > 0) buffer.append('\t');
+                appendCopyTextValue(buffer, row[i]);
+            }
+            buffer.append('\n');
+            pending++;
+            if (pending >= batchSize || buffer.length() >= COPY_FLUSH_CHARS) {
+                flush();
+            }
+        }
+
+        void flush() {
+            if (pending == 0) return;
+            final String data = buffer.toString();
+            buffer.setLength(0);
+            pending = 0;
+            try {
+                tx.connection(conn -> {
+                    try {
+                        PGConnection pg = conn.unwrap(PGConnection.class);
+                        CopyManager copyManager = pg.getCopyAPI();
+                        try (StringReader reader = new StringReader(data)) {
+                            copyManager.copyIn(copySql(), reader);
+                        }
+                    } catch (IOException e) {
+                        throw new SQLException(e);
+                    }
+                });
+            } catch (DataAccessException e) {
+                throw new DataAccessException("COPY failed for table " + q(schema) + "." + q(tableName) + ": " + rootMsg(e), e);
+            }
+        }
+
+        private String copySql() {
+            StringJoiner joiner = new StringJoiner(", ");
+            for (String column : columns) {
+                joiner.add(q(column));
+            }
+            return "COPY " + q(schema) + "." + q(tableName) + " (" + joiner + ")" + " FROM STDIN WITH (FORMAT text, DELIMITER E'\\t', NULL '\\N')";
         }
     }
 }

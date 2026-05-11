@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Editor - Dynamic Visualizations</title>
+    <title>Editor | UDAV</title>
+    <meta name="description" content="UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.">
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/pages/editor.css" />
@@ -24,7 +25,7 @@
     <#include "/pages/editor/editorGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=config?eval_json.id!"new-pipeline" />
+      <@sidebar name=config?eval_json.name!"untitled-pipeline" />
 
       <main class="dv-main">
         <@grid />
@@ -37,6 +38,8 @@
 
     <script type="module">
       import "/packages/gridstack-12.3.3/package/dist/gridstack-all.js";
+      import "/packages/floating-ui-core-1.7.5/package/dist/floating-ui.core.umd.min.js";
+      import "/packages/floating-ui-dom-1.7.6/package/dist/floating-ui.dom.umd.min.js";
       import "/packages/bootstrap-5.3.8/package/dist/js/bootstrap.bundle.min.js";
       import "/packages/d3-7.9.0/package/dist/d3.min.js";
       import Editor from "/js/pages/editor/Editor.js";

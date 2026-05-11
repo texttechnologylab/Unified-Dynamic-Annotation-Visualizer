@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
 import org.texttechnologylab.udav.pipeline.PipelineProcessor;
 
 import javax.sql.DataSource;
@@ -23,14 +24,7 @@ public class MissingSchemaScanner implements ApplicationRunner {
     @Value("${app.db.schema:public}")
     private String schema;
 
-    @Value("${app.pipeline-table:pipeline}")
-    private String PIPELINE_TABLE;
-
-    @Value("${app.pipeline-col-id:pipeline_id}")
-    private String COL_PIPELINE_ID;
-
-    @Value("${app.pipeline-col-json:json}")
-    private String COL_PIPELINE_JSON;
+    // Pipeline table/columns are now centralized; keep old @Value overrides out to prevent drift
 
     // Optional rate limit / safety
     @Value("${app.missing-schema.max-per-run:50}")
@@ -52,13 +46,13 @@ public class MissingSchemaScanner implements ApplicationRunner {
             DSLContext dsl = DSL.using(c);
 
             // Check if pipeline table exists before attempting to query it
-            if (!tableExists(dsl, schema, PIPELINE_TABLE)) {
+            if (!tableExists(dsl, schema, SchemaObjectNames.TABLE_PIPELINE)) {
                 return;
             }
 
             // app data table (in your app's schema)
-            Table<?> P = DSL.table(DSL.name(schema, PIPELINE_TABLE));
-            Field<String> P_ID = DSL.field(DSL.name(schema, PIPELINE_TABLE, COL_PIPELINE_ID), String.class);
+            Table<?> P = DSL.table(DSL.name(schema, SchemaObjectNames.TABLE_PIPELINE));
+            Field<String> P_ID = DSL.field(DSL.name(schema, SchemaObjectNames.TABLE_PIPELINE, SchemaObjectNames.COL_PIPELINE_ID), String.class);
 
             // catalog view for schemas
             Table<?> SCHEMATA = DSL.table(DSL.name("information_schema", "schemata"));
@@ -111,17 +105,18 @@ public class MissingSchemaScanner implements ApplicationRunner {
 
     // --- Simple DB-based advisory lock using a small table ---
     private boolean tryAcquireLock(DSLContext dsl, String pipelineId) {
-        Name lockTable = DSL.name(schema, "pipeline_locks");
+        Name lockTable = DSL.name(schema, SchemaObjectNames.TABLE_PIPELINE_LOCKS);
         dsl.createTableIfNotExists(lockTable)
-                .column("pipeline_id", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false))
-                .column("locked_at", org.jooq.impl.SQLDataType.TIMESTAMPWITHTIMEZONE.nullable(false))
-                .constraints(DSL.constraint("PK_pipeline_locks").primaryKey("pipeline_id"))
+                .column(SchemaObjectNames.COL_PIPELINE_LOCKS_PIPELINE_ID, org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false))
+                .column(SchemaObjectNames.COL_PIPELINE_LOCKS_LOCKED_AT, org.jooq.impl.SQLDataType.TIMESTAMPWITHTIMEZONE.nullable(false))
+                .constraints(DSL.constraint("PK_" + SchemaObjectNames.TABLE_PIPELINE_LOCKS)
+                        .primaryKey(SchemaObjectNames.COL_PIPELINE_LOCKS_PIPELINE_ID))
                 .execute();
 
         // try insert; if already exists, we didn’t get the lock
         try {
             dsl.insertInto(DSL.table(lockTable))
-                    .columns(DSL.field("pipeline_id"), DSL.field("locked_at"))
+                    .columns(DSL.field(SchemaObjectNames.COL_PIPELINE_LOCKS_PIPELINE_ID), DSL.field(SchemaObjectNames.COL_PIPELINE_LOCKS_LOCKED_AT))
                     .values(pipelineId, DSL.currentTimestamp())
                     .execute();
             return true;
@@ -132,8 +127,8 @@ public class MissingSchemaScanner implements ApplicationRunner {
     }
 
     private void releaseLock(DSLContext dsl, String pipelineId) {
-        dsl.deleteFrom(DSL.table(DSL.name(schema, "pipeline_locks")))
-                .where(DSL.field("pipeline_id").eq(pipelineId))
+        dsl.deleteFrom(DSL.table(DSL.name(schema, SchemaObjectNames.TABLE_PIPELINE_LOCKS)))
+                .where(DSL.field(SchemaObjectNames.COL_PIPELINE_LOCKS_PIPELINE_ID).eq(pipelineId))
                 .execute();
     }
 

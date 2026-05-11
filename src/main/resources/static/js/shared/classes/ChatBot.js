@@ -3,7 +3,7 @@ import state from "../../pages/view/utils/viewState.js";
 import { svgToBase64 } from "../modules/convert.js";
 import { createElement } from "../modules/utils.js";
 
-export default class ChartGPT {
+export default class ChatBot {
   constructor(instruction) {
     const root = document.querySelector(".dv-chat-bot");
     this.chat = root.querySelector(".dv-chat-messages");
@@ -86,8 +86,7 @@ export default class ChartGPT {
     if (chart) {
       content.push({
         type: "image_url",
-        image_url: { url: svgToBase64(chart.svg.node()) },
-        widget: chart.config.title,
+        image_url: { url: await svgToBase64(chart.svg.node()) },
       });
     }
 
@@ -150,15 +149,12 @@ export default class ChartGPT {
         if (item.type === "text") {
           string += item.text;
         } else if (item.type === "image_url") {
-          string += `<br> <small>[Context: ${item.widget}]</small>`;
+          string += `<img src="${item.image_url.url}">`;
         }
       });
     } else {
       string = content;
     }
-
-    string.replace("<think>", "<small>");
-    string.replace("</think>", "</small>");
 
     return DOMPurify.sanitize(marked.parse(string));
   }

@@ -1,0 +1,321 @@
+{
+  "id" : "0c1953d4-843b-4de4-a44e-1c607ed5a584",
+  "name" : "DEMO",
+  "sources" : [ {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ],
+      "categoriesWhitelist" : null
+    },
+    "id" : "Source-j6jnkke"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-p1uq71i"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-rhhz27m"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_NOUN",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-ovrv9ml"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_DET",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-pe9viaa"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADP",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-x9crart"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADJ",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-j0x4aue"
+  }, {
+    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADV",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-jh56lsp"
+  } ],
+  "generators" : [ {
+    "name" : "POS_Numbers",
+    "type" : "CategoryNumber",
+    "source" : "Source-j6jnkke",
+    "settings" : { },
+    "extends" : [ ],
+    "id" : "CategoryNumber-eky02g0"
+  }, {
+    "name" : "POS_Formatting",
+    "type" : "TextFormatting",
+    "source" : "Source-j6jnkke",
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : "001PL161008Zwischenausschuss161008gesendgKopie"
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-35367u8",
+    "generatorGroup" : null
+  }, {
+    "name" : "NE_Numbers",
+    "type" : "CategoryNumber",
+    "source" : "Source-p1uq71i",
+    "settings" : { },
+    "extends" : [ ],
+    "id" : "CategoryNumber-esl7guq"
+  }, {
+    "name" : "NE_Formatting",
+    "type" : "TextFormatting",
+    "source" : "Source-p1uq71i",
+    "settings" : {
+      "style" : "highlight",
+      "sofaFile" : "001PL161008Zwischenausschuss161008gesendgKopie",
+      "sofaID" : null
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-uytdce8",
+    "generatorGroup" : null
+  }, {
+    "name" : "Total_Formatting",
+    "type" : "TextFormatting",
+    "source" : "Source-rhhz27m",
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ "TextFormatting-35367u8", "TextFormatting-uytdce8", "TextFormatting-hf4io2z", "TextFormatting-vubumzd", "TextFormatting-fh6ab34", "TextFormatting-lq6c7gt", "TextFormatting-892k706" ],
+    "id" : "TextFormatting-3qppt1u",
+    "generatorGroup" : null
+  }, {
+    "name" : "POS_NOUN",
+    "type" : "TextFormatting",
+    "generatorGroup" : null,
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-hf4io2z",
+    "source" : "Source-ovrv9ml"
+  }, {
+    "name" : "POS_DET",
+    "type" : "TextFormatting",
+    "generatorGroup" : null,
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-vubumzd",
+    "source" : "Source-pe9viaa"
+  }, {
+    "name" : "POS_ADP",
+    "type" : "TextFormatting",
+    "generatorGroup" : null,
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-fh6ab34",
+    "source" : "Source-x9crart"
+  }, {
+    "name" : "POS_ADJ",
+    "type" : "TextFormatting",
+    "generatorGroup" : null,
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-lq6c7gt",
+    "source" : "Source-j0x4aue"
+  }, {
+    "name" : "POS_ADV",
+    "type" : "TextFormatting",
+    "generatorGroup" : null,
+    "settings" : {
+      "style" : "underline",
+      "sofaFile" : ""
+    },
+    "extends" : [ ],
+    "id" : "TextFormatting-892k706",
+    "source" : "Source-jh56lsp"
+  } ],
+  "widgets" : [ {
+    "type" : "StaticText",
+    "title" : "UDAV",
+    "src" : "Unified Dynamic Annotation Visualizer",
+    "options" : {
+      "align" : "center",
+      "size" : "1",
+      "weight" : "bold",
+      "style" : "normal",
+      "decoration" : "underline"
+    },
+    "w" : 12,
+    "x" : 6,
+    "y" : 0,
+    "id" : "StaticText-5mptltr",
+    "h" : 2
+  }, {
+    "type" : "StaticImage",
+    "title" : "Logo",
+    "src" : "https://demo.udav.texttechnologylab.org/img/logo.png",
+    "options" : { },
+    "x" : 18,
+    "y" : 0,
+    "id" : "StaticImage-2vqblz9"
+  }, {
+    "type" : "StaticText",
+    "title" : "UDAV Introduction",
+    "src" : "The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields and\nis supported by a variety of existing software solutions. Despite this variety, few solutions currently support\nannotation visualization, especially for dynamic generation and interaction. To bridge this gap and visualize\nannotated corpora based on user-, project-, or corpus-specific aspects, we developed Unified Dynamic Annotation\nVisualizer (UDAV). UDAV is a web-based solution that implements features not supported by comparable\ntools, enabling a customizable and extensible toolbox for interacting with annotations and allowing integration\ninto existing big-data frameworks. We exemplify UDAV through a range of visualizations and also provide an\nevaluation of corpus import and processing performance.",
+    "options" : {
+      "align" : "center",
+      "size" : "5",
+      "weight" : "normal",
+      "style" : "normal",
+      "decoration" : "none"
+    },
+    "w" : 16,
+    "h" : 4,
+    "x" : 4,
+    "y" : 2,
+    "id" : "StaticText-qavbppr"
+  }, {
+    "type" : "StaticText",
+    "title" : "Parts of Speech and Named Entity",
+    "src" : "Parts of Speech and Named Entity",
+    "options" : {
+      "align" : "center",
+      "size" : "3",
+      "weight" : "bold",
+      "style" : "normal",
+      "decoration" : "none"
+    },
+    "w" : 8,
+    "x" : 8,
+    "y" : 7,
+    "id" : "StaticText-77mut7s"
+  }, {
+    "type" : "BarChart",
+    "title" : "Parts of Speech (POS)",
+    "generator" : {
+      "id" : "CategoryNumber-eky02g0"
+    },
+    "options" : {
+      "horizontal" : false
+    },
+    "w" : 8,
+    "h" : 6,
+    "x" : 0,
+    "y" : 8,
+    "id" : "BarChart-cspd570"
+  }, {
+    "type" : "HighlightText",
+    "title" : "POS & NE in one TextFormatting",
+    "generator" : {
+      "id" : "TextFormatting-3qppt1u"
+    },
+    "options" : { },
+    "w" : 8,
+    "h" : 14,
+    "x" : 8,
+    "y" : 8,
+    "id" : "HighlightText-dd4noze"
+  }, {
+    "type" : "PieChart",
+    "title" : "Named Entities (NE)",
+    "generator" : {
+      "id" : "CategoryNumber-esl7guq"
+    },
+    "options" : {
+      "hole" : 50,
+      "legend" : false
+    },
+    "w" : 8,
+    "h" : 6,
+    "x" : 16,
+    "y" : 8,
+    "id" : "PieChart-aqlay35"
+  }, {
+    "type" : "StaticText",
+    "title" : "Parts of Speech (POS) Caption",
+    "src" : "The chart above shows the distribution of the different POS categories.",
+    "options" : {
+      "align" : "end",
+      "size" : "6",
+      "weight" : "normal",
+      "style" : "italic",
+      "decoration" : "none"
+    },
+    "w" : 8,
+    "x" : 0,
+    "y" : 14,
+    "id" : "StaticText-2ecv0fi"
+  }, {
+    "type" : "StaticText",
+    "title" : "Named Entities (NE) Caption",
+    "src" : "The chart above shows the distribution of the different NE categories.",
+    "options" : {
+      "align" : "start",
+      "size" : "6",
+      "weight" : "normal",
+      "style" : "italic",
+      "decoration" : "none"
+    },
+    "w" : 8,
+    "x" : 16,
+    "y" : 14,
+    "id" : "StaticText-i6z3x8e"
+  }, {
+    "type" : "ScrollTable",
+    "title" : "Parts of Speech (POS)",
+    "generator" : {
+      "id" : "CategoryNumber-eky02g0"
+    },
+    "options" : {
+      "numbers" : true
+    },
+    "w" : 8,
+    "h" : 6,
+    "x" : 0,
+    "y" : 16,
+    "id" : "ScrollTable-jhm05qc"
+  }, {
+    "type" : "ScrollTable",
+    "title" : "Named Entities (NE)",
+    "generator" : {
+      "id" : "CategoryNumber-esl7guq"
+    },
+    "options" : {
+      "numbers" : true
+    },
+    "w" : 8,
+    "h" : 6,
+    "x" : 16,
+    "y" : 16,
+    "id" : "ScrollTable-wwigmth"
+  } ]
+}

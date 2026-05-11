@@ -159,6 +159,13 @@
     font-size: 0.75rem;
     font-weight: bold;
   }
+
+  img {
+    width: 100%;
+    background-color: var(--bg-color);
+    border-radius: 3px;
+    margin: 0.375rem 0;
+  }
 }
 
 .dv-chat-input {

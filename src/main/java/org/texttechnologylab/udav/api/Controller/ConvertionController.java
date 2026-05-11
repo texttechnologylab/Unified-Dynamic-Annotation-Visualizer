@@ -1,23 +1,60 @@
 package org.texttechnologylab.udav.api.Controller;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.widgets.Widget;
+import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
 
 @RestController
 @RequestMapping("/api/convertions")
 public class ConvertionController {
+
+    @PostMapping("/csv")
+    public ResponseEntity<Map<String, String>> widgetToCsv(@RequestBody String body) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(body);
+        JsonNode jsonNodeJson = node.get("data");
+        String widgetType = node.get("type").asText();
+
+        String csv;
+        try {
+            Widget widget = Widget.constructWidget(widgetType);
+            csv = widget.toCsv(node);
+            if (csv == null) throw new Exception();
+            // widget-intrinsic native csv defined!
+
+        } catch (Exception ignored) {
+            // No widget-intrinsic csv defined -> Use general JsonToCsvConverter
+
+            JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
+            csv = converter.convert(jsonNodeJson);
+        }
+
+        Map<String, String> response = new HashMap<>();
+        response.put("content", csv);
+
+        // TODO: Add metadata
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/tikz")
     public ResponseEntity<Map<String, String>> widgetToTikz(@RequestBody String body) throws Exception {
@@ -46,6 +83,37 @@ public class ConvertionController {
         Map<String, String> response = new HashMap<>();
         response.put("content", tex);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/zip")
+    public ResponseEntity<byte[]> createZip(
+            @RequestParam("files") List<MultipartFile> files) throws Exception {
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+            for (MultipartFile file : files) {
+                String filename = file.getOriginalFilename() != null
+                        ? file.getOriginalFilename()
+                        : "file_" + System.currentTimeMillis();
+
+                ZipEntry zipEntry = new ZipEntry(filename);
+                zipOutputStream.putNextEntry(zipEntry);
+                zipOutputStream.write(file.getBytes());
+                zipOutputStream.closeEntry();
+            }
+        }
+
+        byte[] zipBytes = byteArrayOutputStream.toByteArray();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"archive.zip\"");
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/zip");
+        headers.set(HttpHeaders.CONTENT_LENGTH, String.valueOf(zipBytes.length));
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(zipBytes);
     }
 
     private static String addMetaDataToTex(String tex, JsonNode node) {

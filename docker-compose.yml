@@ -7,15 +7,22 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-udav}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    command: >
+      postgres
+      -c shared_buffers=8GB
+      -c maintenance_work_mem=2GB
+      -c work_mem=64MB
+      -c effective_cache_size=24GB
+      -c max_wal_size=8GB
+      -c checkpoint_timeout=15min
+      -c wal_compression=on
+      -c synchronous_commit=off
+      -c max_parallel_maintenance_workers=4
+    shm_size: 1g
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${POSTGRES_DB:-udav}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   udav:
     build:

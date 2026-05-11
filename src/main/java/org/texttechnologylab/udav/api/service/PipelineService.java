@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
@@ -11,30 +12,31 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.texttechnologylab.udav.db.SchemaObjectNames;
+import org.texttechnologylab.udav.api.service.utils.GeneratorConverter;
 
-import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.HttpStatus.*;
 
 @Service
 public class PipelineService {
 
-    private static final String TABLE = "pipeline";
-    private static final String COL_ID = "pipeline_id";
-    private static final String COL_NAME = "pipeline_name";
-    private static final String COL_JSON = "json";
+    private static final String TABLE = SchemaObjectNames.TABLE_PIPELINE;
+    private static final String COL_ID = SchemaObjectNames.COL_PIPELINE_ID;
+    private static final String COL_NAME = SchemaObjectNames.COL_PIPELINE_NAME;
+    private static final String COL_JSON = SchemaObjectNames.COL_PIPELINE_JSON;
     private final SourceBuildService sourceBuildService;
     private final DataSource dataSource;
     private final ObjectMapper objectMapper;
-
+    Logger LOGGER = LoggerFactory.getLogger(PipelineService.class);
     @Value("${app.db.schema:public}")
     private String schema;
-
-    Logger LOGGER = LoggerFactory.getLogger(PipelineService.class);
 
     public PipelineService(SourceBuildService sourceBuildService, DataSource dataSource, ObjectMapper objectMapper) {
         this.sourceBuildService = sourceBuildService;
@@ -57,19 +59,50 @@ public class PipelineService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> listIds(int page, int size, String q) throws Exception {
+    public List<String> listAllIds() throws Exception {
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
+            var fieldId = DSL.field(DSL.name(COL_ID), String.class);
+            return dsl.select(fieldId)
+                    .from(DSL.table(DSL.name(schema, TABLE)))
+                    .orderBy(fieldId.asc())
+                    .fetch(fieldId);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> listIds(int page, int size, String q) throws Exception {
+        return listSummaries(page, size, q).stream()
+                .map(summary -> summary.get("id"))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, String>> listSummaries(int page, int size, String q) throws Exception {
+        try (Connection c = dataSource.getConnection()) {
+            DSLContext dsl = DSL.using(c);
+            var fieldId = DSL.field(DSL.name(COL_ID), String.class);
+            var fieldName = DSL.field(DSL.name(COL_NAME), String.class);
+            var fieldJson = DSL.field(DSL.name(COL_JSON), String.class);
             var cond = (q == null || q.isBlank())
                     ? DSL.noCondition()
-                    : DSL.field(COL_ID, String.class).likeIgnoreCase("%" + q + "%");
-            return dsl.select(DSL.field(COL_ID, String.class))
-                    .from(DSL.table(TABLE))
+                    : fieldId.likeIgnoreCase("%" + q + "%")
+                    .or(fieldName.likeIgnoreCase("%" + q + "%"));
+            return dsl.select(fieldId, fieldName, fieldJson)
+                    .from(DSL.table(DSL.name(schema, TABLE)))
                     .where(cond)
-                    .orderBy(DSL.field(COL_ID).asc())
+                    .orderBy(fieldName.asc())
                     .offset(Math.max(0, page) * Math.max(1, size))
                     .limit(Math.max(1, size))
-                    .fetchInto(String.class);
+                    .fetch(record -> {
+                        String id = record.get(fieldId);
+                        String name = record.get(fieldName);
+
+                        Map<String, String> summary = new LinkedHashMap<>();
+                        summary.put("id", id);
+                        summary.put("name", name);
+                        return summary;
+                    });
         }
     }
 
@@ -77,20 +110,22 @@ public class PipelineService {
     public JsonNode get(String id) throws Exception {
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
-            String json = dsl.select(DSL.field(COL_JSON, String.class))
-                    .from(DSL.table(TABLE))
-                    .where(DSL.field(COL_ID).eq(id))
+            String json = dsl.select(DSL.field(DSL.name(COL_JSON), String.class))
+                    .from(DSL.table(DSL.name(schema, TABLE)))
+                    .where(DSL.field(DSL.name(COL_ID)).eq(id))
+                    .orderBy(DSL.field(DSL.name(COL_NAME)).asc())
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
 
-            return parseJson(json);
+            String normalized = GeneratorConverter.toNewFormat(json);
+            return parseJson(normalized);
         }
     }
 
     @Transactional
     public String create(JsonNode json) throws Exception {
-        String id = json.get("id").asText("main");
-
+        String id = json.get("id").asText();
+        String name = json.get("name").asText();
         String jsonStr = toString(json);
 
         try (Connection c = dataSource.getConnection()) {
@@ -98,16 +133,16 @@ public class PipelineService {
             // check exists
             boolean exists = dsl.fetchExists(
                     dsl.selectOne()
-                            .from(DSL.table(TABLE))
-                            .where(DSL.field(COL_ID).eq(id))
+                            .from(DSL.table(DSL.name(schema, TABLE)))
+                            .where(DSL.field(DSL.name(COL_ID)).eq(id))
             );
             if (exists) throw new ResponseStatusException(CONFLICT, "Pipeline already exists");
 
-            dsl.insertInto(DSL.table(TABLE),
-                            DSL.field(COL_ID),
-                            DSL.field(COL_NAME),
-                            DSL.field(COL_JSON))
-                    .values(id, id, jsonStr)
+            dsl.insertInto(DSL.table(DSL.name(schema, TABLE)),
+                            DSL.field(DSL.name(COL_ID)),
+                            DSL.field(DSL.name(COL_NAME)),
+                            DSL.field(DSL.name(COL_JSON)))
+                    .values(id, name, jsonStr)
                     .execute();
 
             sourceBuildService.startBuild(id, id);
@@ -120,20 +155,28 @@ public class PipelineService {
 
     @Transactional
     public void update(JsonNode json) throws Exception {
-        String id = json.get("id").asText(null);
+        String id = json.get("id").asText();
         if (id == null || id.isBlank()) {
             throw new ResponseStatusException(BAD_REQUEST, "Missing or empty pipeline id");
         }
+
+        String name = json.get("name").asText();
         String jsonStr = toString(json);
+
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
-            int updated = dsl.update(DSL.table(TABLE))
-                    .set(DSL.field(COL_JSON), jsonStr)
-                    .where(DSL.field(COL_ID).eq(id))
-                    .execute();
-            if (updated == 0) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
-            sourceBuildService.startBuild(id, id);
 
+            int updated = dsl.update(DSL.table(DSL.name(schema, TABLE)))
+                    .set(DSL.field(DSL.name(COL_NAME)), name)
+                    .set(DSL.field(DSL.name(COL_JSON)), jsonStr)
+                    .where(DSL.field(DSL.name(COL_ID)).eq(id))
+                    .execute();
+
+            if (updated == 0) {
+                throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
+            }
+
+            sourceBuildService.startBuild(id, id);
             LOGGER.info("Updated pipeline: {}", id);
         }
     }
@@ -144,8 +187,8 @@ public class PipelineService {
             DSLContext dsl = DSL.using(c);
 
             // 1) Delete the pipeline row
-            int deleted = dsl.deleteFrom(DSL.table(TABLE))
-                    .where(DSL.field(COL_ID).eq(id))
+            int deleted = dsl.deleteFrom(DSL.table(DSL.name(schema, TABLE)))
+                    .where(DSL.field(DSL.name(COL_ID)).eq(id))
                     .execute();
             if (deleted == 0) {
                 throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
@@ -182,4 +225,5 @@ public class PipelineService {
             throw new ResponseStatusException(BAD_REQUEST, "Invalid JSON");
         }
     }
+
 }

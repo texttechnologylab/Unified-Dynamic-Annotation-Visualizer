@@ -1,0 +1,196 @@
+{
+  "id": "fbd34fa1-ce48-440d-8688-0d7676b78788",
+  "name": "boundary-approximation",
+  "sources": [
+    {
+      "uri": "uima.tcas.Annotation",
+      "settings": {},
+      "id": "Source-v7vvw1m"
+    }
+  ],
+  "generators": [
+    {
+      "name": "Boundary Coordinates",
+      "type": "MapCoordinates",
+      "source": "Source-v7vvw1m",
+      "settings": {},
+      "extends": [],
+      "id": "MapCoordinates-kejy8y5"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "StaticText",
+      "title": "Text",
+      "src": "Different approaches for boundary approximation",
+      "options": {
+        "align": "center",
+        "size": "5",
+        "weight": "normal",
+        "style": "normal",
+        "decoration": "underline"
+      },
+      "w": 8,
+      "x": 8,
+      "y": 0,
+      "id": "StaticText-gkr5f35"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "quadtree clustering",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": false,
+        "spacing": 5,
+        "clustering": "quadtree",
+        "radiusMultiplier": 1,
+        "gridRows": 10,
+        "threshold": 15,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 0,
+      "y": 1,
+      "id": "BoundaryApproximation-zjexk07"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "dbscan clustering",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": false,
+        "spacing": 5,
+        "clustering": "dbscan",
+        "radiusMultiplier": 0.3,
+        "gridRows": 30,
+        "threshold": 15,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 8,
+      "y": 1,
+      "id": "BoundaryApproximation-saxzu97"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "kernel density estimation",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": false,
+        "spacing": 5,
+        "clustering": "density",
+        "radiusMultiplier": 1,
+        "gridRows": 8,
+        "threshold": 0,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 16,
+      "y": 1,
+      "id": "BoundaryApproximation-a3cgwta"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "quadtree clustering + interpolation",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": true,
+        "spacing": 5,
+        "clustering": "quadtree",
+        "radiusMultiplier": 1,
+        "gridRows": 10,
+        "threshold": 10,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 0,
+      "y": 7,
+      "id": "BoundaryApproximation-hj34xv0"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "dbscan clustering + interpolation",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": true,
+        "spacing": 5,
+        "clustering": "dbscan",
+        "radiusMultiplier": 0.1,
+        "gridRows": 30,
+        "threshold": 0,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 8,
+      "y": 7,
+      "id": "BoundaryApproximation-e66fo5c"
+    },
+    {
+      "type": "BoundaryApproximation",
+      "title": "kernel density estimation + interpolation",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {
+        "interpolate": true,
+        "spacing": 5,
+        "clustering": "density",
+        "radiusMultiplier": 1,
+        "gridRows": 8,
+        "threshold": 0,
+        "epsilon": 10,
+        "minPts": 2,
+        "bandwidth": 20,
+        "thresholds": 5
+      },
+      "w": 8,
+      "h": 6,
+      "x": 16,
+      "y": 7,
+      "id": "BoundaryApproximation-o8reofu"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "Medial Axis",
+      "generator": {
+        "id": "MapCoordinates-kejy8y5"
+      },
+      "options": {},
+      "w": 8,
+      "h": 6,
+      "x": 8,
+      "y": 13,
+      "id": "MedialAxis-l3ni8se"
+    }
+  ]
+}

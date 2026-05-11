@@ -19,52 +19,20 @@ export default class NetworkGraph extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
-  };
-  static previewData = {
-    nodes: [
-      {
-        id: 1,
-        name: "A",
-        color: "#00618f",
-      },
-      {
-        id: 2,
-        name: "B",
-        color: "#00618f",
-      },
-      {
-        id: 3,
-        name: "C",
-        color: "#00618f",
-      },
-    ],
-    links: [
-      {
-        source: 1,
-        target: 2,
-        color: "#9eadbd",
-      },
-      {
-        source: 1,
-        target: 3,
-        color: "#9eadbd",
-      },
-    ],
   };
 
   constructor(root, config) {
     super(root, config, { top: 20, right: 20, bottom: 20, left: 20 });
   }
 
-  async fetch() {
-    return await d3.json("/data/network.json");
-  }
-
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    this.pagination.init(meta.ids);
   }
 
   render(data) {

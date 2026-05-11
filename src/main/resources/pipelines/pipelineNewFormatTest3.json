@@ -1,75 +1,39 @@
 {
-  "id": "newformattest3",
+  "id": "e91b3d0e-f1f6-4688-9dcd-d968304ee163",
+  "name": "newformattest3",
   "sources": [
     {
-      "id": "0",
       "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "id": "total",
-          "name": "Gen1",
-          "token": "CN",
-          "extends": [],
-          "settings": {
-            "categoriesWhitelist": []
-          }
-        },
-        {
-          "type": "TextFormatting",
-          "id": "text-color",
-          "name": "Gen2",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100.xmi",
-            "style": "underline"
-          }
-        }
-      ]
-    },
+      "settings": {},
+      "id": "Source-4gukxhb"
+    }
+  ],
+  "generators": [
     {
-      "id": "1",
-      "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS",
-      "createsGenerators": [
-        {
-          "type": "CategoryNumber",
-          "id": "total",
-          "name": "Gen3",
-          "token": "CN",
-          "extends": [],
-          "settings": {
-            "categoriesWhitelist": []
-          }
-        },
-        {
-          "type": "TextFormatting",
-          "id": "text-color",
-          "name": "Gen4",
-          "token": "TF",
-          "extends": [],
-          "settings": {
-            "sofaFile": "ID21200100.xmi",
-            "style": "underline"
-          }
-        }
-      ]
+      "name": "TextFormatting Generator",
+      "type": "TextFormatting",
+      "source": "Source-4gukxhb",
+      "settings": {
+        "style": "underline",
+        "sofaFile": "ID21200100"
+      },
+      "extends": [],
+      "id": "TextFormatting-hv9s1kj"
     }
   ],
   "widgets": [
     {
-      "id": "text",
-      "x": 4,
-      "y": 2,
-      "w": 8,
-      "h": 8,
       "type": "HighlightText",
       "title": "TextFormatting",
       "generator": {
-        "id": "text-color"
+        "id": "TextFormatting-hv9s1kj"
       },
       "options": {},
-      "icon": "bi bi-card-text"
+      "w": 10,
+      "h": 8,
+      "x": 7,
+      "y": 2,
+      "id": "HighlightText-kkeyaq3"
     }
   ]
 }

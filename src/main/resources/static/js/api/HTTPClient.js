@@ -3,7 +3,7 @@ export default class HTTPClient {
     this.baseUrl = baseUrl;
   }
 
-  async request(path, options = {}) {
+  async request(path, options = {}, responseType = "json") {
     const response = await fetch(this.baseUrl + path, {
       headers: {
         "Content-Type": "application/json",
@@ -13,34 +13,40 @@ export default class HTTPClient {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`${response.status}: ${error}`);
+      const error = await response.json();
+      throw new Error(`${error.path} ${response.status}: ${error.error}`);
     }
 
-    return response.json();
+    const parsers = {
+      json: () => response.json(),
+      text: () => response.text(),
+      blob: () => response.blob(),
+    };
+
+    return parsers[responseType]();
   }
 
-  get(path) {
-    return this.request(path);
+  get(path, responseType) {
+    return this.request(path, {}, responseType);
   }
 
-  post(path, body) {
-    return this.request(path, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+  post(path, body, responseType) {
+    return this.request(
+      path,
+      { method: "POST", body: JSON.stringify(body) },
+      responseType,
+    );
   }
 
-  put(path, body) {
-    return this.request(path, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    });
+  put(path, body, responseType) {
+    return this.request(
+      path,
+      { method: "PUT", body: JSON.stringify(body) },
+      responseType,
+    );
   }
 
-  delete(path) {
-    return this.request(path, {
-      method: "DELETE",
-    });
+  delete(path, responseType) {
+    return this.request(path, { method: "DELETE" }, responseType);
   }
 }

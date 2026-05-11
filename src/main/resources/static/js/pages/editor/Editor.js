@@ -1,16 +1,12 @@
 import accordions from "../../shared/modules/accordions.js";
-import {
-  identifierValid,
-  widgetsValid,
-  sourcesValid,
-} from "./utils/editorValidations.js";
+import { widgetsValid, sourcesValid } from "./utils/editorValidations.js";
 import state from "./utils/editorState.js";
 import {
   createSource,
   createWidget,
   loadSources,
 } from "./utils/editorActions.js";
-import { debounce } from "../../shared/modules/utils.js";
+import { debounce, randomId } from "../../shared/modules/utils.js";
 import {
   createPipeline,
   getPipelines,
@@ -21,6 +17,7 @@ import Source from "./configs/Source.js";
 
 export default class Editor {
   constructor() {
+    this.showWarning = true;
     this.widgetDefaults = Object.values(widgets).map(
       (Widget) => Widget.defaultConfig,
     );
@@ -32,9 +29,20 @@ export default class Editor {
     this.initAvailableWidgets();
     this.initGrid();
 
+    const safeArray = (value) => (Array.isArray(value) ? value : []);
+
     // Load existing data
-    loadSources(config.sources || [], config.generators || []);
-    state.grid.load(config.widgets || []);
+    state.id = config.id || randomId("pipeline");
+    loadSources(safeArray(config.sources), safeArray(config.generators));
+    state.grid.load(safeArray(config.widgets));
+
+    // Warn on leaving
+    window.addEventListener("beforeunload", (event) => {
+      if (this.showWarning) {
+        event.preventDefault();
+        return "";
+      }
+    });
 
     // Replace whitespaces in the id with dashes
     const input = document.querySelector("#identifier-input");
@@ -50,17 +58,21 @@ export default class Editor {
       .addEventListener("click", () => {
         const controller = createSource(Source.defaultConfig);
 
-        container.prepend(controller.root);
+        // TODO: api.createSource(state.id, controller.item);
+        container.append(controller.root);
         controller.init();
       });
 
     document.querySelector("#discard-button").addEventListener("click", () => {
       state.modal.confirm("Discard Changes", "Are you sure?", async () => {
-        const id = input.value;
         const pipelines = await getPipelines();
+        this.showWarning = false;
 
-        if (pipelines.includes(id)) {
-          window.open("/view/" + id, "_self");
+        // Delete temp pipeline
+        // TODO: api.deletePipeline(state.id);
+
+        if (pipelines.find((p) => p.id === state.id)) {
+          window.open("/view/" + state.id, "_self");
         } else {
           window.open("/", "_self");
         }
@@ -117,7 +129,8 @@ export default class Editor {
   }
 
   initAvailableWidgets() {
-    const container = document.querySelector(".dv-available-widgets-container");
+    const staticCont = document.querySelector(".dv-static-widgets-container");
+    const dynamicCont = document.querySelector(".dv-dynamic-widgets-container");
     const template = document.querySelector("#available-widget-template");
 
     this.widgetDefaults.forEach((widget) => {
@@ -128,36 +141,62 @@ export default class Editor {
       element.querySelector("span").textContent = widget.title;
       delete widget.icon;
 
-      container.append(element);
+      if (widget.type.startsWith("Static")) {
+        staticCont.append(element);
+      } else {
+        dynamicCont.append(element);
+      }
     });
   }
 
-  async validate(id) {
+  async validate(name) {
     const pipelines = await getPipelines();
     const config = {
-      id: id,
+      id: state.id,
+      name: name,
       sources: state.sources,
       generators: state.generators,
       widgets: state.grid.save(false),
     };
 
-    const ok =
-      identifierValid(config) && widgetsValid(config) && sourcesValid(config);
+    const ok = widgetsValid(config) && sourcesValid(config);
 
-    if (ok && pipelines.includes(config.id)) {
+    if (ok && pipelines.find((p) => p.id === config.id)) {
       state.modal.confirm(
-        `Overwrite "${config.id}"`,
+        `Overwrite "${config.name}"`,
         "This pipeline already exists. Do you want to overwrite it?",
-        async () => {
+        () => {
           state.modal.loading("Updating pipeline, please wait...");
-          await updatePipeline(config);
-          window.open("/view/" + config.id, "_self");
+
+          updatePipeline(config)
+            .then(() => {
+              this.showWarning = false;
+              window.open("/view/" + config.id, "_self");
+            })
+            .catch(() => {
+              state.modal.alert(
+                "Internal Server Error",
+                "An error occurred while updating the pipeline.",
+              );
+            });
         },
       );
     } else if (ok) {
       state.modal.loading("Creating pipeline, please wait...");
-      await createPipeline(config);
-      window.open("/view/" + config.id, "_self");
+
+      // Promote temp pipeline
+      // TODO: api.promotePipeline(state.id, config.name, config.widgets);
+      createPipeline(config)
+        .then(() => {
+          this.showWarning = false;
+          window.open("/view/" + config.id, "_self");
+        })
+        .catch(() => {
+          state.modal.alert(
+            "Internal Server Error",
+            "An error occurred while creating the pipeline.",
+          );
+        });
     }
   }
 }

@@ -18,63 +18,131 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 - Dynamic and interactive charts
 - Visual editor
-- Different export options
+- Different export options: svg, png, tex, csv, json
+- Widget pagination
+- LLM ChatBot
+
+### Widgets
+
+UDAV currently contains the following widgets:
+
+- Text (static)
+- Image (static)
+- Video (static)
+- Inline Frame (static)
+- Table
+- Bar Chart
+- Pie Chart
+- Line Chart
+- Highlight Text
+- Simple Map
+- Network Graph
+- Voronoi Diagram
+- Medial Axis
+- Boundary Approximation
 
 ## Getting Started
 
 > [!TIP]
-> Please consult the [documentation](https://texttechnologylab.github.io/Unified-Dynamic-Annotation-Visualizer/) page for a more detailled and customizable setup documentation.
+> Please consult the [documentation](https://texttechnologylab.github.io/Unified-Dynamic-Annotation-Visualizer/) page for a more detailed and customizable setup documentation.
 
 ### Requirements
 
-- Java version 21 or higher
-  
-### Usage
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) (v2.x or later)
 
-1. Clone the repository:
+### Quick Start (Docker Compose)
 
-   ```
+1. **Clone the repository:**
+
+   ```bash
    git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
+   cd Unified-Dynamic-Annotation-Visualizer
    ```
 
-2. In the root folder, create an `.env` file that holds the following environment variables:
+2. **Create your `.env` file** by copying the provided example:
 
-   ```env
-   DB_URL=jdbc:postgresql://postgres:5432/udav
-   DB_USER=postgres
-   DB_PASS=postgres
-   DB_SCHEMA=public
-   DB_DIALECT=POSTGRES
-   # Batch size for database inserts (default: 5000)
-   # Higher = fewer DB roundtrips, more memory. Range: 1000-15000
-   DB_BATCH_SIZE=5000
-   # Max identifier length (PostgreSQL: 63, MySQL: 64, MSSQL: 128)
-   DB_MAX_IDENT=255
-   # Enable/disable DUUI importer
-   DUUI_IMPORTER=false
-   # Path to input files
-   DUUI_IMPORTER_PATH=/app/data/input
-   # File extension: .xmi (uncompressed) or .gz (gzip compressed)
-   DUUI_IMPORTER_FILE_ENDING=.xmi
-   # Number of parallel workers (default: 4, rule: 1 per CPU core)
-   DUUI_IMPORTER_WORKERS=4
-   # UIMA CAS pool size (default: 2×workers)
-   DUUI_IMPORTER_CAS_POOL_SIZE=8
-   # Optional: External TypeSystem XML file path (auto-detected from XMI if not set)
-   DUUI_IMPORTER_TYPE_SYSTEM_PATH=
-   PIPELINE_IMPORTER=true
-   PIPELINE_IMPORTER_FOLDER=/app/data/pipelines
-   PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT=false
-   SROUCE_BUILDER=false
-   JAVA_OPTS=-Xmx2048m -Xms1024m
+   ```bash
+   cp .env.example .env
    ```
 
-3. Run the File Importer to import the annotation data
+3. **Start the application:**
 
-4. Start the `App.java` file
+   ```bash
+   docker compose up -d
+   ```
+
+   This starts PostgreSQL and the UDAV application. The web UI is available at [http://localhost:8080](http://localhost:8080) once the container is healthy (usually within ~30–60 seconds).
 
 > [!NOTE]
-> The webpage, by deafult, is reachable under: [http://localhost:8080](http://localhost:8080/). If you're looking for a small demo without creating it yourself, please check our [open demo](udav/demo).
+> If you're looking for a small demo without any setup, check our [open demo](https://demo.udav.texttechnologylab.org/).
+
+---
+
+### Importing DUUI Annotation Data
+
+To import XMI/GZ annotation files produced by DUUI pipelines, you need to configure the importer in your `.env` before starting the containers.
+
+> [!IMPORTANT]
+> `DUUI_IMPORTER_PATH` and `DUUI_IMPORTER_TYPE_SYSTEM_PATH` must be **absolute paths on your host machine** — Docker Compose mounts them into the container automatically.
+
+**1. Set the path to your annotation files:**
+
+```env
+DUUI_IMPORTER_PATH=/absolute/path/to/your/xmi/files
+```
+
+**2. Set the file extension** matching your corpus (`.xmi` for uncompressed, `.gz` for gzip-compressed):
+
+```env
+DUUI_IMPORTER_FILE_ENDING=.xmi
+# or
+DUUI_IMPORTER_FILE_ENDING=.gz
+```
+
+**3. (Optional) Set the path to an external TypeSystem XML** if you want to use a custom type system instead of letting UDAV auto-detect it from the XMI files:
+
+```env
+DUUI_IMPORTER_TYPE_SYSTEM_PATH=/absolute/path/to/your/typesystem
+```
+
+> [!NOTE]
+> If `DUUI_IMPORTER_TYPE_SYSTEM_PATH` is left empty, the type system is auto-detected from the XMI files. If you set it, point it to the **folder** containing your TypeSystem XML file.
+
+**4. Enable the importer and start:**
+
+```env
+DUUI_IMPORTER=true
+```
+
+```bash
+docker compose up -d
+```
+
+The importer runs on startup and processes all matching files in the configured directory. Import progress is logged and visible via:
+
+```bash
+docker compose logs -f udav
+```
+
+#### Example `.env` for DUUI import
+
+```env
+# Database
+DB_USER=postgres
+DB_PASS=postgres
+POSTGRES_DB=udav
+
+# DUUI Importer
+DUUI_IMPORTER=true
+DUUI_IMPORTER_PATH=/data/my-corpus/xmi-files
+DUUI_IMPORTER_FILE_ENDING=.gz
+DUUI_IMPORTER_WORKERS=4
+DUUI_IMPORTER_CAS_POOL_SIZE=12
+DUUI_IMPORTER_TYPE_SYSTEM_PATH=
+
+# Java memory (adjust to your system)
+JAVA_OPTS=-Xmx10G -Xms1024m
+```
 
 ## License
 

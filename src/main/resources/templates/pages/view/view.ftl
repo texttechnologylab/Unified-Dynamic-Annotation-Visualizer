@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
+  <#assign config_json=config?eval_json>
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${id} - Dynamic Visualizations</title>
+    <title>${config_json.name} | UDAV</title>
+    <meta name="description" content="UDAV is designed to enable different disciplines to display their automatic pre-processing results in a schema-based and reproducible, dynamic and interactive way without the need to hard-code manual and user-defined visualizations for each new project.">
 
     <link rel="stylesheet" href="/css/variables.css" />
     <link rel="stylesheet" href="/css/pages/view.css" />
@@ -19,18 +22,21 @@
 
   <body>
     <#include "/shared/modal.ftl"> 
-    <#include "/shared/chatbot.ftl"> 
+    <#include "/shared/chat.ftl"> 
     <#include "/pages/view/viewSidebar.ftl"> 
     <#include "/pages/view/viewGrid.ftl">
 
     <div class="dv-layout">
-      <@sidebar id=id pipelines=pipelines?eval_json widgets=widgets?eval_json />
+      <@sidebar pipelines=pipelines?eval_json lockedPipelines=lockedPipelines config=config_json />
 
       <main class="dv-main">
         <div class="dv-chart-tooltip"></div>
 
         <@grid />
-        <@chatbot />
+
+        <#if chatbot>
+          <@chat title="ChartBot" />
+        </#if>
       </main>
 
       <@modal />
@@ -44,10 +50,10 @@
       import "/packages/dompurify-3.3.2/package/dist/purify.min.js";
       import View from "/js/pages/view/View.js";
 
-      const widgets = JSON.parse("${widgets?json_string}");
-      const view = new View("${id}");
+      const config = JSON.parse("${config?json_string}");
+      const view = new View(config.id);
       
-      view.init(widgets);
+      view.init(config.widgets);
     </script>
   </body>
 </html>

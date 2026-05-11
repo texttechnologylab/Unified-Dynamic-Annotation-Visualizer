@@ -21,30 +21,13 @@ export default class BarChart extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("CategoryNumber"),
+      options: () => getGeneratorOptions(["CategoryNumber"]),
     },
     "options.horizontal": {
       type: "switch",
       label: "Horizontal",
     },
   };
-  static previewData = [
-    {
-      label: "Label 1",
-      value: 140,
-      color: "#00618f",
-    },
-    {
-      label: "Label 2",
-      value: 73,
-      color: "#3a4856",
-    },
-    {
-      label: "Label 3",
-      value: 56,
-      color: "#9eadbd",
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 30, right: 30, bottom: 70, left: 60 });
@@ -53,17 +36,20 @@ export default class BarChart extends D3Visualization {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
 
-    const min = d3.min(data.map((d) => d.value));
-    const max = d3.max(data.map((d) => d.value));
+    this.exports.init(meta.total > 1);
+    this.pagination.init(meta.ids);
+
+    const max = d3.max(data[0].map((d) => d.value));
 
     this.filter = {
       sort: "value",
       desc: true,
-      min,
-      max,
+      min: 0,
+      max: max,
+      limit: 100
     };
     this.controls.append([
       {
@@ -73,7 +59,7 @@ export default class BarChart extends D3Visualization {
         options: ["value", "label"],
         onchange: (event) => {
           this.filter.sort = event.target.value;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
       {
@@ -82,18 +68,28 @@ export default class BarChart extends D3Visualization {
         value: this.filter.desc,
         onchange: (event) => {
           this.filter.desc = event.target.checked;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
         },
       },
       {
         type: "rangedouble",
         label: "Range",
         value: [this.filter.min, this.filter.max],
-        options: { min, max },
+        options: { min: 0, max: max },
         onchange: (min, max) => {
           this.filter.min = min;
           this.filter.max = max;
-          this.fetch().then((data) => this.render(data));
+          this.rerender(true);
+        },
+      },
+      {
+        type: "number",
+        label: "Limit",
+        value: this.filter.limit,
+        options: { min: 0, max: 10000 },
+        onchange: (event) => {
+          this.filter.limit = event.target.value;
+          this.rerender(true);
         },
       },
     ]);

@@ -21,29 +21,13 @@ export default class SimpleMap extends D3Visualization {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("MapCoordinates"),
+      options: () => getGeneratorOptions(["MapCoordinates"]),
     },
     "options.worldColor": {
       type: "color",
       label: "World color",
     },
   };
-  static previewData = [
-    {
-      type: "Feature",
-      properties: {
-        label: "London - New York",
-        color: "#00618f",
-      },
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [0.1278, 51.5074],
-          [-74.0059, 40.7128],
-        ],
-      },
-    },
-  ];
 
   constructor(root, config) {
     super(root, config, { top: 0, right: 0, bottom: 0, left: 0 });
@@ -51,13 +35,12 @@ export default class SimpleMap extends D3Visualization {
     this.worldColor = config.options.worldColor || "#b8b8b8";
   }
 
-  async fetch() {
-    return await d3.json("/data/features.geojson");
-  }
-
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    this.pagination.init(meta.ids);
   }
 
   render(data) {

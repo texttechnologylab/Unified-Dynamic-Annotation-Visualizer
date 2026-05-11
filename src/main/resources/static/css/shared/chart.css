@@ -66,10 +66,10 @@
   display: flex;
   flex-direction: column;
   background-color: var(--bg-color);
-  padding: 1rem;
+  padding: 0.5rem;
   opacity: 0.97;
   transition: all 300ms ease-in-out;
-  z-index: 10;
+  z-index: 20;
 }
 
 .dv-sidepanel.show {
@@ -82,10 +82,94 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  padding: 0.5rem;
 }
 
 .dv-sidepanel-body {
   flex-grow: 1;
   overflow: auto;
+  padding: 0.5rem;
+}
+
+.dv-pagination-controls {
+  opacity: 0;
+  transition: opacity 300ms ease;
+  transition-delay: 800ms;
+}
+
+.dv-pagination-dropdown {
+  top: 1rem;
+  right: 1rem;
+  max-width: 20rem;
+  appearance: none;
+  border-radius: var(--border-radius);
+  padding: 0.25rem 2.25rem 0.25rem 0.5rem;
+  cursor: pointer;
+  background-image: url("/img/chevron.svg");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 10px;
+}
+
+.dv-pagination-indicator {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums; /* prevents layout shift as numbers change */
+  border-radius: 10px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.dv-btn-pagination {
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #444;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.dv-pagination-dropdown,
+.dv-pagination-indicator,
+.dv-btn-pagination {
+  position: absolute;
+  color: #444;
+  background-color: var(--bg-color-emphasis);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.dv-chart-area:hover {
+  .dv-pagination-controls {
+    opacity: 0.9;
+    transition-delay: 0ms;
+  }
+}
+
+.dv-btn-pagination:hover {
+  background: var(--hover-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.dv-btn-pagination:active {
+  background: var(--active-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.dv-btn-pagination.prev {
+  left: 1rem;
+}
+
+.dv-btn-pagination.next {
+  right: 1rem;
 }

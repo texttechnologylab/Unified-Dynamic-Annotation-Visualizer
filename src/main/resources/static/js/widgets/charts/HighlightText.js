@@ -1,10 +1,7 @@
-import { getData } from "../../api/data.api.js";
-import ControlsHandler from "../../pages/view/toolbar/ControlsHandler.js";
-import ExportHandler from "../../pages/view/toolbar/ExportHandler.js";
-import state from "../../pages/view/utils/viewState.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
+import WidgetInterface from "../WidgetInterface.js";
 
-export default class HighlightText {
+export default class HighlightText extends WidgetInterface {
   static defaultConfig = {
     type: "HighlightText",
     title: "Highlight Text",
@@ -22,58 +19,15 @@ export default class HighlightText {
     "generator.id": {
       type: "select",
       label: "Generator",
-      options: () => getGeneratorOptions("TextFormatting"),
+      options: () => getGeneratorOptions(["TextFormatting"]),
     },
-  };
-  static previewData = {
-    spans: [
-      {
-        text: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr",
-        style: "text-decoration: underline 2px #00618f;",
-      },
-      {
-        text: ", sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
-      },
-      {
-        text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
-        style: "text-decoration: underline 2px #3a4856;",
-      },
-      {
-        text: " Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. ",
-      },
-      {
-        text: "Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.",
-        style: "text-decoration: underline 2px #9eadbd;",
-      },
-    ],
   };
 
   constructor(root, config) {
-    this.root = d3.select(root);
-    this.config = config;
-
-    this.setTitle(this.config.title);
+    super(root, config);
 
     this.tooltip = d3.select(".dv-chart-tooltip");
     this.div = this.root.select(".dv-chart-area").append("div");
-    this.data = null;
-
-    this.filter = {};
-    this.controls = new ControlsHandler(this);
-    this.exports = new ExportHandler(this);
-  }
-
-  setTitle(title) {
-    this.root.select(".dv-toolbar-title").attr("title", title).text(title);
-  }
-
-  async fetch() {
-    const { pipeline, generator, type } = this.config;
-
-    return await getData(pipeline, generator.id, type, {
-      corpus: state.corpusFilter.filter,
-      chart: this.filter,
-    });
   }
 
   clear() {
@@ -86,14 +40,17 @@ export default class HighlightText {
   }
 
   async init() {
-    const data = await this.fetch();
-    this.render(data);
+    const { data, meta } = await this.fetch();
+    this.render(data[0]);
+
+    this.exports.init(meta.total > 1);
+    this.pagination.init(meta.ids);
 
     this.filter = {
       hide: [],
     };
     this.controls.append(
-      data.datasets.map(({ name }) => {
+      data[0].datasets.map(({ name }) => {
         return {
           type: "switch",
           label: name.split(".").slice(-2).join("."),
@@ -104,7 +61,7 @@ export default class HighlightText {
             } else {
               this.filter.hide.push(name);
             }
-            this.fetch().then((data) => this.render(data));
+            this.rerender(true);
           },
         };
       }),
