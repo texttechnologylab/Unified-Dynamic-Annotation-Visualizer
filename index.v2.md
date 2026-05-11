@@ -81,8 +81,7 @@ the integrated database.
 
    This starts PostgreSQL and the UDAV application. The web UI is available at [http://localhost:8080](http://localhost:8080) once the container is healthy (usually within ~30–60 seconds).
 
-> [!NOTE]
-> If you're looking for a small demo without any setup, check our [open demo](https://demo.udav.texttechnologylab.org/).
+> **Note:** If you're looking for a small demo without any setup, check our [open demo](https://demo.udav.texttechnologylab.org/).
 
 ---
 
@@ -92,8 +91,7 @@ the integrated database.
 
 To import XMI/GZ annotation files produced by DUUI pipelines, you need to configure the importer in your `.env` before starting the containers.
 
-> [!IMPORTANT]
-> `DUUI_IMPORTER_PATH` and `DUUI_IMPORTER_TYPE_SYSTEM_PATH` must be **absolute paths on your host machine** — Docker Compose mounts them into the container automatically.
+> **Important:** `DUUI_IMPORTER_PATH` and `DUUI_IMPORTER_TYPE_SYSTEM_PATH` must be **absolute paths on your host machine** — Docker Compose mounts them into the container automatically.
 
 **1. Set the path to your annotation files:**
 
@@ -115,8 +113,7 @@ DUUI_IMPORTER_FILE_ENDING=.gz
 DUUI_IMPORTER_TYPE_SYSTEM_PATH=/absolute/path/to/your/typesystem
 ```
 
-> [!NOTE]
-> If `DUUI_IMPORTER_TYPE_SYSTEM_PATH` is left empty, the type system is auto-detected from the XMI files. If you set it, point it to the **folder** containing your TypeSystem XML file.
+> **Note:** If `DUUI_IMPORTER_TYPE_SYSTEM_PATH` is left empty, the type system is auto-detected from the XMI files. If you set it, point it to the **folder** containing your TypeSystem XML file.
 
 **4. Enable the importer and start:**
 
