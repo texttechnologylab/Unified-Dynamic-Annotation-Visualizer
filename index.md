@@ -49,9 +49,6 @@ the integrated database.
 
 ## Getting Started
 
-> [!TIP]
-> Please consult the [documentation](https://texttechnologylab.github.io/Unified-Dynamic-Annotation-Visualizer/) page for a more detailed and customizable setup documentation.
-
 ### Requirements
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) (v2.x or later)
