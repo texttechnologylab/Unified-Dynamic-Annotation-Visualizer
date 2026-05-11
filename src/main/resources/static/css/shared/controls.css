@@ -346,8 +346,6 @@ output {
     border: none;
     outline: none;
     flex-grow: 1;
-    text-overflow: ellipsis;
-    direction: rtl;
   }
 
   i {
