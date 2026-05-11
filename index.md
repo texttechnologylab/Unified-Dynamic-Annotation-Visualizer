@@ -86,6 +86,8 @@ the integrated database.
 
 ### Importing DUUI Annotation Data
 
+> For the full configuration reference, see [DUUI Importer — Configuration Reference](docs/duui-importer-configuration).
+
 To import XMI/GZ annotation files produced by DUUI pipelines, you need to configure the importer in your `.env` before starting the containers.
 
 > [!IMPORTANT]
