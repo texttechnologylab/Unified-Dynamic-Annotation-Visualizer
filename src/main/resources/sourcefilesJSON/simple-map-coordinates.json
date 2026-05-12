@@ -1,0 +1,107 @@
+{
+  "simpleMap": {
+    "name": [
+      "Berlin",
+      "Paris",
+      "London",
+      "Rome",
+      "Madrid",
+      "New York"
+    ],
+    "longitude": [
+      13.405,
+      2.3522,
+      -0.1276,
+      12.4964,
+      -3.7038,
+      -74.006
+    ],
+    "latitude": [
+      52.52,
+      48.8566,
+      51.5072,
+      41.9028,
+      40.4168,
+      40.7128
+    ],
+    "fillColor": [
+      "#2563eb",
+      "#dc2626",
+      "#16a34a",
+      "#9333ea",
+      "#ea580c",
+      "#0891b2"
+    ],
+    "strokeColor": [
+      "#1e3a8a",
+      "#7f1d1d",
+      "#14532d",
+      "#581c87",
+      "#7c2d12",
+      "#164e63"
+    ],
+    "scale": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "edges": [
+      [
+        {
+          "to": 1,
+          "number": 878,
+          "label": "Berlin to Paris",
+          "color": "#334155"
+        },
+        {
+          "to": 2,
+          "number": 932,
+          "label": "Berlin to London",
+          "color": "#334155"
+        }
+      ],
+      [
+        {
+          "to": 2,
+          "number": 344,
+          "label": "Paris to London",
+          "color": "#475569"
+        },
+        {
+          "to": 4,
+          "number": 1054,
+          "label": "Paris to Madrid",
+          "color": "#475569"
+        }
+      ],
+      [],
+      [
+        {
+          "to": 1,
+          "number": 1105,
+          "label": "Rome to Paris",
+          "color": "#64748b"
+        }
+      ],
+      [
+        {
+          "to": 3,
+          "number": 1364,
+          "label": "Madrid to Rome",
+          "color": "#64748b"
+        }
+      ],
+      [
+        {
+          "to": 2,
+          "number": 5570,
+          "label": "New York to London",
+          "color": "#0f766e"
+        }
+      ]
+    ]
+  }
+}

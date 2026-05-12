@@ -10,22 +10,33 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.texttechnologylab.udav.db.SchemaObjectNames;
 
 import org.json.XML;
 
 import javax.sql.DataSource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import static org.jooq.impl.DSL.*;
@@ -41,27 +52,40 @@ public class JsonDataImporter implements ApplicationRunner {
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonDataImporter.class);
 
     private final DataSource dataSource;
-    private final Path folder;
+    private final String folderPath;
     private final boolean replaceIfDifferent;
+    private final ResourcePatternResolver resourceResolver;
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${app.db.schema:public}")
     private String schema;
 
+    @Autowired
     public JsonDataImporter(
             DataSource dataSource,
             @Value("${app.json-data-import.folder:sourcefilesJSON}") String folderPath,
             @Value("${app.json-data-import.replace-if-different:false}") boolean replaceIfDifferent
     ) {
+        this(dataSource, folderPath, replaceIfDifferent, new PathMatchingResourcePatternResolver());
+    }
+
+    JsonDataImporter(
+            DataSource dataSource,
+            String folderPath,
+            boolean replaceIfDifferent,
+            ResourcePatternResolver resourceResolver
+    ) {
         this.dataSource = dataSource;
-        this.folder = Paths.get(folderPath);
+        this.folderPath = folderPath;
         this.replaceIfDifferent = replaceIfDifferent;
+        this.resourceResolver = resourceResolver;
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if (!Files.exists(folder) || !Files.isDirectory(folder)) {
-            LOGGER.warn("sourcefilesJSON folder does not exist or is not a directory: {}", folder.toAbsolutePath());
+        List<ImportCandidate> candidates = resolveImportCandidates();
+        if (candidates.isEmpty()) {
+            LOGGER.warn("No JSON/XML import files found for configured source '{}'.", folderPath);
             return;
         }
 
@@ -83,28 +107,84 @@ public class JsonDataImporter implements ApplicationRunner {
 
             LOGGER.info("Ensured schema and table exist: {}.{}", schema, TABLE);
 
-            try (Stream<Path> files = Files.list(folder)) {
-                files.filter(p -> {
-                            String name = p.getFileName().toString().toLowerCase();
-                            return Files.isRegularFile(p)
-                                    && (name.endsWith(".json") || name.endsWith(".xml"));
-                        })
-                        .forEach(p -> importOne(dsl, T, F_NAME, F_JSON, p));
-            }
+            candidates.forEach(candidate -> importOne(dsl, T, F_NAME, F_JSON, candidate));
         }
+    }
+
+    List<ImportCandidate> resolveImportCandidates() throws IOException {
+        String configured = normalizeConfiguredFolder(folderPath);
+
+        if (configured.startsWith("classpath*:") || configured.startsWith("classpath:")) {
+            return resolveClasspathCandidates(configured);
+        }
+
+        Path filesystemPath = resolveFilesystemPath(configured);
+        if (configured.startsWith("file:")) {
+            if (Files.exists(filesystemPath) && Files.isDirectory(filesystemPath)) {
+                return resolveFilesystemCandidates(filesystemPath);
+            }
+            LOGGER.warn("Configured JSON import file URI is not a directory: {}", filesystemPath.toAbsolutePath());
+            return List.of();
+        }
+
+        if (filesystemPath != null && Files.exists(filesystemPath) && Files.isDirectory(filesystemPath)) {
+            return resolveFilesystemCandidates(filesystemPath);
+        }
+
+        String classpathFolder = normalizeClasspathFolder(configured);
+        List<ImportCandidate> candidates = resolveClasspathCandidates("classpath*:" + classpathFolder);
+        if (candidates.isEmpty()) {
+            String filesystemDescription = filesystemPath == null ? configured : filesystemPath.toAbsolutePath().toString();
+            LOGGER.warn(
+                    "Configured JSON import folder was not found as filesystem directory '{}' or classpath folder '{}'.",
+                    filesystemDescription,
+                    classpathFolder
+            );
+        }
+        return candidates;
+    }
+
+    private List<ImportCandidate> resolveFilesystemCandidates(Path directory) throws IOException {
+        try (Stream<Path> files = Files.list(directory)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .filter(p -> isSupportedFileName(p.getFileName().toString()))
+                    .sorted(Comparator.comparing(p -> p.getFileName().toString()))
+                    .map(p -> new ImportCandidate(
+                            p.getFileName().toString(),
+                            p.toAbsolutePath().toString(),
+                            () -> Files.readString(p, StandardCharsets.UTF_8)
+                    ))
+                    .toList();
+        }
+    }
+
+    private List<ImportCandidate> resolveClasspathCandidates(String location) throws IOException {
+        String pattern = toClasspathSearchPattern(location);
+        return Arrays.stream(resourceResolver.getResources(pattern))
+                .filter(Resource::exists)
+                .filter(resource -> resource.getFilename() != null)
+                .filter(resource -> isSupportedFileName(resource.getFilename()))
+                .sorted(Comparator.comparing(Resource::getFilename))
+                .map(resource -> new ImportCandidate(
+                        resource.getFilename(),
+                        resource.getDescription(),
+                        () -> readResource(resource)
+                ))
+                .toList();
     }
 
     private void importOne(DSLContext dsl,
                            Table<Record> T,
                            Field<String> F_NAME,
                            Field<String> F_JSON,
-                           Path p) {
+                           ImportCandidate candidate) {
         try {
-            String raw = Files.readString(p, StandardCharsets.UTF_8);
-            String sourceFileName = p.getFileName().toString();
+            String raw = candidate.readContent();
+            String sourceFileName = candidate.fileName();
             String canonicalJson;
 
-            if (sourceFileName.toLowerCase().endsWith(".xml")) {
+            if (sourceFileName.toLowerCase(Locale.ROOT).endsWith(".xml")) {
                 canonicalJson = convertXmlToJson(raw);
             } else {
                 canonicalJson = canonicalize(raw);
@@ -146,7 +226,7 @@ public class JsonDataImporter implements ApplicationRunner {
             LOGGER.warn("JSON data with name {} already exists. Skipping.", sourceFileName);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to import JSON data from file {}: {}", p.getFileName(), e.getMessage());
+            LOGGER.error("Failed to import JSON data from file {}: {}", candidate.description(), e.getMessage());
         }
     }
 
@@ -163,5 +243,84 @@ public class JsonDataImporter implements ApplicationRunner {
 
     private String convertXmlToJson(String xml) {
         return XML.toJSONObject(xml).toString();
+    }
+
+    private static String normalizeConfiguredFolder(String value) {
+        if (value == null || value.isBlank()) {
+            return "sourcefilesJSON";
+        }
+        return value.trim().replace('\\', '/');
+    }
+
+    private static Path resolveFilesystemPath(String location) {
+        if (location.startsWith("file:")) {
+            return Paths.get(URI.create(location));
+        }
+        return Paths.get(location);
+    }
+
+    private static String normalizeClasspathFolder(String location) {
+        String normalized = location;
+        if (normalized.startsWith("classpath*:")) {
+            normalized = normalized.substring("classpath*:".length());
+        } else if (normalized.startsWith("classpath:")) {
+            normalized = normalized.substring("classpath:".length());
+        }
+
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+
+        String srcResourcesPrefix = "src/main/resources/";
+        if (normalized.startsWith(srcResourcesPrefix)) {
+            normalized = normalized.substring(srcResourcesPrefix.length());
+        } else {
+            int srcResourcesIndex = normalized.indexOf("/" + srcResourcesPrefix);
+            if (srcResourcesIndex >= 0) {
+                normalized = normalized.substring(srcResourcesIndex + srcResourcesPrefix.length() + 1);
+            }
+        }
+
+        String resourcesPrefix = "resources/";
+        if (normalized.startsWith(resourcesPrefix)) {
+            normalized = normalized.substring(resourcesPrefix.length());
+        } else {
+            int resourcesIndex = normalized.indexOf("/" + resourcesPrefix);
+            if (resourcesIndex >= 0) {
+                normalized = normalized.substring(resourcesIndex + resourcesPrefix.length() + 1);
+            }
+        }
+
+        return normalized;
+    }
+
+    private static String toClasspathSearchPattern(String location) {
+        String normalized = normalizeClasspathFolder(location);
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return "classpath*:" + normalized + "/*";
+    }
+
+    private static boolean isSupportedFileName(String fileName) {
+        String normalized = fileName.toLowerCase(Locale.ROOT);
+        return normalized.endsWith(".json") || normalized.endsWith(".xml");
+    }
+
+    private static String readResource(Resource resource) throws IOException {
+        try (InputStream inputStream = resource.getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    record ImportCandidate(String fileName, String description, ContentReader reader) {
+        String readContent() throws IOException {
+            return reader.read();
+        }
+    }
+
+    @FunctionalInterface
+    interface ContentReader {
+        String read() throws IOException;
     }
 }
