@@ -19,6 +19,7 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -51,7 +52,8 @@ public class TextFormatting extends GeneratorUIMA {
     }
 
     @Override
-    public void setup() {}
+    public void setup() {
+    }
 
     @Override
     public void setup_step1() throws SQLException {
@@ -65,8 +67,12 @@ public class TextFormatting extends GeneratorUIMA {
             for (Generator g : sourceDerived.getSourceGenerators()) {
                 if (!TextFormatting.class.equals(g.getClass())) continue; // Ignore source generators of non-matching classes
                 TextFormatting tf = (TextFormatting) g;
-                if (text == null) { text = tf.getText(); } // TODO: Improve text checking
-                for (Dataset d : tf.getDatasets()) { datasets.add(new Dataset(d)); }
+                if (text == null) {
+                    text = tf.getText();
+                } // TODO: Improve text checking
+                for (Dataset d : tf.getDatasets()) {
+                    datasets.add(new Dataset(d));
+                }
             }
         } else if (SourceUIMA.class.equals(source.getClass())) {
             // UIMA generator:
@@ -81,21 +87,29 @@ public class TextFormatting extends GeneratorUIMA {
                 if (sourceFiles == null || sourceFiles.isEmpty()) {
                     throw new IllegalArgumentException("No sofaFile defined for generator \"" + id + "\" and fileWhitelist is empty or undefined.");
                 } else {
-                    for (String f : sourceFiles) { this.UIMAsofaFile = f; break; }
+                    for (String f : sourceFiles) {
+                        this.UIMAsofaFile = f;
+                        break;
+                    }
                 }
             } else {
                 this.UIMAsofaFile = sofaFile;
             }
             String[] sofa = dbGetSofa(this.UIMAsofaFile, this.UIMAsofaID);
-            UIMAsofaFile =      sofa[0];
-            UIMAsofaID =        sofa[1];
-            this.text =         sofa[2];
+            UIMAsofaFile = sofa[0];
+            UIMAsofaID = sofa[1];
+            this.text = sofa[2];
             String featureName = settings.getStringSettingOrDefault("featureName", null);
             String style = settings.getStringSettingOrDefault("style", null);
             if (style == null) style = DEFAULT_STYLE;
             String singleColorStr = settings.getStringSettingOrDefault("color", null);
             Color singleColor = null;
-            if (singleColorStr != null) { try { singleColor = Color.decode(singleColorStr); } catch (NumberFormatException ignored) {}}
+            if (singleColorStr != null) {
+                try {
+                    singleColor = Color.decode(singleColorStr);
+                } catch (NumberFormatException ignored) {
+                }
+            }
             FilterList<String> filterListCategories = settings.generateStringFilterList("categories");
             ArrayList<Dataset.Segment> segments = dbCreateTextFormattingSegments(featureName, UIMAsofaFile, UIMAsofaID, filterListCategories.getWhitelist(), filterListCategories.getBlacklist());
             String type = sourceUIMA.getUri() + "." + tempFeatureName;
@@ -205,7 +219,7 @@ public class TextFormatting extends GeneratorUIMA {
                 // COLORS batch
                 List<Query> batch = new ArrayList<>();
                 for (String category : ds.categoryCountMap.keySet()) {
-                    Color c = (ds.singleColor == null)? ds.categoryColorMap.get(category) : ds.singleColor;
+                    Color c = (ds.singleColor == null) ? ds.categoryColorMap.get(category) : ds.singleColor;
                     String hex = String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
                     batch.add(
                             dsl.insertInto(T_COLOR)
@@ -226,6 +240,180 @@ public class TextFormatting extends GeneratorUIMA {
                 }
                 if (!batch.isEmpty()) dsl.batch(batch).execute();
             }
+        }
+    }
+
+    private void getUIMAFileAndSofaFromDerived(SourceDerived sourceDerived) {
+        UIMAsofaFile = null;
+        UIMAsofaID = null;
+        for (Generator g : sourceDerived.getSourceGenerators()) {
+            if (!TextFormatting.class.equals(g.getClass())) continue; // Ignore source generators of non-matching classes
+            TextFormatting tf = (TextFormatting) g;
+            if (UIMAsofaFile == null && UIMAsofaID == null) {
+                UIMAsofaFile = tf.UIMAsofaFile;
+                UIMAsofaID = tf.UIMAsofaID;
+            } else {
+                if (!Objects.equals(UIMAsofaID, tf.UIMAsofaID) || !Objects.equals(UIMAsofaFile, tf.UIMAsofaFile)) {
+                    UIMAsofaFile = null;
+                    UIMAsofaID = null;
+                    break;
+                }
+            }
+        }
+    }
+
+    private ArrayList<Dataset.Segment> dbCreateTextFormattingSegments(String featureName, String sofaFile, String sofaId, Set<String> categoriesWhitelist, Set<String> categoriesBlacklist) throws SQLException {
+        final String schema = DBConstants.DB_SCHEMA_UIMA;
+        SourceUIMA sourceUIMA = (SourceUIMA) source;
+
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+            TypeTableResolver resolver = new TypeTableResolver(dsl, schema);
+
+            var S = DSL.table(DSL.name(schema, "sofas"));
+            var S_DOC = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
+            var S_SOFA = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
+            var S_URI = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
+
+            // Normalize sofaFile and resolve the SOFA row; this also normalizes sofaId if null
+            String[] resolved = dbGetSofa(sofaFile, sofaId);
+            String label = resolved[0]; // URI or DOC_ID
+            String resolvedId = resolved[1];
+
+            // We need the DOC_ID for the chosen label + sofaId
+            String baseDoc = label.endsWith(".xmi") ? label.substring(0, label.length() - 4) : label;
+            String docForSofa = dsl.select(S_DOC)
+                    .from(S)
+                    .where(S_SOFA.eq(resolvedId)
+                            .and(S_URI.equalIgnoreCase(label).or(S_DOC.equalIgnoreCase(baseDoc))))
+                    .orderBy(S_SOFA.asc())
+                    .limit(1)
+                    .fetchOne(S_DOC);
+
+            if (docForSofa == null) {
+                throw new IllegalArgumentException("Could not resolve DOC_ID for label=" + label + " and sofa_id=" + resolvedId);
+            }
+
+            List<String> tableHashes = resolver.tablesForTypeIncludingDescendants(sourceUIMA.getUri());
+            if (tableHashes.isEmpty()) tableHashes = List.of(sourceUIMA.getTableHash());
+
+            ArrayList<Dataset.Segment> segments = new ArrayList<>();
+            int compatibleTables = 0;
+            String resolvedFeatureName = null;
+            for (String hash : tableHashes) {
+                var T = DSL.table(DSL.name(schema, hash));
+                var DOC_ID = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "doc_id")), String.class);
+                var SOFA_ID = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "sofa_id")), String.class);
+                var FS_BEGIN = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "fs_begin")), Integer.class);
+                var FS_END = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "fs_end")), Integer.class);
+                Field<String> featureField = resolveFeatureFieldOrNull(dsl, schema, hash, featureName, null);
+                if (featureField == null) {
+                    continue;
+                }
+                compatibleTables++;
+                if (resolvedFeatureName == null) resolvedFeatureName = tempFeatureName;
+
+                Condition cond = DOC_ID.eq(docForSofa).and(SOFA_ID.eq(resolvedId));
+                if (categoriesWhitelist != null && !categoriesWhitelist.isEmpty()) {
+                    cond = cond.and(featureField.in(categoriesWhitelist));
+                }
+                if (categoriesBlacklist != null && !categoriesBlacklist.isEmpty()) {
+                    cond = cond.and(featureField.notIn(categoriesBlacklist));
+                }
+
+                var recs = dsl
+                        .select(FS_BEGIN, FS_END, featureField)
+                        .from(T)
+                        .where(cond)
+                        .orderBy(FS_BEGIN.asc(), FS_END.asc())
+                        .fetch();
+
+                for (Record r : recs) {
+                    Integer b = r.get(FS_BEGIN);
+                    Integer e = r.get(FS_END);
+                    String cat = r.get(featureField);
+                    if (cat == null || cat.isBlank()) cat = "(null)";
+                    if (b != null && e != null && b >= 0 && e >= b) {
+                        segments.add(new Dataset.Segment(b, e, cat));
+                    }
+                }
+            }
+            if (compatibleTables == 0) {
+                throw new IllegalStateException(
+                        "No compatible feature column for UIMA type " + sourceUIMA.getUri() +
+                                " in resolved tables " + tableHashes +
+                                " for desired '" + featureName + "'."
+                );
+            }
+            tempFeatureName = resolvedFeatureName;
+            segments.sort(Comparator.comparingInt((Dataset.Segment s) -> s.begin).thenComparingInt(s -> s.end));
+            return segments;
+        }
+    }
+
+    private String[] dbGetSofa(String wantedSofaFile, String wantedSofaId) throws SQLException {
+        final String schema = DBConstants.DB_SCHEMA_UIMA;
+
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+
+            var SOFAS = DSL.table(DSL.name(schema, "sofas"));
+            var S_DOC = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
+            var S_SOFAID = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
+            var S_URI = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
+            var S_STR = DSL.field(DSL.name(schema, "sofas", "sofa_string"), String.class);
+
+            // Normalize input: accept URI, doc_id, or "ID... .xmi"
+            String in;
+            if (wantedSofaFile != null && !wantedSofaFile.isBlank()) {
+                in = wantedSofaFile.trim();
+            } else {
+                throw new IllegalArgumentException("No source files available to resolve SOFA.");
+            }
+            String baseDoc = in.endsWith(".xmi") ? in.substring(0, in.length() - 4) : in;
+
+
+            // Try to find the row by (uri==in) OR (doc_id==baseDoc)
+            Condition byUriOrDoc = S_URI.equalIgnoreCase(in).or(S_DOC.equalIgnoreCase(baseDoc));
+
+            // If sofaId not provided, pick the first available for that doc/uri
+            String sofaId = wantedSofaId;
+            if (sofaId == null || sofaId.isBlank()) {
+                sofaId = dsl.select(S_SOFAID)
+                        .from(SOFAS)
+                        .where(byUriOrDoc)
+                        .orderBy(S_SOFAID.asc())
+                        .limit(1)
+                        .fetchOne(S_SOFAID);
+                if (sofaId == null) {
+                    throw new IllegalArgumentException("No SOFA found for identifier: " + in + " (tried doc_id=" + baseDoc + ")");
+                }
+            }
+
+            // Load the row and prefer filtering by DOC_ID + SOFA_ID (works even if URI is null)
+            Record r = dsl.select(S_DOC, S_SOFAID, S_URI, S_STR)
+                    .from(SOFAS)
+                    .where(byUriOrDoc.and(S_SOFAID.eq(sofaId)))
+                    .orderBy(S_SOFAID.asc())
+                    .limit(1)
+                    .fetchOne();
+
+            if (r == null) {
+                throw new IllegalArgumentException("SOFA row not found for identifier=" + in + " and sofa_id=" + sofaId);
+            }
+
+            String docId = r.get(S_DOC);
+            String sofaString = r.get(S_STR);
+            String sofaUri = r.get(S_URI);
+
+            if (sofaString == null) {
+                throw new IllegalArgumentException("SOFA string is NULL for doc_id=" + docId + ", sofa_id=" + sofaId);
+            }
+
+            // For "file" we return URI if present, else DOC_ID (so downstream labels remain meaningful)
+            String resolvedFileLabel = (sofaUri != null && !sofaUri.isBlank()) ? sofaUri : docId;
+
+            return new String[]{resolvedFileLabel, sofaId, sofaString};
         }
     }
 
@@ -259,9 +447,6 @@ public class TextFormatting extends GeneratorUIMA {
             this.categoryCountMap = new HashMap<>(copyOf.categoryCountMap);
         }
 
-        private record Segment(int begin, int end, String category) {}
-
-
         private static Map<String, Double> segmentsToCategoryCountMap(List<Dataset.Segment> segments) {
             HashMap<String, Double> categoryCount = new HashMap<>();
             for (Dataset.Segment s : segments) {
@@ -273,152 +458,8 @@ public class TextFormatting extends GeneratorUIMA {
             }
             return categoryCount;
         }
-    }
 
-    private void getUIMAFileAndSofaFromDerived(SourceDerived sourceDerived) {
-        UIMAsofaFile = null; UIMAsofaID = null;
-        for (Generator g : sourceDerived.getSourceGenerators()) {
-            if (!TextFormatting.class.equals(g.getClass())) continue; // Ignore source generators of non-matching classes
-            TextFormatting tf = (TextFormatting) g;
-            if (UIMAsofaFile == null && UIMAsofaID == null) {
-                UIMAsofaFile = tf.UIMAsofaFile;
-                UIMAsofaID = tf.UIMAsofaID;
-            } else {
-                if (!Objects.equals(UIMAsofaID, tf.UIMAsofaID) || !Objects.equals(UIMAsofaFile, tf.UIMAsofaFile)) {
-                    UIMAsofaFile = null; UIMAsofaID = null; break;
-                }
-            }
-        }
-    }
-
-    private ArrayList<Dataset.Segment> dbCreateTextFormattingSegments(String featureName, String sofaFile, String sofaId, Set<String> categoriesWhitelist, Set<String> categoriesBlacklist) throws SQLException {
-        final String schema = DBConstants.DB_SCHEMA_UIMA;
-        final String hash = ((SourceUIMA) source).getTableHash();
-
-        try (Connection connection = dbAccess.getDataSource().getConnection()) {
-            DSLContext dsl = DSL.using(connection);
-            TypeTableResolver resolver = new TypeTableResolver(dsl, schema);
-
-            var T          = DSL.table(DSL.name(schema, hash));
-            var DOC_ID     = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "doc_id")),   String.class);
-            var SOFA_ID    = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "sofa_id")),  String.class);
-            var FS_BEGIN   = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "fs_begin")), Integer.class);
-            var FS_END     = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "fs_end")),   Integer.class);
-            Field<String> featureField = resolveFeatureField(dsl, schema, hash, featureName, null);
-
-            var S       = DSL.table(DSL.name(schema, "sofas"));
-            var S_DOC   = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
-            var S_SOFA  = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
-            var S_URI   = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
-
-            // Normalize sofaFile and resolve the SOFA row; this also normalizes sofaId if null
-            String[] resolved = dbGetSofa(sofaFile, sofaId);
-            String label     = resolved[0]; // URI or DOC_ID
-            String resolvedId= resolved[1];
-
-            // We need the DOC_ID for the chosen label + sofaId
-            String baseDoc = label.endsWith(".xmi") ? label.substring(0, label.length() - 4) : label;
-            String docForSofa = dsl.select(S_DOC)
-                    .from(S)
-                    .where(S_SOFA.eq(resolvedId)
-                            .and(S_URI.equalIgnoreCase(label).or(S_DOC.equalIgnoreCase(baseDoc))))
-                    .orderBy(S_SOFA.asc())
-                    .limit(1)
-                    .fetchOne(S_DOC);
-
-            if (docForSofa == null) {
-                throw new IllegalArgumentException("Could not resolve DOC_ID for label=" + label + " and sofa_id=" + resolvedId);
-            }
-
-            Condition cond = DOC_ID.eq(docForSofa).and(SOFA_ID.eq(resolvedId));
-            if (categoriesWhitelist != null && !categoriesWhitelist.isEmpty()) {
-                cond = cond.and(featureField.in(categoriesWhitelist));
-            }
-            if (categoriesBlacklist != null && !categoriesBlacklist.isEmpty()) {
-                cond = cond.and(featureField.notIn(categoriesBlacklist));
-            }
-
-            var recs = dsl
-                    .select(FS_BEGIN, FS_END, featureField)
-                    .from(T)
-                    .where(cond)
-                    .orderBy(FS_BEGIN.asc(), FS_END.asc())
-                    .fetch();
-
-            ArrayList<Dataset.Segment> segments = new ArrayList<>(recs.size());
-            for (Record r : recs) {
-                Integer b = r.get(FS_BEGIN);
-                Integer e = r.get(FS_END);
-                String cat = r.get(featureField);
-                if (cat == null || cat.isBlank()) cat = "(null)";
-                if (b != null && e != null && b >= 0 && e >= b) {
-                    segments.add(new Dataset.Segment(b, e, cat));
-                }
-            }
-            return segments;
-        }
-    }
-
-    private String[] dbGetSofa(String wantedSofaFile, String wantedSofaId) throws SQLException {
-        final String schema = DBConstants.DB_SCHEMA_UIMA;
-
-        try (Connection connection = dbAccess.getDataSource().getConnection()) {
-            DSLContext dsl = DSL.using(connection);
-
-            var SOFAS    = DSL.table(DSL.name(schema, "sofas"));
-            var S_DOC    = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
-            var S_SOFAID = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
-            var S_URI    = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
-            var S_STR    = DSL.field(DSL.name(schema, "sofas", "sofa_string"), String.class);
-
-            // Normalize input: accept URI, doc_id, or "ID... .xmi"
-            String in;
-            if (wantedSofaFile != null && !wantedSofaFile.isBlank()) { in = wantedSofaFile.trim(); }
-            else { throw new IllegalArgumentException("No source files available to resolve SOFA."); }
-            String baseDoc = in.endsWith(".xmi") ? in.substring(0, in.length() - 4) : in;
-
-
-            // Try to find the row by (uri==in) OR (doc_id==baseDoc)
-            Condition byUriOrDoc = S_URI.equalIgnoreCase(in).or(S_DOC.equalIgnoreCase(baseDoc));
-
-            // If sofaId not provided, pick the first available for that doc/uri
-            String sofaId = wantedSofaId;
-            if (sofaId == null || sofaId.isBlank()) {
-                sofaId = dsl.select(S_SOFAID)
-                        .from(SOFAS)
-                        .where(byUriOrDoc)
-                        .orderBy(S_SOFAID.asc())
-                        .limit(1)
-                        .fetchOne(S_SOFAID);
-                if (sofaId == null) {
-                    throw new IllegalArgumentException("No SOFA found for identifier: " + in + " (tried doc_id=" + baseDoc + ")");
-                }
-            }
-
-            // Load the row and prefer filtering by DOC_ID + SOFA_ID (works even if URI is null)
-            Record r = dsl.select(S_DOC, S_SOFAID, S_URI, S_STR)
-                    .from(SOFAS)
-                    .where(byUriOrDoc.and(S_SOFAID.eq(sofaId)))
-                    .orderBy(S_SOFAID.asc())
-                    .limit(1)
-                    .fetchOne();
-
-            if (r == null) {
-                throw new IllegalArgumentException("SOFA row not found for identifier=" + in + " and sofa_id=" + sofaId);
-            }
-
-            String docId      = r.get(S_DOC);
-            String sofaString = r.get(S_STR);
-            String sofaUri    = r.get(S_URI);
-
-            if (sofaString == null) {
-                throw new IllegalArgumentException("SOFA string is NULL for doc_id=" + docId + ", sofa_id=" + sofaId);
-            }
-
-            // For "file" we return URI if present, else DOC_ID (so downstream labels remain meaningful)
-            String resolvedFileLabel = (sofaUri != null && !sofaUri.isBlank()) ? sofaUri : docId;
-
-            return new String[]{ resolvedFileLabel, sofaId, sofaString };
+        private record Segment(int begin, int end, String category) {
         }
     }
 }
