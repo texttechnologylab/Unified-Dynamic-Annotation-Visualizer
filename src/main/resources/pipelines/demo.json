@@ -23,6 +23,13 @@
       "sourceFilesBlacklist" : [ ]
     },
     "id" : "Source-rhhz27m"
+  }, {
+    "uri" : "simple-map-coordinates.json",
+    "settings" : {
+      "sourceFilesWhitelist" : [ ],
+      "sourceFilesBlacklist" : [ ]
+    },
+    "id" : "Source-zdxrvkc"
   } ],
   "generators" : [ {
     "name" : "POS_Numbers",
@@ -72,6 +79,29 @@
     "extends" : [ "TextFormatting-35367u8", "TextFormatting-uytdce8", "TextFormatting-hf4io2z", "TextFormatting-vubumzd", "TextFormatting-fh6ab34", "TextFormatting-lq6c7gt", "TextFormatting-892k706" ],
     "id" : "TextFormatting-3qppt1u",
     "generatorGroup" : null
+  }, {
+    "name" : "MapCoordinates",
+    "type" : "MapCoordinates",
+    "generatorGroup" : false,
+    "settings" : {
+      "keysMap" : {
+        "simpleMap" : {
+          "name" : "label",
+          "longitude" : "coordinates@0",
+          "latitude" : "coordinates@1",
+          "fillColor" : "fillColor",
+          "strokeColor" : "strokeColor",
+          "scale" : "scale",
+          "edges" : "edges"
+        }
+      },
+      "fixedKeys" : {
+        "outsideColor" : "#ffffff"
+      }
+    },
+    "extends" : [ ],
+    "id" : "MapCoordinates-efozat5",
+    "source" : "Source-zdxrvkc"
   } ],
   "widgets" : [ {
     "type" : "StaticText",
@@ -227,5 +257,77 @@
     "x" : 16,
     "y" : 16,
     "id" : "ScrollTable-wwigmth"
+  }, {
+    "type" : "SimpleMap",
+    "title" : "Cities",
+    "generator" : {
+      "id" : "MapCoordinates-efozat5"
+    },
+    "options" : {
+      "worldColor" : "#b8b8b8"
+    },
+    "w" : 8,
+    "h" : 6,
+    "x" : 3,
+    "y" : 23,
+    "id" : "SimpleMap-6yajyaq"
+  }, {
+    "type" : "NetworkGraph",
+    "title" : "Cities",
+    "generator" : {
+      "id" : "MapCoordinates-efozat5"
+    },
+    "options" : { },
+    "w" : 8,
+    "h" : 6,
+    "x" : 13,
+    "y" : 23,
+    "id" : "NetworkGraph-aq8k9sn"
+  }, {
+    "type" : "StaticText",
+    "title" : "Cite",
+    "src" : "Cite",
+    "options" : {
+      "align" : "start",
+      "size" : "3",
+      "weight" : "bold",
+      "style" : "normal",
+      "decoration" : "none"
+    },
+    "w" : 7,
+    "x" : 0,
+    "y" : 29,
+    "id" : "StaticText-e1flx9i"
+  }, {
+    "type" : "StaticText",
+    "title" : "Text",
+    "src" : "If you use UDAV, please cite it as follows:",
+    "options" : {
+      "align" : "start",
+      "size" : "5",
+      "weight" : "normal",
+      "style" : "normal",
+      "decoration" : "none"
+    },
+    "w" : 7,
+    "x" : 0,
+    "y" : 30,
+    "id" : "StaticText-bbxc9ko"
+  }, {
+    "type" : "StaticText",
+    "title" : "Text",
+    "src" : "Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. \"Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer.\" Proceedings of the 15th International Conference on Language Resources and Evaluation (LREC 2026). accepted.",
+    "options" : {
+      "align" : "start",
+      "size" : "5",
+      "weight" : "normal",
+      "style" : "normal",
+      "decoration" : "none"
+    },
+    "w" : 24,
+    "h" : 2,
+    "x" : 0,
+    "y" : 31,
+    "id" : "StaticText-3kcj6xj"
   } ]
 }
