@@ -82,14 +82,14 @@
       <template id="source-card-template">
         <div class="dv-source-card">
           <div class="dv-source-card-header">
-            <div>
+            <div class="dv-text-truncate">
               <button class="dv-btn" type="button" title="New generator" data-bs-toggle="dropdown">
                 <i class="bi bi-plus-lg"></i>
               </button>
               <div class="dropdown-menu">
                 <div class="dv-dropdown-menu"></div>
               </div>
-              <span class="dv-bold">Source</span>
+              <span class="dv-source-card-name"></span>
             </div>
             <div>
               <button class="dv-btn" type="button" title="Edit">

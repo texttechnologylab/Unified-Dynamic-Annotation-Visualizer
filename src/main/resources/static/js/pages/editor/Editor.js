@@ -60,7 +60,7 @@ export default class Editor {
 
         // TODO: api.createSource(state.id, controller.item);
         container.append(controller.root);
-        controller.init();
+        controller.init([], true);
       });
 
     document.querySelector("#discard-button").addEventListener("click", () => {

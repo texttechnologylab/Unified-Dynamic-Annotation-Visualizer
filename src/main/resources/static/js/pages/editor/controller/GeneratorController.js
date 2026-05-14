@@ -19,7 +19,7 @@ export default class GeneratorController {
     this.span.textContent = name;
   }
 
-  init() {
+  init(openModal = false) {
     this.setName(this.item.name);
 
     const Generator = configs[this.item.type];
@@ -81,6 +81,6 @@ export default class GeneratorController {
       removeGenerator(this.item);
     });
 
-    buttons[0].click();
+    if (openModal) buttons[0].click();
   }
 }

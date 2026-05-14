@@ -2,6 +2,7 @@ import { getAnnotations } from "../../../api/annotations.api.js";
 
 export default class Source {
   static defaultConfig = {
+    name: "Source",
     uri: "",
     settings: {
       sourceFilesWhitelist: [],
@@ -9,6 +10,10 @@ export default class Source {
     },
   };
   static formConfig = {
+    name: {
+      type: "text",
+      label: "Name",
+    },
     uri: {
       type: "searchselect",
       label: "Annotation type",

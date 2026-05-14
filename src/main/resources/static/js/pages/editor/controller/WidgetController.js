@@ -37,7 +37,7 @@ export default class WidgetController {
     }
   }
 
-  init() {
+  init(openModal = false) {
     const Widget = getter[this.item.type];
     const builder = new FormBuilder(
       state.modal,
@@ -74,6 +74,6 @@ export default class WidgetController {
       state.grid.removeWidget(this.item.el);
     });
 
-    buttons[0].click();
+    if (openModal) buttons[0].click();
   }
 }
