@@ -418,28 +418,19 @@ Here we list all publications related to UDAV, which you can also refer to when 
 
 ```bib
 @inproceedings{Dahmann:et:al:2026,
-  title     = {Towards the Generation and Application of Dynamic Web-Based Visualization
-               of UIMA-based Annotations for Big-Data Corpora with the Help of
-               Unified Dynamic Annotation Visualizer},
-  booktitle = {Proceedings of the 15th International Conference on Language Resources
-               and Evaluation (LREC 2026)},
+  title = {Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer},
+  booktitle = {Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)},
   year      = {2026},
+  pages = {6695--6705},
   author    = {Dahmann, Thiemo and Schneider, Julian and Stephan, Philipp and Abrami, Giuseppe
                and Mehler, Alexander},
+  address = {Palma, Mallorca, Spain},
+  publisher = {European Language Resources Association (ELRA)},
+  editor = {Piperidis, Stelios and Bel, Núria and van den Heuvel, Henk and Ide, Nancy and Krek, Simon and Toral, Antonio},
+  doi = {10.63317/5ce2aaity4yz},               
   keywords  = {NLP, UIMA, Annotations, dynamic visualization, uce},
-  abstract  = {The automatic and manual annotation of unstructured corpora is
-               a daily task in various scientific fields, which is supported
-               by a variety of existing software solutions. Despite this variety,
-               there are currently only limited solutions for visualizing annotations,
-               especially with regard to dynamic generation and interaction.
-               To bridge this gap and to visualize and provide annotated corpora
-               based on user-, project- or corpus-specific aspects, Unified Dynamic
-               Annotation Visualizer (UDAV) was developed. UDAV is designed as
-               a web-based solution that implements a number of essential features
-               which comparable tools do not support to enable a customizable
-               and extensible toolbox for interacting with annotations, allowing
-               the integration into existing big data frameworks.},
-  note      = {accepted}
+  abstract = {The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields and is supported by a variety of existing software solutions. Despite this variety, few solutions currently support annotation visualization, especially for dynamic generation and interaction. To bridge this gap and visualize annotated corpora based on user-, project-, or corpus-specific aspects, we developed Unified Dynamic Annotation Visualizer (UDAV). UDAV is a web-based solution that implements features not supported by comparable tools, enabling a customizable and extensible toolbox for interacting with annotations and allowing integration into existing big-data frameworks. We exemplify UDAV through a range of visualizations and also provide an evaluation of corpus import and processing performance.},
+  pdf = {http://www.lrec-conf.org/proceedings/lrec2026/pdf/2026.lrec2026-1.533.pdf}
 }
 ```
 
