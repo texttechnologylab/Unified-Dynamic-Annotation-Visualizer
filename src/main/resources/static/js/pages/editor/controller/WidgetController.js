@@ -69,8 +69,11 @@ export default class WidgetController {
         this.widget.rerender(true);
       });
     });
+
     buttons[1].addEventListener("click", () => {
       state.grid.removeWidget(this.item.el);
     });
+
+    buttons[0].click();
   }
 }

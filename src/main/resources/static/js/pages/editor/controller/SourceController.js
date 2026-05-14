@@ -98,6 +98,8 @@ export default class SourceController {
       // Remove source from the state list
       removeSource(this.item);
     });
+
+    buttons[1].click();
   }
 
   appendGenerator(container, config) {

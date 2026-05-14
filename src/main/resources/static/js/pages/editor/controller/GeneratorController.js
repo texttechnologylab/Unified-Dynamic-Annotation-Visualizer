@@ -69,6 +69,7 @@ export default class GeneratorController {
         },
       );
     });
+
     buttons[1].addEventListener("click", () => {
       // Remove generator from the dom
       this.root.remove();
@@ -79,5 +80,7 @@ export default class GeneratorController {
       // Remove generator from the state list
       removeGenerator(this.item);
     });
+
+    buttons[0].click();
   }
 }
