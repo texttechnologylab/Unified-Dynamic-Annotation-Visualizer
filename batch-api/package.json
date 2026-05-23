@@ -1,0 +1,14 @@
+{
+  "name": "batch-api",
+  "version": "1.0.0",
+  "description": "Batch API for udav visualizations",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
