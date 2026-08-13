@@ -12,6 +12,9 @@ export default class View {
   }
 
   init(widgets) {
+    // Expose runtime state for automation (headless API export) without changing export logic.
+    globalThis.__UDAV_VIEW_STATE__ = state;
+
     this.initGrid(widgets);
     this.initSwitcher();
     this.initButtons();
@@ -71,6 +74,8 @@ export default class View {
       disableResize: true,
     });
 
+    const initPromises = [];
+
     grid.on("added", (_, items) => {
       items.forEach((item) => {
         const template = createTemplateElement(
@@ -84,7 +89,10 @@ export default class View {
         root.className = template.className;
 
         const widget = new Widget(root, { pipeline: this.pipeline, ...item });
-        widget.init();
+        const initResult = widget.init();
+        if (initResult && typeof initResult.then === "function") {
+          initPromises.push(initResult);
+        }
 
         if (!item.type.startsWith("Static")) {
           state.charts.push(widget);
@@ -93,5 +101,11 @@ export default class View {
     });
 
     grid.load(widgets);
+
+    globalThis.__UDAV_READY__ = new Promise((resolve) => {
+      setTimeout(() => {
+        Promise.all(initPromises).then(resolve);
+      }, 0);
+    });
   }
 }
