@@ -32,6 +32,19 @@ public class CategoryNumber extends GeneratorUIMA {
         super(id, configGenerator, configBundle, settingsBundle, dbAccess);
     }
 
+    private static Map<String, Double> calculateTotalFromCategoryCountMap(Map<String, Map<String, Double>> categoryCountMap) {
+        HashMap<String, Double> totals = new HashMap<>();
+
+        for (Map<String, Double> innerMap : categoryCountMap.values()) {
+            for (Map.Entry<String, Double> entry : innerMap.entrySet()) {
+                String category = entry.getKey();
+                Double count = entry.getValue();
+                totals.merge(category, count, Double::sum);
+            }
+        }
+
+        return totals;
+    }
 
     @Override
     public Set<Class<? extends CommonProperties>> preSetup_getAllCommonPropertyClasses() {
@@ -45,7 +58,8 @@ public class CategoryNumber extends GeneratorUIMA {
     }
 
     @Override
-    public void setup() {}
+    public void setup() {
+    }
 
     @Override
     public void setup_step1() throws SQLException {
@@ -63,7 +77,12 @@ public class CategoryNumber extends GeneratorUIMA {
             String featureName = settings.getStringSettingOrDefault("featureName", null);
             String singleColorStr = settings.getStringSettingOrDefault("color", null);
             Color singleColor = null;
-            if (singleColorStr != null) { try { singleColor = Color.decode(singleColorStr); } catch (NumberFormatException ignored) {}}
+            if (singleColorStr != null) {
+                try {
+                    singleColor = Color.decode(singleColorStr);
+                } catch (NumberFormatException ignored) {
+                }
+            }
             FilterList<String> filterListCategories = settings.generateStringFilterList("categories");
             Map<String, Map<String, Double>> categoryNumberMap = dbCreateCategoryCountMap(featureName, filterListCategories.getWhitelist(), filterListCategories.getBlacklist());
             Map<String, Double> categoryNumberMapFlat = calculateTotalFromCategoryCountMap(categoryNumberMap);
@@ -71,7 +90,8 @@ public class CategoryNumber extends GeneratorUIMA {
             features = new String[]{tempFeatureName};
             mapFileToRootFeatures = new HashMap<>();
             for (Map.Entry<String, Map<String, Double>> entry : categoryNumberMap.entrySet()) {
-                String file = entry.getKey(); Map<String, Double> categoryNumber = entry.getValue();
+                String file = entry.getKey();
+                Map<String, Double> categoryNumber = entry.getValue();
                 Map<String, Entry> entries = new HashMap<>();
                 for (Map.Entry<String, Double> e : categoryNumber.entrySet()) {
                     entries.put(e.getKey(), new Entry(e.getKey(), e.getValue(), null));
@@ -129,7 +149,8 @@ public class CategoryNumber extends GeneratorUIMA {
             List<Query> batch = new ArrayList<>();
 
             for (Map.Entry<String, Feature> featureEntry : mapFileToRootFeatures.entrySet()) {
-                String file = featureEntry.getKey(); Feature feature = featureEntry.getValue();
+                String file = featureEntry.getKey();
+                Feature feature = featureEntry.getValue();
                 for (Entry e : feature.entries.values()) {
                     batch.add(
                             dsl.insertInto(T)
@@ -161,7 +182,7 @@ public class CategoryNumber extends GeneratorUIMA {
                 Feature feature = featureEntry.getValue();
                 Color singleColor = feature.singleColor;
                 for (Entry e : feature.entries.values()) {
-                    Color colorObj = singleColor == null? categoryColorMap.get(e.categoryName) : singleColor;
+                    Color colorObj = singleColor == null ? categoryColorMap.get(e.categoryName) : singleColor;
                     String color = String.format("#%02x%02x%02x", colorObj.getRed(), colorObj.getGreen(), colorObj.getBlue());
                     batch.add(
                             dsl.insertInto(T)
@@ -174,6 +195,84 @@ public class CategoryNumber extends GeneratorUIMA {
             if (!batch.isEmpty()) {
                 dsl.batch(batch).execute();
             }
+        }
+    }
+
+    private Map<String, Map<String, Double>> dbCreateCategoryCountMap(String featureName, Set<String> categoriesWhitelist, Set<String> categoriesBlacklist) throws SQLException {
+        final String schema = DBConstants.DB_SCHEMA_UIMA;
+        SourceUIMA sourceUIMA = (SourceUIMA) source;
+
+        try (Connection connection = dbAccess.getDataSource().getConnection()) {
+            DSLContext dsl = DSL.using(connection);
+            TypeTableResolver resolver = new TypeTableResolver(dsl, schema);
+
+            var S = DSL.table(DSL.name(schema, "sofas"));
+            var S_DOC = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
+            var S_SOFA = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
+            var S_URI = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
+
+            // Label = prefer URI, fallback to DOC_ID
+            Field<String> LABEL = DSL.coalesce(S_URI, S_DOC);
+
+            // Normalize input list to match LABEL (if ".xmi" -> strip)
+            Set<String> normalized = new HashSet<>();
+            for (String f : sourceFiles) {
+                if (f == null) continue;
+                String s = f.trim();
+                normalized.add(s);
+                if (s.endsWith(".xmi")) normalized.add(s.substring(0, s.length() - 4)); // doc_id form
+            }
+
+            Map<String, Map<String, Double>> out = new HashMap<>();
+            List<String> tableHashes = resolver.tablesForTypeIncludingDescendants(sourceUIMA.getUri());
+            if (tableHashes.isEmpty()) tableHashes = List.of(sourceUIMA.getTableHash());
+
+            int compatibleTables = 0;
+            String resolvedFeatureName = null;
+            for (String hash : tableHashes) {
+                var T = DSL.table(DSL.name(schema, hash));
+                var DOC_ID = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "doc_id")), String.class);
+                var SOFA_ID = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "sofa_id")), String.class);
+                Field<String> featureField = resolveFeatureFieldOrNull(dsl, schema, hash, featureName, null);
+                if (featureField == null) continue;
+                compatibleTables++;
+                if (resolvedFeatureName == null) resolvedFeatureName = tempFeatureName;
+
+                Condition cond = LABEL.in(normalized);
+                if (categoriesWhitelist != null && !categoriesWhitelist.isEmpty()) {
+                    cond = cond.and(featureField.in(categoriesWhitelist));
+                }
+                if (categoriesBlacklist != null && !categoriesBlacklist.isEmpty()) {
+                    cond = cond.and(featureField.notIn(categoriesBlacklist));
+                }
+
+                var recs = dsl
+                        .select(LABEL, featureField, DSL.count())
+                        .from(T)
+                        .join(S).on(DOC_ID.eq(S_DOC).and(SOFA_ID.eq(S_SOFA)))
+                        .where(cond)
+                        .groupBy(LABEL, featureField)
+                        .fetch();
+
+                for (Record r : recs) {
+                    String label = r.get(LABEL);
+                    String cat = r.get(featureField);
+                    if (cat == null || cat.isBlank()) cat = "(null)";
+                    Double cnt = r.get(2, Integer.class).doubleValue();
+
+                    out.computeIfAbsent(label, k -> new HashMap<>())
+                            .merge(cat, cnt, Double::sum);
+                }
+            }
+            if (compatibleTables == 0) {
+                throw new IllegalStateException(
+                        "No compatible feature column for UIMA type " + sourceUIMA.getUri() +
+                                " in resolved tables " + tableHashes +
+                                " for desired '" + featureName + "'."
+                );
+            }
+            tempFeatureName = resolvedFeatureName;
+            return out;
         }
     }
 
@@ -198,82 +297,6 @@ public class CategoryNumber extends GeneratorUIMA {
             this.categoryName = categoryName;
             this.number = number;
             this.subFeatures = subFeatures;
-        }
-    }
-
-    private static Map<String, Double> calculateTotalFromCategoryCountMap(Map<String, Map<String, Double>> categoryCountMap) {
-        HashMap<String, Double> totals = new HashMap<>();
-
-        for (Map<String, Double> innerMap : categoryCountMap.values()) {
-            for (Map.Entry<String, Double> entry : innerMap.entrySet()) {
-                String category = entry.getKey();
-                Double count = entry.getValue();
-                totals.merge(category, count, Double::sum);
-            }
-        }
-
-        return totals;
-    }
-
-
-    private Map<String, Map<String, Double>> dbCreateCategoryCountMap(String featureName, Set<String> categoriesWhitelist, Set<String> categoriesBlacklist) throws SQLException {
-        final String schema = DBConstants.DB_SCHEMA_UIMA;
-        final String hash = ((SourceUIMA) source).getTableHash();
-
-        try (Connection connection = dbAccess.getDataSource().getConnection()) {
-            DSLContext dsl = DSL.using(connection);
-            TypeTableResolver resolver = new TypeTableResolver(dsl, schema);
-
-            var T          = DSL.table(DSL.name(schema, hash));
-            var DOC_ID     = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "doc_id")),   String.class);
-            var SOFA_ID    = DSL.field(DSL.name(schema, hash, resolver.sys(hash, "sofa_id")),  String.class);
-            Field<String> featureField = resolveFeatureField(dsl, schema, hash, featureName, null);
-
-
-            var S       = DSL.table(DSL.name(schema, "sofas"));
-            var S_DOC   = DSL.field(DSL.name(schema, "sofas", "doc_id"), String.class);
-            var S_SOFA  = DSL.field(DSL.name(schema, "sofas", "sofa_id"), String.class);
-            var S_URI   = DSL.field(DSL.name(schema, "sofas", "sofa_uri"), String.class);
-
-            // Label = prefer URI, fallback to DOC_ID
-            Field<String> LABEL = DSL.coalesce(S_URI, S_DOC);
-
-            // Normalize input list to match LABEL (if ".xmi" -> strip)
-            Set<String> normalized = new HashSet<>();
-            for (String f : sourceFiles) {
-                if (f == null) continue;
-                String s = f.trim();
-                normalized.add(s);
-                if (s.endsWith(".xmi")) normalized.add(s.substring(0, s.length() - 4)); // doc_id form
-            }
-
-            Condition cond = LABEL.in(normalized);
-            if (categoriesWhitelist != null && !categoriesWhitelist.isEmpty()) {
-                cond = cond.and(featureField.in(categoriesWhitelist));
-            }
-            if (categoriesBlacklist != null && !categoriesBlacklist.isEmpty()) {
-                cond = cond.and(featureField.notIn(categoriesBlacklist));
-            }
-
-            var recs = dsl
-                    .select(LABEL, featureField, DSL.count())
-                    .from(T)
-                    .join(S).on(DOC_ID.eq(S_DOC).and(SOFA_ID.eq(S_SOFA)))
-                    .where(cond)
-                    .groupBy(LABEL, featureField)
-                    .fetch();
-
-            Map<String, Map<String, Double>> out = new HashMap<>();
-            for (Record r : recs) {
-                String label = r.get(LABEL);
-                String cat   = r.get(featureField);
-                if (cat == null || cat.isBlank()) cat = "(null)";
-                Double cnt   = r.get(2, Integer.class).doubleValue();
-
-                out.computeIfAbsent(label, k -> new HashMap<>())
-                        .merge(cat, cnt, Double::sum);
-            }
-            return out;
         }
     }
 }

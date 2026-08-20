@@ -11,10 +11,18 @@ import state from "../utils/editorState.js";
 export default class SourceController {
   constructor(item) {
     this.root = createTemplateElement("#source-card-template");
+    this.span = this.root.querySelector(".dv-source-card-name");
     this.item = item;
   }
 
-  init(generators = []) {
+  setName(name) {
+    this.item.name = name;
+    this.span.textContent = name;
+  }
+
+  init(generators = [], openModal = false) {
+    this.setName(this.item.name || "Source");
+
     const buttons = this.root.querySelectorAll("button");
     const options = this.root.querySelector(".dv-dropdown-menu");
     const body = this.root.querySelector(".dv-source-card-body");
@@ -30,7 +38,7 @@ export default class SourceController {
       ...(this.item.createsGenerators || []),
       ...generators,
     ]) {
-      this.appendGenerator(body, config);
+      this.appendGenerator(body, config, false);
     }
     delete this.item.createsGenerators;
 
@@ -67,7 +75,7 @@ export default class SourceController {
       );
 
       option.addEventListener("click", () => {
-        this.appendGenerator(body, config);
+        this.appendGenerator(body, config, true);
       });
 
       options.append(option);
@@ -75,12 +83,13 @@ export default class SourceController {
 
     // Initialize buttons
     buttons[1].addEventListener("click", () => {
-      const { uri, settings } = this.item;
+      const { name, uri, settings } = this.item;
       const defaultSettings = Source.defaultConfig.settings;
 
       builder.buildForm(
-        { uri, settings: { ...defaultSettings, ...settings } },
-        ({ uri, settings }) => {
+        { name, uri, settings: { ...defaultSettings, ...settings } },
+        ({ name, uri, settings }) => {
+          this.setName(name);
           this.item.uri = uri;
           this.item.settings = settings;
           // TODO: api.updateSource(state.id, this.item); + rerender connected widgets
@@ -98,13 +107,15 @@ export default class SourceController {
       // Remove source from the state list
       removeSource(this.item);
     });
+
+    if (openModal) buttons[1].click();
   }
 
-  appendGenerator(container, config) {
+  appendGenerator(container, config, openModal) {
     const controller = createGenerator(config, this.item.id);
 
     // TODO: api.createGenerator(state.id, config);
     container.append(controller.root);
-    controller.init();
+    controller.init(openModal);
   }
 }

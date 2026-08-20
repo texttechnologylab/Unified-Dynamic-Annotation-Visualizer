@@ -63,7 +63,7 @@ export default class WidgetInterface {
   async export(all = false) {
     let items = [{ json: this.data }];
 
-    if (all) {
+    if (all && this.pagination.elements.length > 1) {
       const { data } = await this.fetch(true);
 
       items = data.map((dataset) => ({ json: dataset.data[0] }));

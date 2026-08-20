@@ -530,7 +530,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 try {
                     DSLContext ddl = DSL.using(conn, dsl.dialect(), dsl.settings());
                     ddl.createSchemaIfNotExists(DSL.name(schema)).execute();
-                    ddl.createTableIfNotExists(DSL.name(schema, "uima_type_registry")).column("id", SQLDataType.BIGINT.identity(true)).column("uima_type_uri", SQLDataType.CLOB.nullable(false)).column("table_name", SQLDataType.VARCHAR(maxIdentifierLength).nullable(false)).column("row_count", SQLDataType.BIGINT.defaultValue(0L)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_uima_type_registry"))).primaryKey("id"), constraint(DSL.name(cutWithHash("uq_type_uri"))).unique("uima_type_uri"), constraint(DSL.name(cutWithHash("uq_table_name"))).unique("table_name")).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "uima_type_registry")).column("id", SQLDataType.BIGINT.identity(true)).column("uima_type_uri", SQLDataType.CLOB.nullable(false)).column("supertype_uri", SQLDataType.CLOB.nullable(true)).column("table_name", SQLDataType.VARCHAR(maxIdentifierLength).nullable(false)).column("row_count", SQLDataType.BIGINT.defaultValue(0L)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_uima_type_registry"))).primaryKey("id"), constraint(DSL.name(cutWithHash("uq_type_uri"))).unique("uima_type_uri"), constraint(DSL.name(cutWithHash("uq_table_name"))).unique("table_name")).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "documents")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("uri", SQLDataType.CLOB.nullable(true)).column("language", SQLDataType.VARCHAR(32).nullable(true)).column("content_hash", SQLDataType.VARCHAR(64).nullable(true)).column("ts_hash", SQLDataType.VARCHAR(64).nullable(true)).column("pipeline_hash", SQLDataType.VARCHAR(64).nullable(true)).constraints(constraint(DSL.name(cutWithHash("pk_documents"))).primaryKey("doc_id")).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "type_system_fingerprints")).column("ts_hash", SQLDataType.VARCHAR(64).nullable(false)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_ts_fingerprint"))).primaryKey("ts_hash")).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "sofas")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("sofa_id", SQLDataType.VARCHAR(128).nullable(false)).column("sofa_num", SQLDataType.INTEGER.nullable(true)).column("mime_type", SQLDataType.CLOB.nullable(true)).column("sofa_uri", SQLDataType.CLOB.nullable(true)).column("sofa_string", SQLDataType.CLOB.nullable(true)).column("sofa_hash", SQLDataType.VARCHAR(64).nullable(true)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_sofas"))).primaryKey("doc_id", "sofa_id")).execute();
@@ -546,6 +546,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
 
     private void ensureCompatibilityColumns(DSLContext ctx) {
         ctx.execute("ALTER TABLE " + q(schema) + "." + q("uima_type_registry") + " ADD COLUMN IF NOT EXISTS " + q("row_count") + " BIGINT DEFAULT 0");
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q("uima_type_registry") + " ADD COLUMN IF NOT EXISTS " + q("supertype_uri") + " TEXT");
         ctx.execute("ALTER TABLE " + q(schema) + "." + q("documents") + " ADD COLUMN IF NOT EXISTS " + q("pipeline_hash") + " VARCHAR(64)");
     }
 
@@ -615,7 +616,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             if (Objects.equals(meta.tableNameHash, hash)) {
                 resolved.add(meta);
             } else {
-                resolved.add(new TypeMeta(meta.type, meta.isAnno, meta.primFeats, hash, storeCoveredText));
+                resolved.add(new TypeMeta(meta.type, meta.supertypeName, meta.isAnno, meta.primFeats, hash, storeCoveredText));
             }
         }
         if (!missing.isEmpty()) {
@@ -629,6 +630,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         Set<String> seenTs = seenTsFingerprints();
         if (fingerprintExists(ctx, cache.tsHash)) {
             preloadTypeToTableFromRegistry(ctx, cache);
+            updateTypeRegistryHierarchy(ctx, cache);
             seenTs.add(cache.tsHash);
             return;
         }
@@ -666,7 +668,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             // Secondary indexes (idx_*_doc_sofa[_begin]) are intentionally NOT created here.
             // PostImportIndexBuilder builds them once after all COPY work finishes — bulk-built
             // btrees are denser and faster than maintaining them incrementally during COPY.
-            upsertTypeRegistry(ctx, uimaType, tableNameHash);
+            upsertTypeRegistry(ctx, uimaType, meta.supertypeName, tableNameHash);
             createdTables.add(tableNameHash);
         }
         insertFingerprint(ctx, cache.tsHash);
@@ -730,10 +732,27 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         }
     }
 
-    private void upsertTypeRegistry(DSLContext ctx, String uimaType, String tableNameHash) {
+    private void upsertTypeRegistry(DSLContext ctx, String uimaType, String supertypeName, String tableNameHash) {
         Table<?> tbl = table(name(schema, "uima_type_registry"));
-        ctx.insertInto(tbl).columns(field(name("uima_type_uri")), field(name("table_name"))).values(uimaType, tableNameHash).onConflict(field(name("uima_type_uri"))).doUpdate().set(field(name("table_name")), tableNameHash).execute();
+        ctx.insertInto(tbl)
+                .columns(field(name("uima_type_uri")), field(name("supertype_uri")), field(name("table_name")))
+                .values(uimaType, supertypeName, tableNameHash)
+                .onConflict(field(name("uima_type_uri")))
+                .doUpdate()
+                .set(field(name("supertype_uri")), supertypeName)
+                .set(field(name("table_name")), tableNameHash)
+                .execute();
         typeToTable.put(uimaType, tableNameHash);
+    }
+
+    private void updateTypeRegistryHierarchy(DSLContext ctx, TsCache cache) {
+        Table<?> tbl = table(name(schema, "uima_type_registry"));
+        for (TypeMeta meta : cache.types) {
+            ctx.update(tbl)
+                    .set(field(name("supertype_uri")), meta.supertypeName)
+                    .where(field(name("uima_type_uri")).eq(meta.typeName))
+                    .execute();
+        }
     }
 
     private DocumentState getDocumentState(DSLContext ctx, String docId, String tsHash, String contentHash, String pipelineHash) {
@@ -875,6 +894,8 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         for (Iterator<Type> it = ts.getTypeIterator(); it.hasNext(); ) {
             Type t = it.next();
             if (isSkippableType(t)) continue;
+            Type parent = ts.getParent(t);
+            String supertypeName = parent == null || isSkippableType(parent) ? null : parent.getName();
             boolean isAnno = annoSuper != null && ts.subsumes(annoSuper, t);
             List<Feature> primFeats = new ArrayList<>();
             List<String> featParts = new ArrayList<>();
@@ -891,8 +912,8 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
             primFeats.sort(Comparator.comparing(JooqDatabaseWriter::featSortName));
             Collections.sort(featParts);
             String tableNameHash = typeToTable.get(t.getName());
-            metas.add(new TypeMeta(t, isAnno, primFeats, tableNameHash, storeCoveredText));
-            hashParts.add(t.getName() + "|" + (isAnno ? "A" : "F") + "|" + String.join(",", featParts));
+            metas.add(new TypeMeta(t, supertypeName, isAnno, primFeats, tableNameHash, storeCoveredText));
+            hashParts.add(t.getName() + "|" + (supertypeName == null ? "" : supertypeName) + "|" + (isAnno ? "A" : "F") + "|" + String.join(",", featParts));
         }
         Collections.sort(hashParts);
         String tsHash = DigestUtils.sha256Hex(String.join("\n", hashParts));
@@ -967,14 +988,16 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
     private static final class TypeMeta {
         final Type type;
         final String typeName;
+        final String supertypeName;
         final boolean isAnno;
         final List<Feature> primFeats;
         final String tableNameHash;
         final int bindCount;
 
-        TypeMeta(Type type, boolean isAnno, List<Feature> primFeats, String tableNameHash, boolean storeCoveredText) {
+        TypeMeta(Type type, String supertypeName, boolean isAnno, List<Feature> primFeats, String tableNameHash, boolean storeCoveredText) {
             this.type = type;
             this.typeName = type.getName();
+            this.supertypeName = supertypeName;
             this.isAnno = isAnno;
             this.primFeats = primFeats;
             this.tableNameHash = tableNameHash;

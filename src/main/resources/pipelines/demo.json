@@ -23,41 +23,6 @@
       "sourceFilesBlacklist" : [ ]
     },
     "id" : "Source-rhhz27m"
-  }, {
-    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_NOUN",
-    "settings" : {
-      "sourceFilesWhitelist" : [ ],
-      "sourceFilesBlacklist" : [ ]
-    },
-    "id" : "Source-ovrv9ml"
-  }, {
-    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_DET",
-    "settings" : {
-      "sourceFilesWhitelist" : [ ],
-      "sourceFilesBlacklist" : [ ]
-    },
-    "id" : "Source-pe9viaa"
-  }, {
-    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADP",
-    "settings" : {
-      "sourceFilesWhitelist" : [ ],
-      "sourceFilesBlacklist" : [ ]
-    },
-    "id" : "Source-x9crart"
-  }, {
-    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADJ",
-    "settings" : {
-      "sourceFilesWhitelist" : [ ],
-      "sourceFilesBlacklist" : [ ]
-    },
-    "id" : "Source-j0x4aue"
-  }, {
-    "uri" : "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS_ADV",
-    "settings" : {
-      "sourceFilesWhitelist" : [ ],
-      "sourceFilesBlacklist" : [ ]
-    },
-    "id" : "Source-jh56lsp"
   } ],
   "generators" : [ {
     "name" : "POS_Numbers",
@@ -107,61 +72,6 @@
     "extends" : [ "TextFormatting-35367u8", "TextFormatting-uytdce8", "TextFormatting-hf4io2z", "TextFormatting-vubumzd", "TextFormatting-fh6ab34", "TextFormatting-lq6c7gt", "TextFormatting-892k706" ],
     "id" : "TextFormatting-3qppt1u",
     "generatorGroup" : null
-  }, {
-    "name" : "POS_NOUN",
-    "type" : "TextFormatting",
-    "generatorGroup" : null,
-    "settings" : {
-      "style" : "underline",
-      "sofaFile" : ""
-    },
-    "extends" : [ ],
-    "id" : "TextFormatting-hf4io2z",
-    "source" : "Source-ovrv9ml"
-  }, {
-    "name" : "POS_DET",
-    "type" : "TextFormatting",
-    "generatorGroup" : null,
-    "settings" : {
-      "style" : "underline",
-      "sofaFile" : ""
-    },
-    "extends" : [ ],
-    "id" : "TextFormatting-vubumzd",
-    "source" : "Source-pe9viaa"
-  }, {
-    "name" : "POS_ADP",
-    "type" : "TextFormatting",
-    "generatorGroup" : null,
-    "settings" : {
-      "style" : "underline",
-      "sofaFile" : ""
-    },
-    "extends" : [ ],
-    "id" : "TextFormatting-fh6ab34",
-    "source" : "Source-x9crart"
-  }, {
-    "name" : "POS_ADJ",
-    "type" : "TextFormatting",
-    "generatorGroup" : null,
-    "settings" : {
-      "style" : "underline",
-      "sofaFile" : ""
-    },
-    "extends" : [ ],
-    "id" : "TextFormatting-lq6c7gt",
-    "source" : "Source-j0x4aue"
-  }, {
-    "name" : "POS_ADV",
-    "type" : "TextFormatting",
-    "generatorGroup" : null,
-    "settings" : {
-      "style" : "underline",
-      "sofaFile" : ""
-    },
-    "extends" : [ ],
-    "id" : "TextFormatting-892k706",
-    "source" : "Source-jh56lsp"
   } ],
   "widgets" : [ {
     "type" : "StaticText",

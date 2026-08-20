@@ -41,6 +41,27 @@ UDAV currently contains the following widgets:
 - Medial Axis
 - Boundary Approximation
 
+### Headless Batch Export
+
+UDAV also exposes a headless batch export API that reuses the same browser-side export logic as the UI.
+
+- `POST /api/batch/export/{format}` for a single widget
+- `POST /api/batch/export/pipeline/{format}` for all generator-backed widgets in a pipeline
+
+Supported formats: `svg`, `png`, `tex`, `csv`, `json`.
+
+The batch exporter uses a headless Chromium/Edge executable on the machine running the Java process. Configure the browser path explicitly with `BROWSER_EXECUTABLE_PATH` if automatic detection does not find it.
+
+#### Export capability matrix
+
+| Channel | Endpoint / Action | Typical Scope | Formats | Output Shape |
+| --- | --- | --- | --- | --- |
+| Web UI | Toolbar export | Single widget | svg, png, tex, csv, json | Direct file |
+| Web UI | Toolbar **bulk** export | Widget pages/parts | svg, png, tex, csv, json | ZIP |
+| API | `POST /api/batch/export/{format}` | Single widget selector | svg, png, tex, csv, json | Direct file or ZIP |
+| API | `POST /api/batch/export/pipeline/{format}` / `GET /api/batch/export/pipeline/{pipelineId}/{format}` | All generator-backed widgets in pipeline | svg, png, tex, csv, json | ZIP (+ summary/errors) |
+| API | `POST /api/data/export?format=...` | Data-oriented group export | json, csv, tex | ZIP |
+
 ## Getting Started
 
 > [!TIP]

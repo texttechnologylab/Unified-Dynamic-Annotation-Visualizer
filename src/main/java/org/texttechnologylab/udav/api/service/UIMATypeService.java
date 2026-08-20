@@ -8,7 +8,6 @@ import java.util.List;
 
 @Service
 public class UIMATypeService {
-
     private final UIMATypeRepository repository;
 
     public UIMATypeService(UIMATypeRepository repository) {
@@ -16,7 +15,21 @@ public class UIMATypeService {
     }
 
     public List<UimaTypeRow> list(int page, int size, String q) {
-        return repository.list(page, size, q);
+        return repository.list(page, size, q).stream()
+                .map(this::formatAnnotationLabel)
+                .toList();
     }
 
+    private UimaTypeRow formatAnnotationLabel(UimaTypeRow row) {
+        if (row.rowCount() == -1 || row.annotation() == null) {
+            return row;
+        }
+        String uri = row.annotation();
+        int lastDot = uri.lastIndexOf('.');
+        if (lastDot == -1 || lastDot == uri.length() - 1) {
+            return row;
+        }
+        String shortName = uri.substring(lastDot + 1);
+        return new UimaTypeRow(shortName + " (" + uri + ")", row.rowCount());
+    }
 }

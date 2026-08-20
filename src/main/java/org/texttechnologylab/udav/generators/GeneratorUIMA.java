@@ -16,32 +16,26 @@ public abstract class GeneratorUIMA extends Generator {
         super(id, configGenerator, configBundle, settingsBundle, dbAccess);
     }
 
-    /** Return the feature field <schema>.<hash>.<hash>_f_<short> by trying candidates until one exists. */
     protected org.jooq.Field<String> resolveFeatureField(org.jooq.DSLContext dsl,
-                                                       String schema,
-                                                       String tableHash,
-                                                       String desiredShort,
-                                                       java.util.List<String> extraCandidates) {
-        java.util.LinkedHashSet<String> candidates = new java.util.LinkedHashSet<>();
+                                                         String schema,
+                                                         String tableHash,
+                                                         String desiredShort,
+                                                         java.util.List<String> extraCandidates) {
+        org.jooq.Field<String> field = resolveFeatureFieldOrNull(dsl, schema, tableHash, desiredShort, extraCandidates);
+        if (field != null) return field;
 
-        if (desiredShort != null && !desiredShort.isBlank()) candidates.add(desiredShort.trim());
+        throw new IllegalStateException(
+                "No matching feature column in " + schema + "." + tableHash +
+                        " for desired '" + desiredShort + "'. Tried: " + featureCandidates(desiredShort, extraCandidates)
+        );
+    }
 
-        if (((SourceUIMA) source).getAnnotationType() == SourceUIMA.AnnotationType.POS) {
-            // common POS feature short names
-            candidates.add("coarseValue");
-            candidates.add("posValue");
-            candidates.add("value");
-        } else {
-            // NE / Lemma etc.
-            candidates.add("value");
-            candidates.add("identifier");
-            candidates.add("label");
-            candidates.add("lemmaValue");
-        }
-
-        if (extraCandidates != null) {
-            for (String c : extraCandidates) if (c != null && !c.isBlank()) candidates.add(c.trim());
-        }
+    protected org.jooq.Field<String> resolveFeatureFieldOrNull(org.jooq.DSLContext dsl,
+                                                               String schema,
+                                                               String tableHash,
+                                                               String desiredShort,
+                                                               java.util.List<String> extraCandidates) {
+        java.util.LinkedHashSet<String> candidates = featureCandidates(desiredShort, extraCandidates);
 
         // Importer writes feature columns as "<tableHash>_f_<sanitizedShortName>_<8-hex-of-feature-FQN>"
         // (see JooqDatabaseWriter.featColName). Fetch the table's columns once and match in Java so we
@@ -63,9 +57,31 @@ public abstract class GeneratorUIMA extends Generator {
             }
         }
 
-        throw new IllegalStateException(
-                "No matching feature column in " + schema + "." + tableHash +
-                        " for desired '" + desiredShort + "'. Tried: " + candidates
-        );
+        return null;
+    }
+
+    private java.util.LinkedHashSet<String> featureCandidates(String desiredShort,
+                                                              java.util.List<String> extraCandidates) {
+        java.util.LinkedHashSet<String> candidates = new java.util.LinkedHashSet<>();
+
+        if (desiredShort != null && !desiredShort.isBlank()) candidates.add(desiredShort.trim());
+
+        if (((SourceUIMA) source).getAnnotationType() == SourceUIMA.AnnotationType.POS) {
+            // common POS feature short names
+            candidates.add("coarseValue");
+            candidates.add("posValue");
+            candidates.add("value");
+        } else {
+            // NE / Lemma etc.
+            candidates.add("value");
+            candidates.add("identifier");
+            candidates.add("label");
+            candidates.add("lemmaValue");
+        }
+
+        if (extraCandidates != null) {
+            for (String c : extraCandidates) if (c != null && !c.isBlank()) candidates.add(c.trim());
+        }
+        return candidates;
     }
 }

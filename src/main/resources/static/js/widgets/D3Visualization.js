@@ -53,7 +53,7 @@ export default class D3Visualization extends WidgetInterface {
   async export(all = false) {
     let items = [{ json: this.data, svg: this.svg.node() }];
 
-    if (all) {
+    if (all && this.pagination.elements.length > 1) {
       // Save current state
       const snapshot = { svg: this.svg, data: this.data };
       const { data } = await this.fetch(true);
