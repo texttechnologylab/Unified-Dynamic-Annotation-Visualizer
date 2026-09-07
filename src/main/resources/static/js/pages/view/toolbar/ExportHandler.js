@@ -58,7 +58,15 @@ export default class ExportHandler {
       json: () => this.widget.export(bulk).then((d) => this.jsonExport(d)),
     };
 
-    exporters[format]();
+    const run = exporters[format];
+    if (!run) {
+      return Promise.reject(new Error("Unsupported export format: " + format));
+    }
+
+    // Returning the promise lets callers observe async failures. The UI's toolbar buttons
+    // just discard it; the headless export API relies on it to fail fast rather than
+    // waiting out its timeout on a rejection nobody was listening for.
+    return run();
   }
 
   async svgExport({ items, meta }) {

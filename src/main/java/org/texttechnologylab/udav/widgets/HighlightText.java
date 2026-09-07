@@ -55,9 +55,6 @@ public class HighlightText extends Widget {
         return csv.toString();
     }
 
-    // ───────────────────────────────────────────────
-    //  Helper methods
-    // ───────────────────────────────────────────────
 
     /** Navigate to the "data" node, supporting both root shapes. */
     private JsonNode resolveData(JsonNode jsonNode) {

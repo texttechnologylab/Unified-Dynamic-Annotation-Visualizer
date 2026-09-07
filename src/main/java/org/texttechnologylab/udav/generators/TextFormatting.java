@@ -10,7 +10,9 @@ import org.texttechnologylab.udav.generators.common_properties.CommonFeatureCate
 import org.texttechnologylab.udav.generators.common_properties.CommonProperties;
 import org.texttechnologylab.udav.generators.settings.FilterList;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
+import org.texttechnologylab.udav.generators.sources.JsonSourceSupport;
 import org.texttechnologylab.udav.generators.sources.SourceDerived;
+import org.texttechnologylab.udav.generators.sources.SourceJson;
 import org.texttechnologylab.udav.generators.sources.SourceUIMA;
 import org.texttechnologylab.udav.pipeline.JSONView;
 import org.texttechnologylab.udav.sources.DBAccess;
@@ -33,6 +35,10 @@ public class TextFormatting extends GeneratorUIMA {
     private CommonFeatureCategoryColors commonFeatureCategoryColors;
     private Set<Dataset> datasets;
     private String text;
+
+    /** Colours given explicitly by a JSON generator's {@code colors} setting: per type, or for all types. */
+    private Map<String, Map<String, Color>> explicitTypeCategoryColors;
+    private Map<String, Color> explicitCategoryColors;
 
 
     public TextFormatting(String id, JSONView configGenerator, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) {
@@ -116,8 +122,88 @@ public class TextFormatting extends GeneratorUIMA {
             Dataset newDataset = new Dataset(tempFeatureName, type, style, singleColor, segments);
             datasets.add(newDataset);
             commonFeatureCategoryColors.addFeatureToCategoryCountMap(tempFeatureName, newDataset.categoryCountMap);
+        } else if (source instanceof SourceJson sourceJson) {
+            // JSON generator:
+            setupFromJson(sourceJson);
         } else {
             throw new IllegalArgumentException("Unsupported source for generator \"" + id + "\".");
+        }
+    }
+
+    /**
+     * Text and annotation segments from a JSON source. The document is an object
+     * <pre>{"text": "...", "segments": [{"begin": 0, "end": 5, "category": "NOUN", "type": "POS"}, ...]}</pre>
+     * The two top-level keys can be renamed with the {@code textKey} and {@code segmentsKey} settings,
+     * segment fields with {@code keys} ({@code {"begin": "start", ...}}). Segments without a
+     * {@code type} go to the {@code type} setting (default {@code annotation}); every distinct type
+     * becomes one annotation layer, styled by {@code styles} ({@code {"POS": "underline"}}) or the
+     * single {@code style} setting. Colours: {@code colors} as {@code {"NOUN": "#hex"}} for all layers
+     * or {@code {"POS": {"NOUN": "#hex"}}} per layer, the single {@code color} setting, or the shared
+     * palette. A grouped generator over {@code {"doc-1": {...}, "doc-2": {...}}} yields one text per
+     * document, which the widgets page through.
+     */
+    private void setupFromJson(SourceJson sourceJson) {
+        JSONView root = sourceJson.getSingleFileJSONView();
+        if (!root.isMap()) {
+            throw new IllegalArgumentException("TextFormatting generator \"" + id + "\": JSON source \""
+                    + sourceJson.getSingleFileName() + "\" must be an object holding a text and a list of segments.");
+        }
+        Map<String, Object> document = root.asMap();
+        String textKey = settings.getStringSettingOrDefault("textKey", "text");
+        String segmentsKey = settings.getStringSettingOrDefault("segmentsKey", "segments");
+        if (!(document.get(textKey) instanceof String documentText)) {
+            throw new IllegalArgumentException("TextFormatting generator \"" + id + "\": JSON source \""
+                    + sourceJson.getSingleFileName() + "\" has no string under \"" + textKey + "\".");
+        }
+        this.text = documentText;
+        this.UIMAsofaFile = JsonSourceSupport.defaultFileLabel(sourceJson, settings);
+        this.UIMAsofaID = null;
+
+        String defaultType = settings.getStringSettingOrDefault("type", "annotation");
+        String defaultStyle = settings.getStringSettingOrDefault("style", DEFAULT_STYLE);
+        Map<String, String> styles = JsonSourceSupport.stringMap(settings.getMapSettingOrDefault("styles", null));
+        Color singleColor = JsonSourceSupport.color(settings.getStringSettingOrDefault("color", null));
+        Map<String, String> keys = JsonSourceSupport.stringMap(settings.getMapSettingOrDefault("keys", null));
+        FilterList<String> filterListCategories = settings.generateStringFilterList("categories");
+
+        Map<String, List<Dataset.Segment>> segmentsByType = new LinkedHashMap<>();
+        if (document.get(segmentsKey) instanceof List<?> segmentList) {
+            for (Object item : segmentList) {
+                if (!(item instanceof Map<?, ?> segment)) continue;
+                Integer begin = JsonSourceSupport.integer(segment.get(keys.getOrDefault("begin", "begin")));
+                Integer end = JsonSourceSupport.integer(segment.get(keys.getOrDefault("end", "end")));
+                if (begin == null || end == null || begin < 0 || end < begin) continue;
+                String category = JsonSourceSupport.string(segment.get(keys.getOrDefault("category", "category")));
+                if (category == null) category = "(null)";
+                if (!JsonSourceSupport.categoryAllowed(filterListCategories, category)) continue;
+                String type = JsonSourceSupport.string(segment.get(keys.getOrDefault("type", "type")));
+                segmentsByType.computeIfAbsent(type == null ? defaultType : type, k -> new ArrayList<>())
+                        .add(new Dataset.Segment(begin, end, category));
+            }
+        }
+        if (segmentsByType.isEmpty()) segmentsByType.put(defaultType, new ArrayList<>());
+
+        explicitTypeCategoryColors = new HashMap<>();
+        explicitCategoryColors = new HashMap<>();
+        Map<?, ?> colorSetting = settings.getMapSettingOrDefault("colors", null);
+        if (colorSetting != null) {
+            colorSetting.forEach((key, value) -> {
+                if (value instanceof Map<?, ?> perType) {
+                    explicitTypeCategoryColors.put(String.valueOf(key), JsonSourceSupport.colorMap(perType));
+                } else {
+                    Color c = JsonSourceSupport.color(value);
+                    if (c != null) explicitCategoryColors.put(String.valueOf(key), c);
+                }
+            });
+        }
+
+        for (Map.Entry<String, List<Dataset.Segment>> layer : segmentsByType.entrySet()) {
+            String type = layer.getKey();
+            List<Dataset.Segment> segments = layer.getValue();
+            segments.sort(Comparator.comparingInt((Dataset.Segment s) -> s.begin).thenComparingInt(s -> s.end));
+            Dataset dataset = new Dataset(type, type, styles.getOrDefault(type, defaultStyle), singleColor, segments);
+            datasets.add(dataset);
+            commonFeatureCategoryColors.addFeatureToCategoryCountMap(type, dataset.categoryCountMap);
         }
     }
 
@@ -131,7 +217,42 @@ public class TextFormatting extends GeneratorUIMA {
         for (Dataset d : datasets) {
             d.categoryColorMap = commonFeatureCategoryColors.getCategoryColorMap(d.featureName);
             d.categoryColorMap.keySet().retainAll(d.categoryCountMap.keySet());
+            if (explicitCategoryColors != null) {
+                explicitCategoryColors.forEach((category, color) -> {
+                    if (d.categoryCountMap.containsKey(category)) d.categoryColorMap.put(category, color);
+                });
+            }
+            if (explicitTypeCategoryColors != null && explicitTypeCategoryColors.containsKey(d.type)) {
+                explicitTypeCategoryColors.get(d.type).forEach((category, color) -> {
+                    if (d.categoryCountMap.containsKey(category)) d.categoryColorMap.put(category, color);
+                });
+            }
         }
+    }
+
+    /** Segments per layer as they will be written. Exposed for tests. */
+    Map<String, List<int[]>> segmentsByTypeForTest() {
+        Map<String, List<int[]>> out = new LinkedHashMap<>();
+        for (Dataset d : datasets) {
+            List<int[]> list = new ArrayList<>();
+            for (Dataset.Segment s : d.segments) list.add(new int[]{s.begin, s.end});
+            out.put(d.type, list);
+        }
+        return out;
+    }
+
+    /** Style and colour of one layer as they will be written. Exposed for tests. */
+    Map<String, Object> layerForTest(String type) {
+        for (Dataset d : datasets) {
+            if (d.type.equals(type)) {
+                Map<String, Object> out = new HashMap<>();
+                out.put("style", d.style);
+                out.put("colors", d.categoryColorMap);
+                out.put("categories", d.categoryCountMap.keySet());
+                return out;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -219,7 +340,7 @@ public class TextFormatting extends GeneratorUIMA {
                 // COLORS batch
                 List<Query> batch = new ArrayList<>();
                 for (String category : ds.categoryCountMap.keySet()) {
-                    Color c = (ds.singleColor == null) ? ds.categoryColorMap.get(category) : ds.singleColor;
+                    Color c = (ds.singleColor == null) ? ds.categoryColorMap.getOrDefault(category, Color.GRAY) : ds.singleColor;
                     String hex = String.format("#%02x%02x%02x", c.getRed(), c.getGreen(), c.getBlue());
                     batch.add(
                             dsl.insertInto(T_COLOR)

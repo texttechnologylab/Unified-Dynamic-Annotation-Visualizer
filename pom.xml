@@ -16,6 +16,7 @@
     </parent>
 
     <properties>
+        <surefire.excludedGroups>browser</surefire.excludedGroups>
         <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -169,6 +170,15 @@
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
             <version>1.5.5</version>
+            <exclusions>
+                <!-- Declared by DUUI but referenced by none of its compiled classes, and
+                     JitPack no longer serves the pinned commit build (404), which breaks
+                     every clean build, including the Docker image. -->
+                <exclusion>
+                    <groupId>com.github.texttechnologylab</groupId>
+                    <artifactId>Utilities</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -223,6 +233,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <!-- Tests tagged "browser" launch a Chromium through Playwright; they are
+                         opt-in via the browser-tests profile. -->
+                    <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                     <argLine>
                         --illegal-access=permit
                         --add-opens java.base/java.util=ALL-UNNAMED
@@ -264,4 +277,13 @@
 <!--            </plugin>-->
         </plugins>
     </build>
+    <profiles>
+        <!-- mvn test -Pbrowser-tests: also run the Playwright-backed tests (needs a Chromium) -->
+        <profile>
+            <id>browser-tests</id>
+            <properties>
+                <surefire.excludedGroups></surefire.excludedGroups>
+            </properties>
+        </profile>
+    </profiles>
 </project>

@@ -27,23 +27,30 @@ import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
 @RequestMapping("/api/convertions")
 public class ConvertionController {
 
+    private final ObjectMapper mapper;
+
+    public ConvertionController(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
+
     @PostMapping("/csv")
     public ResponseEntity<Map<String, String>> widgetToCsv(@RequestBody String body) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(body);
         JsonNode jsonNodeJson = node.get("data");
         String widgetType = node.get("type").asText();
 
-        String csv;
-        try {
-            Widget widget = Widget.constructWidget(widgetType);
-            csv = widget.toCsv(node);
-            if (csv == null) throw new Exception();
-            // widget-intrinsic native csv defined!
+        // widget-intrinsic native csv if defined, otherwise the general JsonToCsvConverter
+        String csv = Widget.tryConstructWidget(widgetType)
+                .map(widget -> {
+                    try {
+                        return widget.toCsv(node);
+                    } catch (Exception ignored) {
+                        return null;
+                    }
+                })
+                .orElse(null);
 
-        } catch (Exception ignored) {
-            // No widget-intrinsic csv defined -> Use general JsonToCsvConverter
-
+        if (csv == null) {
             JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
             csv = converter.convert(jsonNodeJson);
         }
@@ -59,20 +66,21 @@ public class ConvertionController {
     @PostMapping("/tikz")
     public ResponseEntity<Map<String, String>> widgetToTikz(@RequestBody String body) throws Exception {
         // Parse JSON body to extract SVG string
-        ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(body);
         String widgetType = node.get("type").asText();
 
-        String tex;
-        try {
-            Widget widget = Widget.constructWidget(widgetType);
-            tex = widget.toTex(node);
-            if (tex == null) throw new Exception();
-            // widget-intrinsic native tex defined!
+        // widget-intrinsic native tex if defined, otherwise the general SvgToLaTeXConverter
+        String tex = Widget.tryConstructWidget(widgetType)
+                .map(widget -> {
+                    try {
+                        return widget.toTex(node);
+                    } catch (Exception ignored) {
+                        return null;
+                    }
+                })
+                .orElse(null);
 
-        } catch (Exception ignored) {
-            // No widget-intrinsic tex defined -> Use general SvgToLaTeXConverter
-
+        if (tex == null) {
             String svg = node.get("svg").asText();
             SvgToLaTeXConverter converter = new SvgToLaTeXConverter();
             tex = converter.convert(svg);

@@ -7,18 +7,25 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-udav}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    # Memory settings default to values that start inside a laptop's Docker VM. The values used on
+    # the corpus import server are listed in .env.example.
     command: >
       postgres
-      -c shared_buffers=8GB
-      -c maintenance_work_mem=2GB
+      -c shared_buffers=${PG_SHARED_BUFFERS:-1GB}
+      -c maintenance_work_mem=${PG_MAINTENANCE_WORK_MEM:-256MB}
       -c work_mem=64MB
-      -c effective_cache_size=24GB
-      -c max_wal_size=8GB
+      -c effective_cache_size=${PG_EFFECTIVE_CACHE_SIZE:-4GB}
+      -c max_wal_size=${PG_MAX_WAL_SIZE:-2GB}
       -c checkpoint_timeout=15min
       -c wal_compression=on
       -c synchronous_commit=off
       -c max_parallel_maintenance_workers=4
     shm_size: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${POSTGRES_DB:-udav}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     ports:
       - "5432:5432"
     volumes:
@@ -52,11 +59,18 @@ services:
       APP_INPUT_DIR: ${APP_INPUT_DIR:-/app/data/input}
       PIPELINE_IMPORTER: ${PIPELINE_IMPORTER:-true}
       PIPELINE_IMPORTER_FOLDER: ${PIPELINE_IMPORTER_FOLDER:-/app/pipelines}
+      JSON_IMPORTER_FOLDER: ${JSON_IMPORTER_FOLDER:-/app/sourcefilesJSON}
       PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT: ${PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT:-false}
       SROUCE_BUILDER: ${SROUCE_BUILDER:-false}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_TOKEN: ${LLM_API_TOKEN:-}
-      JAVA_OPTS: ${JAVA_OPTS:--Xmx10G -Xms512m}
+      # Batch export API (headless Chromium is shipped in the image; see README)
+      BROWSER_EXECUTABLE_PATH: ${BROWSER_EXECUTABLE_PATH:-/usr/lib/chromium/chromium}
+      EXPORT_NO_SANDBOX: ${EXPORT_NO_SANDBOX:-true}
+      EXPORT_CONCURRENCY: ${EXPORT_CONCURRENCY:-4}
+      EXPORT_POOL_MAX_SESSIONS: ${EXPORT_POOL_MAX_SESSIONS:-2}
+      EXPORT_METRICS: ${EXPORT_METRICS:-false}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx4G -Xms512m}
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health/liveness || exit 1"]
       interval: 30s
@@ -64,8 +78,9 @@ services:
       retries: 3
       start_period: 40s
     volumes:
-      - ${DUUI_IMPORTER_PATH}:/app/data/input:ro
-      - ${DUUI_IMPORTER_TYPE_SYSTEM_PATH}:/app/data/types:ro
+      # Corpus input for the DUUI importer; the defaults are empty folders in the repository.
+      - ${DUUI_IMPORTER_PATH:-./data/input}:/app/data/input:ro
+      - ${DUUI_IMPORTER_TYPE_SYSTEM_PATH:-./data/types}:/app/data/types:ro
 
 volumes:
   postgres_data:

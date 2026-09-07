@@ -477,7 +477,7 @@ public class ElementProcessor {
 
         // Gaussian blur handling.
         // IMPORTANT: when inside a blurred group (forceNoStroke=true), children
-        // must NOT get their own blur halos — the group already handles the
+        // must NOT get their own blur halos; the group already handles the
         // visual softening.  Rendering child blurs as halos creates texture.
         double blurStd = inh.forceNoStroke ? -1 : getGaussianBlurStdDev(el);
         if (blurStd > 0) {
@@ -547,7 +547,7 @@ public class ElementProcessor {
 
         if (isGlow) {
             // Glow: blur dilutes a bright shape into a soft sparkle.
-            // Render at reduced opacity — enough to be visible but subtle.
+            // Render at reduced opacity, enough to be visible but subtle.
             double glowOp = opMul * 0.25;
             if (glowOp < 0.003) return;      // invisible, skip entirely
             String fillOpt = (gradOpts != null) ? gradOpts : "fill=" + fillColor;
@@ -596,7 +596,7 @@ public class ElementProcessor {
                 return brightness > 0.5;
             }
         }
-        // Unknown colour — assume dark (shadow)
+        // Unknown colour: assume dark (shadow)
         return false;
     }
 

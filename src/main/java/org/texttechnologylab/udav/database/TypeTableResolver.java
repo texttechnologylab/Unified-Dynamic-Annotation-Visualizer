@@ -21,9 +21,11 @@ public final class TypeTableResolver {
     }
 
     /**
-     * Converts annotation uri to table hash name.
+     * Converts annotation uri to table hash name; null when the type is unknown or no corpus has
+     * been imported yet (the registry table is created by the DUUI importer).
      */
     public String tableForType(String uimaTypeUri) {
+        if (!registryExists()) return null;
         return dsl.select(field(name("table_name"), String.class))
                 .from(table(name(schema, "uima_type_registry")))
                 .where(field(name("uima_type_uri"), String.class).eq(uimaTypeUri))
@@ -82,6 +84,15 @@ public final class TypeTableResolver {
             pending.addAll(childrenByParent.getOrDefault(uri, List.of()));
         }
         return List.copyOf(tables);
+    }
+
+    private boolean registryExists() {
+        Integer count = dsl.selectCount()
+                .from(table(name("information_schema", "tables")))
+                .where(field(name("table_schema"), String.class).eq(schema))
+                .and(field(name("table_name"), String.class).eq("uima_type_registry"))
+                .fetchOne(0, Integer.class);
+        return count != null && count > 0;
     }
 
     private boolean registryHasColumn(String columnName) {

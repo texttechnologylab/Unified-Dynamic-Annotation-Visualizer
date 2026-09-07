@@ -30,7 +30,8 @@ public class SourceUIMA extends Source {
             this.tableHash = resolver.tableForType(uri);
         }
         if (this.tableHash == null) {
-            throw new IllegalArgumentException("No table registered for UIMA type: " + uri);
+            throw new IllegalArgumentException("UIMA type " + uri
+                    + " has no annotation table; import a corpus with the DUUI importer first.");
         }
         this.annotationType = determineAnnotationType(uri);
     }

@@ -1,5 +1,7 @@
 package org.texttechnologylab.udav.importer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @Component
 public class MissingSchemaScanner implements ApplicationRunner {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MissingSchemaScanner.class);
 
     private final DataSource dataSource;
     private final PipelineProcessor processor;
@@ -82,7 +86,7 @@ public class MissingSchemaScanner implements ApplicationRunner {
                     processor.process(pid);
                 } catch (Exception ex) {
                     // Log & continue; you might want a dead-letter table
-                    System.err.println("Failed processing pipeline " + pid + ": " + ex.getMessage());
+                    LOGGER.warn("Pipeline {} still has no data: {}", pid, ex.getMessage());
                 } finally {
                     releaseLock(dsl, pid);
                 }

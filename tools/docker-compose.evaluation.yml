@@ -1,0 +1,17 @@
+# Overlay for running the batch-export evaluation against the Docker stack:
+#
+#   docker compose -f docker-compose.yml -f tools/docker-compose.evaluation.yml up -d --build
+#
+# Publishes the app on 18080 and Postgres on 15432, so the stack can run next to a development
+# instance on the default ports, and switches the per-request measurements on, which the harness
+# reads from the X-UDAV-Export-Metrics header. The evaluation pipelines themselves are part of the
+# image. tools/run-evaluation.sh --docker uses this file.
+services:
+  postgres:
+    ports: !override
+      - "15432:5432"
+  udav:
+    ports: !override
+      - "18080:8080"
+    environment:
+      EXPORT_METRICS: "true"

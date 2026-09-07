@@ -168,7 +168,7 @@ public class ColorManager {
                 String fallback = v.substring(paren + 1).trim();
                 if (!fallback.isEmpty()) return resolveColorValue(fallback);
             }
-            // No fallback — try to sample the referenced gradient at t=0.5
+            // No fallback: try to sample the referenced gradient at t=0.5
             // so gradient strokes get a representative colour instead of vanishing.
             Matcher gm = Pattern.compile("url\\(#([^)]+)\\)").matcher(v);
             if (gm.find() && ctx != null) {

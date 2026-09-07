@@ -124,7 +124,7 @@ public class PipelineJsonImporter implements ApplicationRunner {
 
                 LOGGER.info("Pipeline with name {} and id {} has been inserted.", pipelineName, pipelineIdOriginal);
 
-                sourceBuildService.startBuild(pipelineIdOriginal, pipelineIdOriginal);
+                buildAfterImport(pipelineIdOriginal);
                 return;
             }
 
@@ -148,8 +148,8 @@ public class PipelineJsonImporter implements ApplicationRunner {
                 LOGGER.info("Pipeline with id {} has been {} from file {}.", pipelineIdOriginal,
                         updated == 1 ? "updated" : "not updated", pipelineName);
 
-                // 🔧 build sources for this pipeline in this schema
-                sourceBuildService.startBuild(pipelineIdOriginal, pipelineIdOriginal);
+                // build sources for this pipeline in this schema
+                buildAfterImport(pipelineIdOriginal);
                 return;
             }
 
@@ -162,10 +162,24 @@ public class PipelineJsonImporter implements ApplicationRunner {
 
             LOGGER.info("Inserted duplicate pipeline as id={} (original id {}, file {})", uniqueId, pipelineIdOriginal, pipelineName);
 
-            sourceBuildService.startBuild(uniqueId, uniqueId);
+            buildAfterImport(uniqueId);
 
         } catch (Exception e) {
             LOGGER.error("Failed to import pipeline from file {}: {}", p.getFileName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Builds the generator data of a pipeline that was just stored. A failed build is not a failed
+     * import: the row is there, SourceBuildService has already logged why the data could not be
+     * built (typically annotations that are not imported yet), and MissingSchemaScanner retries
+     * pipelines without data at the next start.
+     */
+    private void buildAfterImport(String pipelineId) {
+        try {
+            sourceBuildService.startBuild(pipelineId, pipelineId);
+        } catch (RuntimeException e) {
+            LOGGER.info("Pipeline {} is stored; its data is built at the next start once the required annotations exist.", pipelineId);
         }
     }
 
