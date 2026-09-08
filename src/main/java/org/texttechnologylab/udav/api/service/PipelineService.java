@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.api.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -151,7 +152,7 @@ public class PipelineService {
                     .fetchOneInto(String.class);
             if (json == null) throw new ResponseStatusException(NOT_FOUND, "Pipeline not found");
 
-            String normalized = GeneratorConverter.toNewFormat(json);
+            String normalized = withRowId(GeneratorConverter.toNewFormat(json), id);
             if (pipelineCacheTtlMs > 0) {
                 pipelineCache.put(id, new CachedPipeline(
                         normalized, System.nanoTime() + pipelineCacheTtlMs * 1_000_000L));
@@ -266,6 +267,18 @@ public class PipelineService {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * The id inside the JSON has to be the row's: the view page, the editor and the data API take
+     * the pipeline id from there. Duplicates stored by older versions of PipelineJsonImporter still
+     * carry the original pipeline's id, so it is corrected on read.
+     */
+    private String withRowId(String json, String id) {
+        JsonNode node = parseJson(json);
+        if (!(node instanceof ObjectNode obj) || id.equals(obj.path("id").asText())) return json;
+        obj.put("id", id);
+        return toString(obj);
     }
 
     private JsonNode parseJson(String json) {

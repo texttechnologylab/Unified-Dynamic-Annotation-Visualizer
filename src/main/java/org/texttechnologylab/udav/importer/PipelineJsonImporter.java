@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.importer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
@@ -157,7 +158,7 @@ public class PipelineJsonImporter implements ApplicationRunner {
             String uniqueId = ensureUniquePipelineId(dsl, T, F_ID, pipelineIdOriginal);
             dsl.insertInto(T)
                     .columns(F_NAME, F_JSON, F_ID)
-                    .values(pipelineName, canonicalJson, uniqueId)
+                    .values(pipelineName, withPipelineId(canonicalJson, uniqueId), uniqueId)
                     .execute();
 
             LOGGER.info("Inserted duplicate pipeline as id={} (original id {}, file {})", uniqueId, pipelineIdOriginal, pipelineName);
@@ -270,6 +271,22 @@ public class PipelineJsonImporter implements ApplicationRunner {
     private String canonicalize(String json) throws Exception {
         JsonNode node = mapper.readTree(json);
         return mapper.writeValueAsString(node);
+    }
+
+    /**
+     * Sets the id inside the pipeline JSON. The view page, the editor and the data API read the
+     * pipeline id from the JSON, not from the row, so a duplicate stored under a fresh row id has
+     * to carry that id inside as well. Otherwise its widgets query the original pipeline's schema
+     * and come up empty.
+     */
+    String withPipelineId(String json, String pipelineId) throws Exception {
+        JsonNode root = mapper.readTree(json);
+        JsonNode pipelineNode = root.has("pipelines") ? root.get("pipelines").get(0) : root;
+        if (!(pipelineNode instanceof ObjectNode pipelineObject)) {
+            throw new IllegalArgumentException("Invalid pipeline JSON: pipeline entry is not an object.");
+        }
+        pipelineObject.put("id", pipelineId);
+        return mapper.writeValueAsString(root);
     }
 
     private record ParsedPipeline(String canonicalJson, String pipelineId, String pipelineName) {
