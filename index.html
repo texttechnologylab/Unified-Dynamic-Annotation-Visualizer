@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UDAV — Unified Dynamic Annotation Visualizer</title>
+  <meta name="description" content="UDAV turns UIMA annotations and custom JSON/XML data into reproducible, interactive dashboards: a visual pipeline editor, 14 widgets, paginated generator groups, SVG/PNG/TeX/CSV/JSON export, a headless batch export API, the VecTikZ SVG-to-TikZ converter and an LLM assistant for charts.">
+  <meta property="og:title" content="UDAV — Unified Dynamic Annotation Visualizer">
+  <meta property="og:description" content="Schema-based, reproducible and interactive visualization of annotated corpora. Open source (AGPL-3.0), LREC 2026.">
+  <meta property="og:image" content="https://texttechnologylab.github.io/Unified-Dynamic-Annotation-Visualizer/img/banner.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="img/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="assets/site.css">
+  <script>
+    /* Apply the stored theme before the first paint, so the page never flashes the wrong one. */
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem("udav-docs-theme"); } catch (e) { /* ignore */ }
+      if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+<a class="sr-only" href="#overview">Skip to content</a>
+<!-- Arrow heads shared by the figures below; referenced through marker-end in site.css. -->
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+  <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="ah" d="M0,0 L8,4 L0,8 z"/></marker>
+  <marker id="arrowhead-brand" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="ah brand" d="M0,0 L8,4 L0,8 z"/></marker>
+</svg>
+<header class="topbar">
+  <a class="brand" href="#top">
+    <img src="img/logo.png" alt="UDAV logo">
+    <span>UDAV<small>Unified Dynamic Annotation Visualizer</small></span>
+  </a>
+  <div class="spacer"></div>
+  <nav aria-label="External links">
+    <a href="https://demo.udav.texttechnologylab.org/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6h-2.95a15.7 15.7 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14A7.9 7.9 0 0 1 4 12c0-.69.1-1.36.26-2h3.38A16.7 16.7 0 0 0 7.5 12c0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.7 15.7 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66A14.7 14.7 0 0 1 9.5 12c0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.35-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg><span class="lbl">Demo</span></a>
+    <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg><span class="lbl">GitHub</span></a>
+    <a href="#paper"><svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6V2zm8 1.5V8h4.5L14 3.5zM8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z"/></svg><span class="lbl">Paper</span></a>
+    <button id="theme-btn" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle light / dark theme"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+    <button id="menu-btn" class="icon-btn" type="button" aria-label="Toggle table of contents"><svg viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg></button>
+  </nav>
+</header>
+<div id="progress" class="progress"></div>
+
+<div class="layout" id="top">
+  <aside class="toc" id="toc" aria-label="Table of contents">
+    <div class="toc-filter">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input id="toc-filter" type="search" placeholder="Filter sections" aria-label="Filter sections" autocomplete="off">
+      <kbd>/</kbd>
+    </div>
+    <div class="toc-head"><span>Contents</span><button id="toc-expand" type="button">expand / collapse</button></div>
+    <nav id="toc-nav" class="toc-nav"></nav>
+    <div id="toc-empty" class="toc-empty">No section matches.</div>
+  </aside>
+  <div id="toc-backdrop" class="toc-mobile-backdrop"></div>
+
+  <main class="content">
+    <div class="content-inner">
+
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Text Technology Lab · Goethe University Frankfurt</p>
+          <h1>Unified Dynamic <span>Annotation Visualizer</span></h1>
+          <p class="lead">Turn UIMA annotations and your own JSON/XML data into reproducible, interactive dashboards — described by a single pipeline definition, rendered in the browser, exported as SVG, PNG, LaTeX/TikZ, CSV or JSON, and available headlessly through a batch API.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#getting-started">Get started</a>
+            <a class="btn" href="https://demo.udav.texttechnologylab.org/" target="_blank" rel="noopener">Open the live demo</a>
+            <a class="btn" href="https://vectikz.lovable.app/" target="_blank" rel="noopener">Try VecTikZ</a>
+          </div>
+          <div class="hero-badges">
+            <span class="pill brand">LREC 2026</span>
+            <span class="pill">AGPL-3.0</span>
+            <span class="pill">Java 21 · Spring Boot 3.5</span>
+            <span class="pill">PostgreSQL 17</span>
+            <span class="pill">Docker Compose</span>
+            <span class="pill">D3.js</span>
+          </div>
+        </div>
+        <img class="hero-logo" src="img/logo.png" alt="">
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="v">14</div><div class="l">widget types (10 interactive, 4 static)</div></div>
+        <div class="stat"><div class="v">5</div><div class="l">export formats: svg · png · tex · csv · json</div></div>
+        <div class="stat"><div class="v">3</div><div class="l">generator types over UIMA or JSON/XML sources</div></div>
+      </div>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="overview">
+        <h2 data-toc="Overview">Overview</h2>
+        <p>The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields, but few tools visualize the result <em>dynamically</em>: for a new corpus, a new project or a new question, someone usually hand-codes a chart. UDAV closes this gap. A <strong>pipeline</strong> — a small JSON document — declares which data is read (<strong>sources</strong>), how it is aggregated (<strong>generators</strong>) and how it is shown (<strong>widgets</strong> on a grid). UDAV builds the data once, stores it per pipeline in PostgreSQL and serves it to an interactive web view that filters, pages, zooms and exports.</p>
+        <div class="grid-3">
+          <div class="card"><h4>Schema-based</h4><p>Pipelines are plain JSON. Create them in the visual editor, drop them into a folder, or upload them — they import at start-up and can be versioned like code.</p></div>
+          <div class="card"><h4>Reproducible</h4><p>Every export embeds the active corpus and chart filters as metadata, the TeX output is generated deterministically from checked-in font metrics, and the batch API produces byte-identical artefacts to the UI.</p></div>
+          <div class="card"><h4>Big-data ready</h4><p>Corpora enter through <a href="https://github.com/texttechnologylab/DockerUnifiedUIMAInterface" target="_blank" rel="noopener">DUUI</a> with parallel workers and PostgreSQL <code>COPY</code>; generator data is pre-aggregated, so the view only ever loads what a widget shows.</p></div>
+        </div>
+        <p>UDAV was developed at the <a href="https://www.texttechnologylab.org/" target="_blank" rel="noopener">Text Technology Lab</a> and is described in a paper at <a href="#paper">LREC 2026</a>. A public instance with the demo pipeline runs at <a href="https://demo.udav.texttechnologylab.org/" target="_blank" rel="noopener">demo.udav.texttechnologylab.org</a>.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="features">
+        <h2 data-toc="Feature highlights">Feature highlights</h2>
+        <div class="grid-2">
+          <div class="card highlight">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v2H4V4zm0 14h16v2H4v-2zm2-4l4-5 3 4 2-3 5 4H6z"/></svg></span>Headless batch export</h4>
+            <p>One request exports a widget or a whole pipeline in any of the five formats, rendered by pooled headless Chromium sessions that run the UI's own export code. Concurrency, admission control, per-request metrics and a reproducible evaluation harness are built in.</p>
+            <a class="more" href="#batch-export">Batch export API →</a>
+          </div>
+          <div class="card highlight">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M5 3h14l2 4-9 14L3 7l2-4zm1.2 2L5 7h3.6l1.2-2H6.2zm5.6 0l-1.2 2h2.8l-1.2-2h-.4zm3.8 0l1.2 2H19l-1.2-2h-2.2zM6.4 9l4.2 7-1.8-7H6.4zm4.5 0l1.1 8.6L13.1 9h-2.2zm4.6 0l-1.8 7 4.2-7h-2.4z"/></svg></span>VecTikZ — SVG to TikZ</h4>
+            <p>Charts leave UDAV as LaTeX/TikZ, not as bitmaps. The bundled VecTikZ converter maps SVG shapes, paths, text, gradients, patterns, markers, clipping and CSS into a standalone TikZ document — and is available as a stand-alone web demo.</p>
+            <a class="more" href="#vectikz">VecTikZ →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 5h8v6H3V5zm10 0h8v6h-8V5zM3 13h8v6H3v-6zm10 0h8v6h-8v-6z"/></svg></span>Custom JSON / XML sources</h4>
+            <p>Besides UIMA annotation types, any JSON or XML file dropped into a folder becomes a source. A small key-mapping grammar adapts your field names to a generator's; XML is converted to JSON on import.</p>
+            <a class="more" href="#sources">Data sources →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z"/></svg></span>Grouped generator templates</h4>
+            <p>Set <code>"generatorGroup": true</code> on one generator and UDAV instantiates it once per top-level key of the source file — one dataset per document, corpus slice or experiment, without repeating the definition.</p>
+            <a class="more" href="#generator-groups">Generator groups →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5zm-4 0h2v14H4V5z"/></svg></span>Paginated widgets</h4>
+            <p>Widgets bound to a grouped generator get a pager: step through datasets, jump via a dropdown, and export the current page or all pages at once as a ZIP.</p>
+            <a class="more" href="#pagination">Pagination →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 1 5 5v1h1a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3h1V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v1h6V7a3 3 0 0 0-3-3zM8 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg></span>ChartBot</h4>
+            <p>An LLM assistant lives in the view. Pick a model, attach any chart as an image and ask what it shows; answers are rendered as Markdown. Works with any Open WebUI-style endpoint.</p>
+            <a class="more" href="#chartbot">ChartBot →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>Visual pipeline editor</h4>
+            <p>Drag widgets onto a 24-column grid, configure sources and generators in forms, save — UDAV rebuilds the pipeline's data and opens the view.</p>
+            <a class="more" href="#editor">Editor →</a>
+          </div>
+          <div class="card">
+            <h4><span class="icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4V6zm0 5h10v2H4v-2zm0 5h16v2H4v-2z"/></svg></span>Corpus &amp; chart filters</h4>
+            <p>Restrict any view to a set of documents, and every chart to its own sort, range, limit or layer selection — all reflected in the export metadata.</p>
+            <a class="more" href="#interactive-view">Interactive view →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="architecture">
+        <h2 data-toc="Architecture">Architecture</h2>
+        <p>UDAV is a single Spring Boot application (Java 21) in front of a PostgreSQL database, packaged with Docker Compose. Everything below runs inside that one process: the importers, the generator builds, the REST API, the server-rendered pages and — for batch exports — the headless browser.</p>
+        <figure class="diagram">
+          <svg viewBox="0 0 940 610" role="img" aria-label="Architecture of UDAV: inputs, importers, PostgreSQL storage, source build, API layer and clients">
+            <!-- lane labels -->
+            <text class="region-lbl" x="12" y="30">Inputs</text>
+            <text class="region-lbl" x="12" y="128">Importers</text>
+            <text class="region-lbl" x="12" y="226">Storage</text>
+            <text class="region-lbl" x="12" y="356">Build</text>
+            <text class="region-lbl" x="12" y="448">API</text>
+            <text class="region-lbl" x="12" y="546">Clients</text>
+            <!-- inputs -->
+            <rect class="box" x="100" y="14" width="250" height="70" rx="8"/>
+            <text class="t" x="225" y="38" text-anchor="middle">DUUI pipeline</text>
+            <text class="s" x="225" y="56" text-anchor="middle">Reader → NLP₁ … NLPₙ → XMI / GZ files</text>
+            <text class="m" x="225" y="72" text-anchor="middle">DUUI_IMPORTER_PATH</text>
+            <rect class="box accent" x="380" y="14" width="230" height="70" rx="8"/>
+            <text class="t" x="495" y="38" text-anchor="middle">Custom JSON / XML files</text>
+            <text class="s" x="495" y="56" text-anchor="middle">any structure, mapped per generator</text>
+            <text class="m" x="495" y="72" text-anchor="middle">sourcefilesJSON/</text>
+            <rect class="box brand" x="640" y="14" width="280" height="70" rx="8"/>
+            <text class="t" x="780" y="38" text-anchor="middle">Pipeline definitions (JSON)</text>
+            <text class="s" x="780" y="56" text-anchor="middle">visual editor · upload · files</text>
+            <text class="m" x="780" y="72" text-anchor="middle">pipelines/</text>
+            <!-- importers -->
+            <rect class="box" x="100" y="108" width="250" height="52" rx="8"/>
+            <text class="t" x="225" y="130" text-anchor="middle">DUUI importer</text>
+            <text class="s" x="225" y="148" text-anchor="middle">parallel CAS workers → COPY writers</text>
+            <rect class="box" x="380" y="108" width="230" height="52" rx="8"/>
+            <text class="t" x="495" y="130" text-anchor="middle">JSON data importer</text>
+            <text class="s" x="495" y="148" text-anchor="middle">XML → JSON, one row per file</text>
+            <rect class="box" x="640" y="108" width="280" height="52" rx="8"/>
+            <text class="t" x="780" y="130" text-anchor="middle">Pipeline importer · PipelineService</text>
+            <text class="s" x="780" y="148" text-anchor="middle">normalises legacy formats, assigns ids</text>
+            <!-- storage -->
+            <rect class="region" x="90" y="188" width="840" height="130" rx="10"/>
+            <text class="region-lbl" x="110" y="208">PostgreSQL</text>
+            <rect class="box" x="110" y="220" width="255" height="86" rx="8"/>
+            <text class="t" x="237" y="242" text-anchor="middle">UIMA schema (public)</text>
+            <text class="m" x="237" y="260" text-anchor="middle">documents · sofas</text>
+            <text class="m" x="237" y="276" text-anchor="middle">uima_type_registry</text>
+            <text class="m" x="237" y="292" text-anchor="middle">one table per annotation type</text>
+            <rect class="box" x="385" y="220" width="225" height="86" rx="8"/>
+            <text class="t" x="497" y="242" text-anchor="middle">App schema (public)</text>
+            <text class="m" x="497" y="260" text-anchor="middle">json_data</text>
+            <text class="m" x="497" y="276" text-anchor="middle">pipeline</text>
+            <text class="m" x="497" y="292" text-anchor="middle">pipeline_locks</text>
+            <rect class="box brand" x="640" y="220" width="270" height="86" rx="8"/>
+            <text class="t" x="775" y="242" text-anchor="middle">One schema per pipeline id</text>
+            <text class="m" x="775" y="260" text-anchor="middle">GENERATORDATA_* (per generator)</text>
+            <text class="m" x="775" y="276" text-anchor="middle">GENERATORTYPE</text>
+            <text class="m" x="775" y="292" text-anchor="middle">VISUALIZATIONJSONS</text>
+            <!-- build -->
+            <rect class="box ok" x="240" y="336" width="460" height="56" rx="8"/>
+            <text class="t" x="470" y="358" text-anchor="middle">SourceBuildService → Generators</text>
+            <text class="s" x="470" y="376" text-anchor="middle">CategoryNumber · TextFormatting · MapCoordinates — built into «id»__tmp, then swapped in</text>
+            <!-- api -->
+            <rect class="box" x="100" y="426" width="215" height="58" rx="8"/>
+            <text class="t" x="207" y="448" text-anchor="middle">Data API</text>
+            <text class="m" x="207" y="466" text-anchor="middle">/api/data · /api/pipelines</text>
+            <rect class="box accent" x="330" y="426" width="230" height="58" rx="8"/>
+            <text class="t" x="445" y="448" text-anchor="middle">Batch export API</text>
+            <text class="m" x="445" y="466" text-anchor="middle">/api/batch · headless Chromium</text>
+            <rect class="box" x="575" y="426" width="180" height="58" rx="8"/>
+            <text class="t" x="665" y="448" text-anchor="middle">Conversions</text>
+            <text class="m" x="665" y="466" text-anchor="middle">VecTikZ · CSV · ZIP</text>
+            <rect class="box" x="770" y="426" width="150" height="58" rx="8"/>
+            <text class="t" x="845" y="448" text-anchor="middle">Chat proxy</text>
+            <text class="m" x="845" y="466" text-anchor="middle">/api/chat → LLM</text>
+            <!-- clients -->
+            <rect class="box brand" x="100" y="520" width="400" height="68" rx="8"/>
+            <text class="t" x="300" y="544" text-anchor="middle">Browser</text>
+            <text class="s" x="300" y="562" text-anchor="middle">Menu · Pipeline editor · Interactive view</text>
+            <text class="s" x="300" y="578" text-anchor="middle">widgets · corpus filter · pager · exports · ChartBot</text>
+            <rect class="box" x="520" y="520" width="240" height="68" rx="8"/>
+            <text class="t" x="640" y="544" text-anchor="middle">Scripts &amp; CI</text>
+            <text class="s" x="640" y="562" text-anchor="middle">curl → ZIP of svg · png · tex · csv · json</text>
+            <text class="s" x="640" y="578" text-anchor="middle">evaluation harness</text>
+            <rect class="box" x="780" y="520" width="140" height="68" rx="8"/>
+            <text class="t" x="850" y="548" text-anchor="middle">LLM server</text>
+            <text class="s" x="850" y="566" text-anchor="middle">Open WebUI API</text>
+            <!-- arrows: inputs -> importers -->
+            <path class="arrow" d="M225,84 L225,106"/>
+            <path class="arrow" d="M495,84 L495,106"/>
+            <path class="arrow" d="M780,84 L780,106"/>
+            <!-- importers -> storage -->
+            <path class="arrow" d="M225,160 L225,218"/>
+            <path class="arrow" d="M495,160 L495,218"/>
+            <path class="arrow" d="M780,160 L780,218"/>
+            <!-- storage -> build -->
+            <path class="arrow" d="M237,306 L237,364 L238,364"/>
+            <path class="arrow" d="M497,306 L497,334"/>
+            <path class="arrow brand" d="M700,364 L775,364 L775,308"/>
+            <!-- pipeline schema -> data api -->
+            <path class="arrow brand" d="M910,263 L925,263 L925,455 L757,455 L757,424"/>
+            <path class="arrow" d="M207,394 L207,424"/>
+            <!-- api <-> clients -->
+            <path class="arrow" d="M207,484 L207,518"/>
+            <path class="arrow dashed" d="M445,484 L445,518"/>
+            <path class="arrow" d="M640,484 L640,518"/>
+            <path class="arrow" d="M845,484 L850,518"/>
+            <text class="lbl" x="452" y="504">opens /view/{id}?export=1</text>
+          </svg>
+          <figcaption>Data flows top-down: corpora and files are imported once, each pipeline's generators are built into their own PostgreSQL schema, and the API serves that pre-aggregated data to the browser, to scripts (batch export) and to the LLM assistant.</figcaption>
+        </figure>
+        <h3 id="architecture-components">Components</h3>
+        <div class="dl">
+          <dt>DUUI importer</dt><dd>Reads XMI or gzip-compressed XMI written by a <a href="https://github.com/texttechnologylab/DockerUnifiedUIMAInterface" target="_blank" rel="noopener">DUUI</a> pipeline, strips annotator meta-data, and writes every annotation type into its own table via PostgreSQL <code>COPY</code>. Tables are registered in <code>uima_type_registry</code> together with their super-type and row count; documents and their text (SOFAs) land in <code>documents</code> and <code>sofas</code>. <a href="#duui-importer">Details</a>.</dd>
+          <dt>JSON data importer</dt><dd>Imports every <code>.json</code> and <code>.xml</code> file of a folder into the <code>json_data</code> table (XML is converted to JSON with <code>org.json</code>). The file name is the source's <code>uri</code>. <a href="#sources">Details</a>.</dd>
+          <dt>Pipeline importer</dt><dd>Imports pipeline definitions from a folder at start-up, resolves duplicate ids, normalises the legacy <code>createsGenerators</code> format and triggers a build. Pipelines created through the editor or the API take the same path.</dd>
+          <dt>Source build</dt><dd><code>SourceBuildService</code> instantiates the generators of a pipeline, lets them aggregate their data (<code>setup</code>) and write it (<code>writeToDB</code>) into a temporary schema, then atomically renames it to the pipeline id. A pipeline whose annotations are not imported yet is retried at the next start (<code>MissingSchemaScanner</code>).</dd>
+          <dt>Data API</dt><dd>One <code>ChartHandler</code> per widget type (the classes in <code>org.texttechnologylab.udav.widgets</code>) reads generator data, applies chart filters and corpus filters, and returns the widget's payload. <a href="#api">Reference</a>.</dd>
+          <dt>Frontend</dt><dd>FreeMarker templates plus vanilla ES modules: <a href="https://d3js.org/" target="_blank" rel="noopener">D3.js</a> for the charts, <a href="https://gridstackjs.com/" target="_blank" rel="noopener">gridstack.js</a> for the grid, <a href="https://floating-ui.com/" target="_blank" rel="noopener">Floating UI</a>, <a href="https://getbootstrap.com/" target="_blank" rel="noopener">Bootstrap</a> (icons, styling), and <a href="https://marked.js.org/" target="_blank" rel="noopener">Marked</a> + <a href="https://github.com/cure53/DOMPurify" target="_blank" rel="noopener">DOMPurify</a> for ChartBot's Markdown. All packages are vendored; no build step.</dd>
+          <dt>Batch export</dt><dd>A pool of Playwright-driven headless Chromium sessions loads the view in export mode and runs the same export code the toolbar uses. <a href="#batch-export">Details</a>.</dd>
+        </div>
+        <figure class="shot">
+          <img src="img/architecture.png" alt="Architecture figure from the LREC 2026 paper" style="max-width:min(520px, 100%);display:block;margin:0 auto">
+          <figcaption>The component diagram from the paper: importer at the end of a DUUI pipeline, generators created by the SourceBuilder, and the controller/service layers behind editor, visualization and menu.</figcaption>
+        </figure>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="getting-started">
+        <h2 data-toc="Getting started">Getting started</h2>
+        <p>There are two ways to run UDAV: with Docker Compose (nothing to install besides Docker) or from source against your own PostgreSQL. Both import the bundled demo and evaluation pipelines and their JSON sources at start-up, so the pipeline list is populated right away.</p>
+        <div class="callout tip"><svg class="ci" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1 15l-4-4 1.41-1.41L11 14.17l5.59-5.59L18 10l-7 7z"/></svg><div><strong>Just want to look?</strong> The <a href="https://demo.udav.texttechnologylab.org/" target="_blank" rel="noopener">public demo</a> runs the <code>DEMO</code> pipeline over an annotated German parliamentary corpus — no set-up required.</div></div>
+        <h3 id="requirements">Requirements</h3>
+        <ul>
+          <li><strong>Docker route:</strong> <a href="https://docs.docker.com/get-docker/" target="_blank" rel="noopener">Docker</a> with <a href="https://docs.docker.com/compose/install/" target="_blank" rel="noopener">Compose</a> v2. The image ships Chromium, so the batch export API works out of the box.</li>
+          <li><strong>Source route:</strong> JDK 21, Maven 3.9, PostgreSQL (the Docker stack uses 17). For the batch export API a Chromium, Chrome or Edge on the machine (otherwise Playwright downloads its own browsers on first use, about 1 GB).</li>
+        </ul>
+        <div class="tabs">
+          <div class="tab-list" role="tablist">
+            <button role="tab" data-tab="docker">Docker Compose</button>
+            <button role="tab" data-tab="source">From source</button>
+          </div>
+          <div class="tab-panel" data-tab="docker">
+            <ol class="steps">
+              <li><strong>Clone the repository</strong>
+<pre data-title="terminal"><code class="language-bash">git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
+cd Unified-Dynamic-Annotation-Visualizer</code></pre></li>
+              <li><strong>Create your <code>.env</code></strong> from the example. Its defaults suit a laptop; the commented values are those used for large corpus imports.
+<pre data-title="terminal"><code class="language-bash">cp .env.example .env</code></pre></li>
+              <li><strong>Start the stack</strong>
+<pre data-title="terminal"><code class="language-bash">docker compose up -d
+docker compose logs -f udav   # watch the importers</code></pre>
+                <p>PostgreSQL and UDAV start; the UI is at <a href="http://localhost:8080" target="_blank" rel="noopener">http://localhost:8080</a> once the container is healthy (usually 30–60 s). The image bundles the demo and evaluation pipelines under <code>/app/pipelines</code> and their JSON sources under <code>/app/sourcefilesJSON</code>; mount your own folders and point <code>PIPELINE_IMPORTER_FOLDER</code> / <code>JSON_IMPORTER_FOLDER</code> at them, or set <code>PIPELINE_IMPORTER=false</code>.</p></li>
+            </ol>
+          </div>
+          <div class="tab-panel" data-tab="source">
+            <ol class="steps">
+              <li><strong>Create an empty database.</strong> UDAV creates every table and schema itself; the user only needs the right to create schemas.
+<pre data-title="terminal"><code class="language-bash">createdb udav</code></pre></li>
+              <li><strong>Tell UDAV where it is.</strong> Create a <code>.env</code> in the repository root (do not copy <code>.env.example</code> here — its paths describe the Docker layout). Spring reads this file at start-up, so any property can go here, e.g. <code>server.port=8081</code> together with <code>UDAV_BASE_URL=http://localhost:8081</code> for the batch API.
+<pre data-title=".env"><code class="language-ini">DB_URL=jdbc:postgresql://localhost:5432/udav
+DB_USER=postgres
+DB_PASS=postgres</code></pre></li>
+              <li><strong>Run it</strong>
+<pre data-title="terminal"><code class="language-bash">mvn spring-boot:run</code></pre>
+                <p>The first build downloads dependencies from Maven Central and JitPack. The UI is available at <a href="http://localhost:8080" target="_blank" rel="noopener">http://localhost:8080</a> once the log says <code>Started App</code>. Running from the repository root, <code>src/main/resources/pipelines</code> and <code>src/main/resources/sourcefilesJSON</code> are imported automatically.</p></li>
+            </ol>
+          </div>
+        </div>
+        <div class="callout"><svg class="ci" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div><strong>What shows data immediately?</strong> Pipelines over JSON sources (the geometry demos and <code>pipeline_eval-*</code>) work right away. Pipelines over UIMA annotation types (<code>DEMO</code>, <code>simple-demo</code>, the <code>*Test*</code> pipelines) show no data until a corpus has been imported with the <a href="#duui-importer">DUUI importer</a>; the log warns about each of them at start-up and they are rebuilt automatically once the annotations exist.</div></div>
+        <h3 id="first-pipeline">Your first pipeline in five minutes</h3>
+        <ol class="steps">
+          <li><strong>Drop a data file.</strong> Save <code>counts.json</code> into the JSON source folder and restart (or set <code>JSON_IMPORTER_REPLACE_IF_DIFFERENT=true</code> to refresh changed files on restart):
+<pre data-title="sourcefilesJSON/counts.json"><code class="language-json">{ "NOUN": 1061, "VERB": 492, "ADJ": 341, "ADV": 251, "PRON": 264 }</code></pre></li>
+          <li><strong>Create a pipeline.</strong> On the start page choose <em>Create new pipeline</em>, add a source and pick <code>counts.json</code> as its annotation type, add a <code>CategoryNumber</code> generator via the <kbd>+</kbd> of the source card, then drag a <em>Bar Chart</em> onto the grid and bind it to the generator.</li>
+          <li><strong>Save.</strong> UDAV stores the JSON, builds the generator data and opens the view. Export the chart from its toolbar, or fetch everything with one call:
+<pre data-title="terminal"><code class="language-bash">curl "http://localhost:8080/api/batch/export/pipeline/&lt;pipelineId&gt;/svg" -o charts.zip</code></pre></li>
+        </ol>
+        <p>The same pipeline as a file, ready to drop into <code>pipelines/</code> or to upload on the start page, is shown in <a href="#pipeline-json">Anatomy of a pipeline</a>.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="concepts">
+        <h2 data-toc="Concepts &amp; pipeline JSON">Concepts and the pipeline JSON</h2>
+        <p>Everything in UDAV hangs off four concepts. A <strong>pipeline</strong> owns a list of <strong>sources</strong>, <strong>generators</strong> and <strong>widgets</strong>. Sources say <em>where</em> data comes from, generators say <em>what</em> is computed from it, widgets say <em>how</em> it is displayed. Several widgets can share one generator (a bar chart and a table of the same counts) and several generators can share one source.</p>
+        <figure class="diagram">
+          <svg viewBox="0 0 900 190" role="img" aria-label="Data model: sources feed generators, generators feed widgets, generators can extend other generators">
+            <rect class="box" x="20" y="20" width="240" height="64" rx="8"/><text class="t" x="140" y="45" text-anchor="middle">Source</text><text class="s" x="140" y="63" text-anchor="middle">UIMA type URI or JSON/XML file name</text>
+            <rect class="box" x="20" y="106" width="240" height="64" rx="8"/><text class="t" x="140" y="131" text-anchor="middle">Source</text><text class="s" x="140" y="149" text-anchor="middle">+ shared settings (filters)</text>
+            <rect class="box ok" x="330" y="20" width="240" height="64" rx="8"/><text class="t" x="450" y="45" text-anchor="middle">Generator</text><text class="s" x="450" y="63" text-anchor="middle">CategoryNumber · counts per category</text>
+            <rect class="box ok" x="330" y="106" width="240" height="64" rx="8"/><text class="t" x="450" y="131" text-anchor="middle">Generator</text><text class="s" x="450" y="149" text-anchor="middle">TextFormatting · text + annotation layers</text>
+            <rect class="box brand" x="640" y="6" width="240" height="50" rx="8"/><text class="t" x="760" y="27" text-anchor="middle">Widget · Bar Chart</text><text class="s" x="760" y="45" text-anchor="middle">options: horizontal</text>
+            <rect class="box brand" x="640" y="68" width="240" height="50" rx="8"/><text class="t" x="760" y="89" text-anchor="middle">Widget · Table</text><text class="s" x="760" y="107" text-anchor="middle">options: numbers</text>
+            <rect class="box brand" x="640" y="130" width="240" height="50" rx="8"/><text class="t" x="760" y="151" text-anchor="middle">Widget · Highlight Text</text><text class="s" x="760" y="169" text-anchor="middle">layers toggled in controls</text>
+            <path class="arrow" d="M260,52 L328,52"/><path class="arrow" d="M260,138 L328,138"/>
+            <path class="arrow brand" d="M570,52 L638,31"/><path class="arrow brand" d="M570,52 L638,93"/><path class="arrow brand" d="M570,138 L638,155"/>
+          </svg>
+          <figcaption>Sources feed generators; widgets read generators. A generator may also <code>extend</code> other generators of its type (currently used by TextFormatting to overlay annotation layers).</figcaption>
+        </figure>
+        <h3 id="pipeline-json">Anatomy of a pipeline</h3>
+        <p>A pipeline is one JSON object. Ids are free strings (the editor generates <code>Type-xxxxxxx</code>); the pipeline id becomes the name of the PostgreSQL schema that holds its generator data, so keep it schema-safe. Widgets are laid out on a 24-column grid with <code>x</code>, <code>y</code>, <code>w</code>, <code>h</code>.</p>
+<pre data-title="pos-overview.json"><code class="language-json">{
+  "id": "pos-overview",
+  "name": "POS overview",
+  "sources": [
+    { "id": "Source-pos",    "uri": "de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS", "settings": {} },
+    { "id": "Source-counts", "uri": "counts-per-doc.json", "settings": {} }
+  ],
+  "generators": [
+    { "id": "CategoryNumber-pos", "name": "POS numbers", "type": "CategoryNumber",
+      "source": "Source-pos", "settings": { "categoriesBlacklist": ["PUNCT"] }, "extends": [] },
+    { "id": "CategoryNumber-doc-@ID@", "name": "Counts per document", "type": "CategoryNumber",
+      "source": "Source-counts", "generatorGroup": true,
+      "settings": { "colors": { "NOUN": "#4e79a7", "VERB": "#f28e2b" } }, "extends": [] }
+  ],
+  "widgets": [
+    { "id": "BarChart-1", "type": "BarChart", "title": "Parts of speech",
+      "generator": { "id": "CategoryNumber-pos" }, "options": { "horizontal": false },
+      "x": 0, "y": 0, "w": 8, "h": 6 },
+    { "id": "PieChart-1", "type": "PieChart", "title": "Per document",
+      "generator": { "id": "CategoryNumber-doc-@ID@" }, "options": { "hole": 50, "legend": true },
+      "x": 8, "y": 0, "w": 8, "h": 6 },
+    { "id": "StaticText-1", "type": "StaticText", "title": "Caption", "src": "POS distribution of the corpus",
+      "options": { "align": "center", "size": "5", "weight": "normal", "style": "italic", "decoration": "none" },
+      "x": 0, "y": 6, "w": 16, "h": 2 }
+  ]
+}</code></pre>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Key</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>sources[].uri</code></td><td>A fully qualified UIMA type (<code>…lexmorph.type.pos.POS</code>) or the file name of an imported JSON/XML source (<code>counts.json</code>). Anything ending in <code>.json</code> / <code>.xml</code> is a JSON-backed source.</td></tr>
+            <tr><td><code>sources[].settings</code></td><td>Settings shared by all generators of the source, merged with each generator's own settings (see below).</td></tr>
+            <tr><td><code>generators[].type</code></td><td><code>CategoryNumber</code>, <code>TextFormatting</code> or <code>MapCoordinates</code> — the simple class name of a generator in <code>org.texttechnologylab.udav.generators</code>.</td></tr>
+            <tr><td><code>generators[].source</code></td><td>Id of the source the generator reads.</td></tr>
+            <tr><td><code>generators[].extends</code></td><td>Ids of generators of the same type this one derives from (a <em>derived</em> generator has no source of its own).</td></tr>
+            <tr><td><code>generators[].generatorGroup</code></td><td><code>true</code> turns the definition into a template instantiated once per top-level key of a JSON/XML source. <a href="#generator-groups">Generator groups</a>.</td></tr>
+            <tr><td><code>widgets[].generator.id</code></td><td>The generator a chart widget reads; for grouped generators the template id (with <code>@ID@</code>). Static widgets carry <code>src</code> instead.</td></tr>
+            <tr><td><code>widgets[].options</code></td><td>Widget-specific options, listed in the <a href="#widgets">widget catalogue</a>.</td></tr>
+          </tbody>
+        </table></div>
+        <p>Two legacy layouts are still accepted and normalised on read: a <code>{ "pipelines": [ … ] }</code> envelope around a single pipeline, and generators nested inside their source as <code>createsGenerators</code>. The API always returns the flat form shown above.</p>
+        <h3 id="settings-grammar">Settings and filter lists</h3>
+        <p>Settings are free-form per generator type (see the <a href="#generators">generator reference</a>), but a few rules apply everywhere:</p>
+        <ul>
+          <li><strong>Keys are case-insensitive</strong> (<code>featureName</code> and <code>featurename</code> are the same setting).</li>
+          <li><strong>Filter lists.</strong> A key ending in <code>Whitelist</code> or <code>Blacklist</code> defines a filter on the base key. Generators evaluate <code>files</code> and <code>categories</code>, so the working keys are <code>filesWhitelist</code>, <code>filesBlacklist</code>, <code>categoriesWhitelist</code> and <code>categoriesBlacklist</code>. A whitelist restricts to the listed values, a blacklist removes them; file names are matched case-sensitively, categories case-insensitively. <code>…WhitelistPriority</code> re-admits values a blacklist would remove.</li>
+          <li><strong>Source-level settings are merged into every generator of the source.</strong> Scalars and lists of the generator win over the source, maps are merged recursively, whitelists of both levels are intersected and blacklists united.</li>
+        </ul>
+        <div class="callout"><svg class="ci" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div>The editor's source form offers <em>Source files whitelist/blacklist</em> fields, which it stores as <code>sourceFilesWhitelist</code> / <code>sourceFilesBlacklist</code>. The generators read <code>filesWhitelist</code> / <code>filesBlacklist</code>; write those keys in the pipeline JSON (on the source or the generator) to restrict a generator to specific documents.</div></div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="widgets">
+        <h2 data-toc="Widgets">Widgets</h2>
+        <p>Every interactive widget shares one frame: a toolbar with a <strong>Controls</strong> side panel (chart-specific filters), the widget title, an <strong>Exports</strong> dropdown, and — when the generator is a group — a <strong>pager</strong> in the chart area. Charts drawn with D3 re-render on resize, show tooltips, and most of them can be zoomed and panned. Static widgets have no data binding and are meant for titles, captions, logos and embedded media.</p>
+        <h3 id="interactive-widgets">Interactive widgets</h3>
+        <div class="grid-2">
+          <div class="card widget-card"><h4>Bar Chart</h4><p>Vertical or horizontal bars, one per category, in the generator's colours.</p>
+            <ul><li>Option: <code>horizontal</code></li><li>Controls: sort by value/label, descending, value range, limit</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">CategoryNumber</span></div></div>
+          <div class="card widget-card"><h4>Pie Chart</h4><p>Pie or doughnut with optional legend.</p>
+            <ul><li>Options: <code>hole</code> (0–99 %), <code>legend</code></li><li>Controls: value range, limit</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">CategoryNumber</span></div></div>
+          <div class="card widget-card"><h4>Table</h4><p>Scrollable table over category numbers or coordinates; the first row is the header.</p>
+            <ul><li>Option: <code>numbers</code> (row numbers)</li><li>Controls: sort column, descending (server-side also min/max/limit)</li><li>Exports: tex (native <code>tabular</code>) · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">CategoryNumber</span><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Highlight Text</h4><p>The document text with annotation layers rendered as underline, highlight or bold in category colours; hovering a span lists its labels.</p>
+            <ul><li>Controls: toggle each annotation layer</li><li>Exports: tex (native, <code>soul</code>/<code>xcolor</code>) · csv (one row per span and label) · json</li></ul>
+            <div class="meta"><span class="pill brand">TextFormatting</span></div></div>
+          <div class="card widget-card"><h4>Line Chart</h4><p>One line per dataset (file) over x/y coordinates, with zoom and pan.</p>
+            <ul><li>Options: <code>points</code>, <code>curve</code> (linear, basis, cardinal, Catmull-Rom)</li><li>Controls: toggle datasets</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Simple Map</h4><p>Points and edges projected onto a world map (equirectangular, bundled GeoJSON), zoomable.</p>
+            <ul><li>Option: <code>worldColor</code></li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Network Graph</h4><p>Force-directed graph: points become nodes, edges become links; the layout is computed deterministically without animation.</p>
+            <ul><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Voronoi Diagram</h4><p>Voronoi tessellation of the points, optionally with a boundary lattice and cell polygons scaled by each point's scale value.</p>
+            <ul><li>Options: <code>min</code>, <code>max</code>, <code>step</code> of the boundary</li><li>Controls: centre points, centre polygons, boundary points</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Medial Axis</h4><p>Medial axis of a point-sampled shape derived from the Delaunay triangulation; hovering an axis segment reveals the circumcircles it comes from.</p>
+            <ul><li>Controls: boundary points, Delaunay triangles, circumcircles, circumcenters, Voronoi edges</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+          <div class="card widget-card"><h4>Boundary Approximation</h4><p>Approximates the outline of a point cloud or edge set with a chosen density/clustering method and draws it as a contour.</p>
+            <ul><li>Options: <code>interpolate</code> (sample points along edges), <code>clustering</code>: quadtree grid, DBSCAN, kernel density estimation, Voronoi area, k-nearest neighbour, Delaunay edge length, Gaussian KDE</li><li>Controls: method-specific (grid rows, threshold, radius, ε / minPts, bandwidth, k)</li><li>Exports: svg · png · tex · csv · json</li></ul>
+            <div class="meta"><span class="pill brand">MapCoordinates</span></div></div>
+        </div>
+        <h3 id="static-widgets">Static widgets</h3>
+        <div class="grid-2">
+          <div class="card widget-card"><h4>Text</h4><p>Titles and captions.</p><ul><li>Options: <code>align</code>, <code>size</code> 1–6, <code>weight</code>, <code>style</code>, <code>decoration</code></li></ul></div>
+          <div class="card widget-card"><h4>Image</h4><p>An image by URL, e.g. a project logo.</p></div>
+          <div class="card widget-card"><h4>Video</h4><p>A video by URL.</p><ul><li>Options: <code>controls</code>, <code>autoplay</code></li></ul></div>
+          <div class="card widget-card"><h4>Inline Frame</h4><p>Any web page embedded in the dashboard.</p><ul><li>Option: <code>border</code></li></ul></div>
+        </div>
+        <p class="small muted">Which widget accepts which generator is enforced by the editor: the <em>Generator</em> dropdown of a widget only lists compatible generators.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="generators">
+        <h2 data-toc="Generators">Generators</h2>
+        <p>A generator transforms a source into the data model of a family of widgets and writes it into the pipeline's schema. Three generators are bundled; <a href="#dev-generator">new ones</a> are Java classes. When several generators of the same source share categories, they share one colour palette, which is why a highlight text and a pie chart of the same annotations use matching colours.</p>
+        <h3 id="gen-categorynumber">CategoryNumber <span class="pill mono">CN</span></h3>
+        <p>Maps categories to a number and a colour — counts of a feature's values for a UIMA type (e.g. POS tags), or numbers read from a JSON source. Feeds Bar Chart, Pie Chart and Table.</p>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Setting</th><th>Applies to</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>featureName</code></td><td>UIMA</td><td>Short name of the feature to count. Auto-detected when omitted (<code>coarseValue</code>, <code>posValue</code>, <code>value</code> for POS; <code>value</code>, <code>identifier</code>, <code>label</code>, <code>lemmaValue</code> otherwise). Sub-types of the source type are included.</td></tr>
+            <tr><td><code>filesWhitelist</code> / <code>filesBlacklist</code></td><td>both</td><td>Documents to count; default all documents of the corpus (UIMA) or all files of the JSON document.</td></tr>
+            <tr><td><code>categoriesWhitelist</code> / <code>categoriesBlacklist</code></td><td>both</td><td>Categories to keep or drop.</td></tr>
+            <tr><td><code>color</code></td><td>both</td><td>One colour for all categories.</td></tr>
+            <tr><td><code>colors</code></td><td>both</td><td><code>{ "NOUN": "#4e79a7" }</code>; unlisted categories get palette colours.</td></tr>
+            <tr><td><code>keys</code>, <code>keysMap</code>, <code>fixedKeys</code>, <code>file</code></td><td>JSON</td><td>Field mapping for row-shaped JSON and the file label, see <a href="#json-mapping">key mapping</a>.</td></tr>
+          </tbody>
+        </table></div>
+        <h3 id="gen-textformatting">TextFormatting <span class="pill mono">TF</span></h3>
+        <p>Stores one document's text together with annotation layers (type → segments with category), the style of each layer and the colour of each category. Feeds Highlight Text. Several TextFormatting generators can be combined with <code>extends</code>: the derived generator overlays the layers of the extended ones over the same text (the <code>DEMO</code> pipeline shows POS and named entities in one text this way).</p>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Setting</th><th>Applies to</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>sofaFile</code>, <code>sofaID</code></td><td>UIMA</td><td>The document (URI or id, with or without <code>.xmi</code>) and SOFA to show; default: the first document of the files filter.</td></tr>
+            <tr><td><code>featureName</code></td><td>UIMA</td><td>Feature whose value is the segment category (auto-detected as for CategoryNumber).</td></tr>
+            <tr><td><code>style</code></td><td>both</td><td><code>underline</code> (default), <code>highlight</code> or <code>bold</code> — the accent of the layer (JSON: default for all layers).</td></tr>
+            <tr><td><code>styles</code></td><td>JSON</td><td>Style per layer, <code>{ "POS": "underline", "NamedEntity": "highlight" }</code>.</td></tr>
+            <tr><td><code>colors</code></td><td>both</td><td><code>{ "NOUN": "#hex" }</code> for all layers or <code>{ "POS": { "NOUN": "#hex" } }</code> per layer.</td></tr>
+            <tr><td><code>color</code></td><td>both</td><td>One colour for every category.</td></tr>
+            <tr><td><code>categoriesWhitelist</code> / <code>categoriesBlacklist</code></td><td>both</td><td>Categories to keep or drop.</td></tr>
+            <tr><td><code>textKey</code>, <code>segmentsKey</code>, <code>keys</code>, <code>type</code>, <code>file</code></td><td>JSON</td><td>Where text and segments live in the document, segment field names, the layer for untyped segments (default <code>annotation</code>), and the file label.</td></tr>
+          </tbody>
+        </table></div>
+        <h3 id="gen-mapcoordinates">MapCoordinates <span class="pill mono">MC</span></h3>
+        <p>Stores labelled, colour-coded positions (any number of coordinates, a scale, fill/stroke colours) and optional directed edges between them (with weight, label and colour). Feeds Line Chart, Simple Map, Network Graph, Voronoi Diagram, Medial Axis, Boundary Approximation and Table. MapCoordinates reads JSON sources only.</p>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Setting</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>keys</code> / <code>keysMap</code></td><td>Map the source's fields to <code>coordinates</code>, <code>label</code>, <code>scale</code>, <code>fillColor</code>, <code>strokeColor</code> and nested <code>edges</code> (<code>to</code>, <code>number</code>, <code>label</code>, <code>color</code>). Colours are hex strings or <code>{ "Red": 1, "Green": 0.5, "Blue": 0, "Alpha": 1 }</code>.</td></tr>
+            <tr><td><code>fixedKeys</code></td><td>Constants injected into every point, e.g. <code>{ "fillColor": "#000000", "scale": 1 }</code>.</td></tr>
+            <tr><td><code>inputFormat</code></td><td><code>"edgePairs"</code>: the source is a list of <code>[from, to, meta]</code> triples; end points closer than <code>epsilon</code> (default 1e-6) are merged into one vertex.</td></tr>
+            <tr><td><code>scale</code></td><td>Multiplier applied to every coordinate (e.g. <code>0.1</code>).</td></tr>
+          </tbody>
+        </table></div>
+        <h3 id="gen-compat">Compatibility matrix</h3>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Generator</th><th>Sources</th><th>Widgets</th><th>Groupable</th></tr></thead>
+          <tbody>
+            <tr><td>CategoryNumber</td><td>UIMA type, JSON/XML</td><td>Bar Chart, Pie Chart, Table</td><td>JSON/XML sources</td></tr>
+            <tr><td>TextFormatting</td><td>UIMA type, JSON/XML, other TextFormatting generators (<code>extends</code>)</td><td>Highlight Text</td><td>JSON/XML sources</td></tr>
+            <tr><td>MapCoordinates</td><td>JSON/XML</td><td>Line Chart, Simple Map, Network Graph, Voronoi Diagram, Medial Axis, Boundary Approximation, Table</td><td>JSON/XML sources</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="sources">
+        <h2 data-toc="Data sources: UIMA &amp; custom JSON/XML">Data sources: UIMA and custom JSON/XML</h2>
+        <p>A source's <code>uri</code> decides where a generator reads from. Two kinds exist.</p>
+        <h3 id="uima-sources">UIMA annotation types</h3>
+        <p>After a corpus has been imported with the <a href="#duui-importer">DUUI importer</a>, every annotation type with at least one row is available as a source, e.g. <code>de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS</code> or <code>de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity</code>. The editor's <em>Annotation type</em> picker lists them with their row counts (<code>GET /api/annotations</code>). Generators resolve the type to its table through <code>uima_type_registry</code> and, where it makes sense, include the tables of sub-types.</p>
+        <h3 id="json-sources">Custom JSON and XML files — how to define your own source</h3>
+        <ol class="steps">
+          <li><strong>Drop the file into the JSON source folder.</strong> From source that is <code>src/main/resources/sourcefilesJSON</code>; in Docker mount a folder and set <code>JSON_IMPORTER_FOLDER</code>. Both <code>.json</code> and <code>.xml</code> are picked up; XML is converted to JSON with <code>org.json</code> (elements become objects, repeated elements arrays, attributes keys).</li>
+          <li><strong>Restart.</strong> The importer stores each file in the <code>json_data</code> table under its file name. Files that already exist are skipped unless <code>JSON_IMPORTER_REPLACE_IF_DIFFERENT=true</code>, in which case changed files are updated.</li>
+          <li><strong>Reference it.</strong> Use the file name as the source <code>uri</code> — in the editor the file appears in the annotation-type picker, in JSON write <code>"uri": "myfile.json"</code>.</li>
+          <li><strong>Map the fields</strong> if your names differ from what the generator expects (below), or pick one of the natively understood shapes.</li>
+        </ol>
+        <h3 id="json-shapes">What each generator accepts</h3>
+        <div class="tabs">
+          <div class="tab-list" role="tablist">
+            <button role="tab" data-tab="cn">CategoryNumber</button>
+            <button role="tab" data-tab="tf">TextFormatting</button>
+            <button role="tab" data-tab="mc">MapCoordinates</button>
+            <button role="tab" data-tab="xml">XML</button>
+          </div>
+          <div class="tab-panel" data-tab="cn">
+            <p>Three document shapes, no mapping needed:</p>
+<pre data-title="one file: category → number"><code class="language-json">{ "NOUN": 12, "VERB": 7, "ADJ": 3 }</code></pre>
+<pre data-title="several files: file → category → number"><code class="language-json">{ "doc-1": { "NOUN": 12, "VERB": 7 }, "doc-2": { "NOUN": 9, "VERB": 4 } }</code></pre>
+<pre data-title="rows (fields renamed with keys)"><code class="language-json">[
+  { "pos": "NOUN", "count": 12, "doc": "doc-1", "color": "#4e79a7" },
+  { "pos": "VERB", "count": 7,  "doc": "doc-1" }
+]</code></pre>
+<pre data-title="generator settings for the row shape"><code class="language-json">{ "keys": { "category": "pos", "number": "count", "file": "doc" } }</code></pre>
+            <p class="small muted">Rows of the same category and file are summed. Colours come from a row's <code>color</code>, the <code>colors</code> setting, the <code>color</code> setting, or the shared palette. The file label of the flat shape is the <code>file</code> setting or the source file name.</p>
+          </div>
+          <div class="tab-panel" data-tab="tf">
+            <p>An object with the text and a list of segments; every distinct <code>type</code> becomes one annotation layer:</p>
+<pre data-title="text.json"><code class="language-json">{
+  "text": "Dogs bark loud.",
+  "segments": [
+    { "begin": 0, "end": 4, "category": "NOUN",   "type": "POS" },
+    { "begin": 5, "end": 9, "category": "VERB",   "type": "POS" },
+    { "begin": 0, "end": 4, "category": "ANIMAL", "type": "NamedEntity" }
+  ]
+}</code></pre>
+<pre data-title="generator settings"><code class="language-json">{
+  "styles": { "POS": "underline", "NamedEntity": "highlight" },
+  "colors": { "POS": { "NOUN": "#4e79a7", "VERB": "#f28e2b" } },
+  "textKey": "text", "segmentsKey": "segments",
+  "keys": { "begin": "start", "end": "stop", "category": "label" }
+}</code></pre>
+            <p class="small muted">Segments without a <code>type</code> go to the layer named by the <code>type</code> setting (default <code>annotation</code>). With <code>"generatorGroup": true</code> over <code>{ "doc-1": {…}, "doc-2": {…} }</code> you get one text per document, which the Highlight Text widget pages through.</p>
+          </div>
+          <div class="tab-panel" data-tab="mc">
+            <p>A list of points, points with nested edges, parallel arrays, or edge pairs — always through a mapping:</p>
+<pre data-title="points.json + keys (target ← source)"><code class="language-json">[ { "x": -0.47, "y": 0.25 }, { "x": -0.46, "y": 0.21 } ]</code></pre>
+<pre data-title="generator settings"><code class="language-json">{
+  "keys": { "coordinates": ["x", "y"] },
+  "fixedKeys": { "fillColor": "#000000", "strokeColor": "#000000", "scale": 1 }
+}</code></pre>
+<pre data-title="parallel arrays + keysMap (mirrors the document; source → target)"><code class="language-json">{ "1_0": { "X": [ -0.17, 0.08 ], "Y": [ 0.0004, 0.29 ], "Z_abs": [ 0.5, 0.7 ],
+           "colors_S": [ [1, 0, 0, 1], [0, 0, 1, 1] ] } }</code></pre>
+<pre data-title="generator settings"><code class="language-json">{ "keysMap": { "1_0": {
+    "X": "coordinates@0", "Y": "coordinates@1", "Z_abs": "scale",
+    "colors_S": ["fillColor@Red", "fillColor@Green", "fillColor@Blue", "fillColor@Alpha"] } },
+  "fixedKeys": { "outsideColor": "#ffffff" } }</code></pre>
+<pre data-title="edge pairs: [from, to, meta] triples"><code class="language-json">[ [ { "x": 276.4, "y": 210.9 }, { "x": 231.4, "y": 212.1 }, { "label": "Edge A1", "number": 1.0, "color": "#7f8c8d" } ] ]</code></pre>
+<pre data-title="generator settings"><code class="language-json">{ "inputFormat": "edgePairs", "scale": 0.1,
+  "keysMap": { "0": { "x": "from@0", "y": "from@1" }, "1": { "x": "to@0", "y": "to@1" },
+               "2": { "label": "label", "number": "number", "color": "color" } } }</code></pre>
+          </div>
+          <div class="tab-panel" data-tab="xml">
+            <p>An XML file is converted to JSON on import and then treated exactly like a JSON source, so the same shapes and mappings apply to the converted structure:</p>
+<pre data-title="counts.xml"><code class="language-xml">&lt;counts&gt;
+  &lt;row category="NOUN" number="12" file="doc-1"/&gt;
+  &lt;row category="VERB" number="7"  file="doc-1"/&gt;
+&lt;/counts&gt;</code></pre>
+<pre data-title="what the importer stores"><code class="language-json">{ "counts": { "row": [ { "category": "NOUN", "number": 12, "file": "doc-1" },
+                       { "category": "VERB", "number": 7,  "file": "doc-1" } ] } }</code></pre>
+            <p class="small muted">The root is an object, so a mapping has to reach into <code>counts.row</code>; for row-shaped data, a <code>keysMap</code> mirroring the structure (<code>{ "counts": { "row": … } }</code>) or a flat JSON export of the same data is the simplest route. Attribute values that look like numbers are stored as numbers.</p>
+          </div>
+        </div>
+        <h3 id="json-mapping">The key-mapping grammar</h3>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Setting</th><th>Direction</th><th>Use when</th></tr></thead>
+          <tbody>
+            <tr><td><code>keys</code></td><td>target ← source: <code>{ "coordinates": ["x", "y"], "label": "name" }</code></td><td>The document is a <em>list of rows</em>. A list value gathers several source fields into an indexed target (<code>coordinates</code>).</td></tr>
+            <tr><td><code>keysMap</code></td><td>source → target, mirroring the document: <code>{ "1_0": { "X": "coordinates@0" } }</code></td><td>The document is <em>nested</em> or holds <em>parallel arrays</em>. Walk the document with its own keys; the leaf names the target field, <code>@</code> nests (<code>fillColor@Red</code>), and when a source key holds a list, one row is produced per index.</td></tr>
+            <tr><td><code>fixedKeys</code></td><td>constants</td><td>Inject the same value into every row (<code>file</code>, colours, <code>scale</code>).</td></tr>
+          </tbody>
+        </table></div>
+        <p>Without any mapping, list rows are taken as they are and object documents are read in the generator's native shape. The evaluation pipelines (<code>pipeline_eval-*.json</code>) and the geometry demos (<code>voronoi-demo</code>, <code>medialaxis-demo</code>, <code>boundary-approx-new</code>) in the repository are complete, working examples of every variant.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="generator-groups">
+        <h2 data-toc="Generator groups">Generator groups: one template, many generators</h2>
+        <p>Often the same visualization is wanted for every document, corpus slice, speaker or experiment. Instead of copying a generator definition <em>n</em> times, mark it as a <strong>group</strong>: <code>"generatorGroup": true</code>. UDAV then treats every <strong>top-level key</strong> of the JSON/XML source as a sub-source and instantiates the generator once per key. The resulting generators are <em>real</em> generators — they are built, stored and served individually — but they are declared once.</p>
+        <figure class="diagram">
+          <svg viewBox="0 0 900 200" role="img" aria-label="A grouped generator template expands into one generator per top-level key of the source file; a widget bound to the template pages through them">
+            <rect class="box accent" x="16" y="40" width="200" height="120" rx="8"/>
+            <text class="t" x="116" y="64" text-anchor="middle">pages.json</text>
+            <text class="m" x="116" y="86" text-anchor="middle">{ "1_0": { … },</text>
+            <text class="m" x="116" y="104" text-anchor="middle">  "1_1": { … },</text>
+            <text class="m" x="116" y="122" text-anchor="middle">  "1_2": { … } }</text>
+            <text class="lbl" x="116" y="148" text-anchor="middle">3 top-level keys</text>
+            <rect class="box ok" x="270" y="52" width="230" height="96" rx="8"/>
+            <text class="t" x="385" y="78" text-anchor="middle">Generator template</text>
+            <text class="m" x="385" y="98" text-anchor="middle">"id": "MapCoordinates-@ID@"</text>
+            <text class="m" x="385" y="116" text-anchor="middle">"generatorGroup": true</text>
+            <text class="m" x="385" y="134" text-anchor="middle">"type": "MapCoordinates"</text>
+            <rect class="box ok" x="560" y="20" width="160" height="34" rx="6"/><text class="m" x="640" y="42" text-anchor="middle">MapCoordinates-1_0</text>
+            <rect class="box ok" x="560" y="83" width="160" height="34" rx="6"/><text class="m" x="640" y="105" text-anchor="middle">MapCoordinates-1_1</text>
+            <rect class="box ok" x="560" y="146" width="160" height="34" rx="6"/><text class="m" x="640" y="168" text-anchor="middle">MapCoordinates-1_2</text>
+            <rect class="box brand" x="760" y="60" width="130" height="80" rx="8"/>
+            <text class="t" x="825" y="86" text-anchor="middle">Widget</text>
+            <text class="s" x="825" y="104" text-anchor="middle">bound to the</text>
+            <text class="s" x="825" y="118" text-anchor="middle">template id</text>
+            <text class="m" x="825" y="134" text-anchor="middle">page 1 / 3</text>
+            <path class="arrow" d="M216,100 L268,100"/>
+            <path class="arrow" d="M500,80 L558,40"/><path class="arrow" d="M500,100 L558,100"/><path class="arrow" d="M500,120 L558,160"/>
+            <path class="arrow brand" d="M720,37 L758,80"/><path class="arrow brand" d="M720,100 L758,100"/><path class="arrow brand" d="M720,163 L758,120"/>
+          </svg>
+          <figcaption>Expansion happens when the pipeline is built and again, deterministically, when the view asks which generators belong to a template.</figcaption>
+        </figure>
+        <h3 id="gg-rules">Rules</h3>
+        <ul>
+          <li><strong>Ids.</strong> Put <code>@ID@</code> into the template id; it is replaced by the sub-source key (<code>MapCoordinates-@ID@</code> → <code>MapCoordinates-1_0</code>). Without the placeholder the key is appended with an underscore. Collisions fall back to a running number.</li>
+          <li><strong>Only JSON/XML sources can be grouped</strong> — a group over a UIMA type is rejected with an error. The source document must be an object; its top-level keys are iterated in document order, which also fixes the page order.</li>
+          <li><strong>Every sub-generator sees only its own key's value</strong> as the document, with the template's settings. So the sub-values must have the shape the generator expects (for CategoryNumber a <code>{ category: number }</code> object, for TextFormatting a <code>{ text, segments }</code> object, for MapCoordinates a point structure the <code>keysMap</code> mirrors).</li>
+          <li><strong>Widgets reference the template id</strong> (<code>"generator": { "id": "MapCoordinates-@ID@" }</code>). The data API resolves the template to the list of concrete generators and reports it as <code>meta.total</code> / <code>meta.ids</code>; that is what drives <a href="#pagination">pagination</a> and bulk export.</li>
+          <li>In the editor, <em>Generator group</em> is a switch in the generator form; the pipeline JSON carries it as <code>generatorGroup</code>.</li>
+        </ul>
+        <h3 id="gg-demo">Try it</h3>
+        <p>Edit the source document or the template id and watch how the group expands and what the bound widget's pager shows. The expansion logic below mirrors the server's.</p>
+        <div class="demo">
+          <div class="demo-head"><svg viewBox="0 0 24 24"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>Interactive: generator group expansion &amp; widget pager</div>
+          <div class="demo-body two">
+            <div style="display:grid;gap:.8rem">
+              <label class="field"><span>Source document (JSON object; top-level keys become sub-sources)</span>
+                <textarea id="gg-source" spellcheck="false">{
+  "speech-2024-01": { "NOUN": 120, "VERB": 60, "ADJ": 33 },
+  "speech-2024-02": { "NOUN": 95,  "VERB": 71, "ADJ": 12 },
+  "speech-2024-03": { "NOUN": 140, "VERB": 55, "ADJ": 41 },
+  "speech-2024-04": { "NOUN": 80,  "VERB": 30, "ADJ": 20 }
+}</textarea></label>
+              <label class="field"><span>Generator template id</span><input id="gg-template" value="CategoryNumber-@ID@"></label>
+              <label class="field row"><span class="switch"><input id="gg-group" type="checkbox" checked><span class="track"></span></span><span>"generatorGroup": true</span></label>
+              <div id="gg-error" class="err"></div>
+            </div>
+            <div style="display:grid;gap:.8rem;align-content:start">
+              <div class="mini-widget">
+                <div class="mini-toolbar"><span class="ic">⚙</span><span id="pg-title">…</span><span class="ic">⤓</span></div>
+                <div class="mini-area">
+                  <svg id="pg-svg" viewBox="0 0 300 140" aria-label="Preview of the bound widget"></svg>
+                  <div class="pager">
+                    <select id="pg-select" aria-label="Jump to page"></select>
+                    <button id="pg-prev" type="button" aria-label="Previous page">‹</button>
+                    <button id="pg-next" type="button" aria-label="Next page">›</button>
+                    <span id="pg-ind" class="ind">1 / 1</span>
+                  </div>
+                </div>
+              </div>
+              <div id="gg-out" class="demo-out"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="pagination">
+        <h2 data-toc="Paginated widgets">Paginated widgets</h2>
+        <p>A widget whose generator is a group shows a <strong>pager</strong> in its chart area: <em>previous</em> / <em>next</em> buttons, a dropdown listing every generator of the group, and a <code>page / total</code> indicator. Paging wraps around at both ends, and every page is fetched on demand — the browser never loads all datasets at once. Widgets over an ordinary generator have exactly one page and show no pager.</p>
+        <div class="two-col">
+          <div>
+            <h4>In the view</h4>
+            <ul>
+              <li>Each page is one fetch of <code>POST /api/data</code> with <code>page=i&amp;size=1</code>; the chart filters (sort, range, layers …) and the corpus filter stay applied across pages.</li>
+              <li>The exports dropdown gains a second block, <em>Export all as …</em>: all pages are rendered in the background and delivered as one ZIP, one file per page (<code>title-000.svg</code>, <code>title-001.svg</code>, …).</li>
+              <li>The widget title, controls and options are shared by all pages — the template is the widget's configuration.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>In the API</h4>
+            <ul>
+              <li><code>meta.total</code> is the group size, <code>meta.ids</code> the concrete generator ids in page order (omit with <code>includeIds=false</code>).</li>
+              <li><code>size &gt; 1</code> returns several pages at once as <code>data: [ { data: [...] }, … ]</code>; the page index is clamped to the last page.</li>
+              <li>The batch export API's <code>bulk</code> flag decides between the first page (<code>false</code>) and all pages (<code>true</code>) of every grouped widget; <code>POST /api/data/export</code> zips the raw datasets of a group as json, csv or tex.</li>
+            </ul>
+          </div>
+        </div>
+        <p>The evaluation's pagination experiment uses exactly this mechanism: in the <code>pipeline_eval-pag</code> pipeline 15 of the 16 widgets sit on one group of eight, so a non-bulk export writes 16 files and a bulk export 15 × 8 + 1 = 121 — same layout, same widgets, only the number of pages differs.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="interactive-view">
+        <h2 data-toc="Interactive view">The interactive view</h2>
+        <p>The view page (<code>/view/{pipelineId}</code>) renders the pipeline's widgets on a fixed 24-column grid with the sidebar on the left.</p>
+        <figure class="shot"><img src="img/example4.png" alt="Pipeline view with corpus filter open and a highlight text and pie chart"><figcaption>A pipeline view: the corpus filter on the left restricts every widget to the checked documents; the highlight text and the doughnut chart share one generator palette.</figcaption></figure>
+        <h3 id="corpus-filter">Corpus filter</h3>
+        <p>The <strong>Files</strong> filter searches the imported documents (<code>GET /api/files/documents?q=</code>), lets you add them as checkboxes and applies the checked set to every widget of the view with <em>Apply</em>; <em>Reset</em> restores the full corpus. Category numbers are re-aggregated over the selected documents, coordinate widgets show only the selected files. The filter is sent as the <code>corpus</code> block of every data request and is embedded verbatim in every export's metadata, so an exported figure records which documents it was computed from. <em>Tags</em> and <em>Date</em> appear in the sidebar as well; they are accepted by the API but not yet backed by corpus metadata.</p>
+        <h3 id="chart-controls">Chart controls and value modes</h3>
+        <p>The sliders icon of a widget opens its <strong>Controls</strong> panel: sort key and direction, a value range, a limit, or toggles for datasets and annotation layers, depending on the widget. Every control triggers a fresh fetch with the widget's <code>chart</code> filter. The data API additionally understands a <code>valueMode</code> filter for category numbers — <code>RAW</code> (default), <code>SHARE</code> (value ⁄ sum), <code>MAX1</code> (value ⁄ max), <code>ZSCORE</code> and <code>PER_FILE_AVG</code> (average over the selected files) — which scripts can use for normalised exports.</p>
+        <h3 id="view-navigation">Navigation</h3>
+        <ul>
+          <li>The <strong>pipeline switcher</strong> in the sidebar jumps between pipelines; <strong>Edit Pipeline</strong> opens the editor (hidden for the locked public demo pipeline).</li>
+          <li>On the start page every pipeline has <em>edit</em>, <em>download configuration</em> (the pipeline JSON, pretty-printed) and <em>delete</em> actions, plus a drop zone that opens the editor with an uploaded JSON configuration.</li>
+          <li>The <strong>ChartBot</strong> panel appears at the bottom of the view when an LLM endpoint is configured.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="editor">
+        <h2 data-toc="Pipeline editor">Pipeline editor</h2>
+        <p>The editor (<code>/editor</code>, <code>/editor/{id}</code>) is where pipelines are composed without writing JSON. It has two sidebar tabs and a grid.</p>
+        <figure class="shot"><img src="img/editor.png" alt="The pipeline editor with sources and generators in the sidebar and two widgets on the grid"><figcaption>Sources with their generators on the left; widgets are dragged from the Widgets tab onto the 24-column grid, then resized, moved and configured through the pencil icon.</figcaption></figure>
+        <ol class="steps">
+          <li><strong>Generators tab.</strong> <em>New source</em> creates a source card; its form asks for a name, the annotation type (searchable: UIMA types with row counts and imported JSON/XML files) and optional file filters. The <kbd>+</kbd> of a card adds a generator — hover the <kbd>?</kbd> for a description of each type — whose form exposes the settings listed in the <a href="#generators">generator reference</a>, the <em>Generator group</em> switch and <em>Extends</em>.</li>
+          <li><strong>Widgets tab.</strong> Static and interactive widgets are dragged onto the grid. The pencil opens the widget form (title, generator, options); the widget renders live with the generator's data, or with bundled sample data while nothing is built yet.</li>
+          <li><strong>Identifier and Save.</strong> The identifier becomes the pipeline name (spaces turn into dashes). <em>Save</em> validates that every widget has an existing generator and every source an annotation type, then creates the pipeline (or asks before overwriting an existing one), builds its data and opens the view. <em>Discard</em> returns without saving; leaving the page with unsaved changes is guarded.</li>
+        </ol>
+        <p>Forms are generated from declarative <code>formConfig</code> descriptions with these input types: <code>text</code>, <code>textarea</code>, <code>number</code>, <code>range</code>, <code>rangedouble</code>, <code>select</code>, <code>multiselect</code>, <code>searchselect</code>, <code>switch</code>, <code>color</code> and <code>json</code> (a validated JSON editor used for mappings, colour maps and filter lists).</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="exports">
+        <h2 data-toc="Exports">Exports</h2>
+        <p>Every interactive widget can be exported from its toolbar. The <em>Exports</em> dropdown lists the formats the widget supports; <strong>svg</strong> and <strong>png</strong> exist for widgets that draw an SVG, <strong>tex</strong>, <strong>csv</strong> and <strong>json</strong> for all of them. For grouped generators a second block exports all pages as a ZIP.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Format</th><th>How it is produced</th><th>Metadata</th></tr></thead>
+          <tbody>
+            <tr><td><strong>svg</strong></td><td>The chart's live SVG, serialised with an XML header.</td><td>A <code>&lt;metadata&gt;</code> element with the corpus and chart filters.</td></tr>
+            <tr><td><strong>png</strong></td><td>The SVG rasterised on a canvas at the widget's on-screen size.</td><td>—</td></tr>
+            <tr><td><strong>tex</strong></td><td>Widgets with a native LaTeX representation (Table → <code>tabular</code>, Highlight Text → <code>soul</code>/<code>xcolor</code> mark-up) generate it directly; every SVG-drawing widget goes through <a href="#vectikz">VecTikZ</a>. Standalone documents, compile with <code>pdflatex</code>.</td><td>A comment block at the top with the filters.</td></tr>
+            <tr><td><strong>csv</strong></td><td>Widget-specific converters where the payload has structure (Highlight Text: one row per span and label), a generic JSON-to-CSV flattening otherwise.</td><td>—</td></tr>
+            <tr><td><strong>json</strong></td><td>The widget's dataset exactly as returned by the data API.</td><td><code>{ "metadata": { corpus, chart }, "data": … }</code></td></tr>
+          </tbody>
+        </table></div>
+        <p>Conversions run on the server (<code>POST /api/convertions/tikz</code>, <code>/csv</code>, <code>/zip</code>), so the UI, the batch API and your own scripts get identical files. Data-only bulk exports of a generator group without a browser are available through <code>POST /api/data/export?format=json|csv|tex</code>.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="vectikz">
+        <h2 data-toc="VecTikZ: SVG → TikZ">VecTikZ: charts as LaTeX</h2>
+        <p>Figures in papers should be vector graphics in the document's font, not screenshots. <strong>VecTikZ</strong> is UDAV's SVG-to-TikZ converter: it parses an SVG document and emits a standalone LaTeX file in which every shape is a native TikZ path and every label a TikZ node. The result compiles with <code>pdflatex</code>, scales without loss, and can be edited by hand — change a colour, move a label, drop it into a <code>figure</code> environment.</p>
+        <h3 id="vectikz-try">Try it here</h3>
+        <p>The converter also runs as a stand-alone web app at <a href="https://vectikz.lovable.app/" target="_blank" rel="noopener">vectikz.lovable.app</a> &mdash; the same code that produces UDAV's TeX exports. Drop or paste any SVG and copy or download the <code>.tex</code>.</p>
+        <figure class="embed">
+          <div class="embed-facade" data-src="https://vectikz.lovable.app/" data-frame-title="VecTikZ — SVG to TikZ converter">
+            <div class="embed-mark" aria-hidden="true">V<span>&#8596;</span>T</div>
+            <div class="embed-text">
+              <strong>VecTikZ &mdash; SVG &#8646; TikZ converter</strong>
+              <p>Runs on <code>vectikz.lovable.app</code>. Nothing is requested from that server until you load it.</p>
+              <div class="embed-actions">
+                <button class="btn btn-primary" type="button">Load the converter</button>
+                <a class="btn" href="https://vectikz.lovable.app/" target="_blank" rel="noopener">Open in a new tab</a>
+              </div>
+            </div>
+          </div>
+          <figcaption>The converter runs entirely in your browser on a site outside this documentation; if it is ever unreachable, the link above still points at it.</figcaption>
+        </figure>
+        <h3 id="vectikz-example">Example</h3>
+        <p>The SVG below is a small D3-style bar chart (axes, tick labels, three bars). The TikZ on the right is the unedited output of the converter in this repository.</p>
+        <div class="two-col">
+          <div>
+            <div class="svg-preview">
+              <svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200" style="color:#1c2733">
+                <g transform="translate(40,20)">
+                  <g transform="translate(0,140)" fill="none" font-size="10" font-family="sans-serif" text-anchor="middle">
+                    <path stroke="currentColor" d="M0.5,6V0.5H240.5V6"/>
+                    <g transform="translate(40.5,0)"><line stroke="currentColor" y2="6"/><text fill="currentColor" y="9" dy="0.71em">NOUN</text></g>
+                    <g transform="translate(120.5,0)"><line stroke="currentColor" y2="6"/><text fill="currentColor" y="9" dy="0.71em">VERB</text></g>
+                    <g transform="translate(200.5,0)"><line stroke="currentColor" y2="6"/><text fill="currentColor" y="9" dy="0.71em">ADJ</text></g>
+                  </g>
+                  <g fill="none" font-size="10" font-family="sans-serif" text-anchor="end">
+                    <path stroke="currentColor" d="M-6,140.5H0.5V0.5H-6"/>
+                    <g transform="translate(0,140.5)"><line stroke="currentColor" x2="-6"/><text fill="currentColor" x="-9" dy="0.32em">0</text></g>
+                    <g transform="translate(0,70.5)"><line stroke="currentColor" x2="-6"/><text fill="currentColor" x="-9" dy="0.32em">600</text></g>
+                    <g transform="translate(0,0.5)"><line stroke="currentColor" x2="-6"/><text fill="currentColor" x="-9" dy="0.32em">1200</text></g>
+                  </g>
+                  <rect x="16" y="16" width="48" height="124" fill="#4e79a7"/>
+                  <rect x="96" y="83" width="48" height="57" fill="#f28e2b"/>
+                  <rect x="176" y="100" width="48" height="40" fill="#e15759"/>
+                </g>
+              </svg>
+            </div>
+<pre data-title="input.svg (excerpt)"><code class="language-xml">&lt;svg width="320" height="200"&gt;
+  &lt;g transform="translate(40,20)"&gt;
+    &lt;g transform="translate(0,140)" font-size="10"
+       font-family="sans-serif" text-anchor="middle"&gt;
+      &lt;path stroke="currentColor" d="M0.5,6V0.5H240.5V6"/&gt;
+      &lt;g transform="translate(40.5,0)"&gt;
+        &lt;line stroke="currentColor" y2="6"/&gt;
+        &lt;text y="9" dy="0.71em"&gt;NOUN&lt;/text&gt;
+      &lt;/g&gt; …
+    &lt;/g&gt;
+    &lt;rect x="16" y="16" width="48" height="124" fill="#4e79a7"/&gt;
+    &lt;rect x="96" y="83" width="48" height="57" fill="#f28e2b"/&gt;
+    &lt;rect x="176" y="100" width="48" height="40" fill="#e15759"/&gt;
+  &lt;/g&gt;
+&lt;/svg&gt;</code></pre>
+          </div>
+          <div>
+<pre data-title="output.tex (VecTikZ)"><code class="language-latex">\documentclass{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{anyfontsize}
+\usepackage{tikz}
+\usetikzlibrary{shadings}
+\usetikzlibrary{arrows.meta}
+\usepackage[outline]{contour}
+\definecolor{c4e79a7}{RGB}{78,121,167}
+\definecolor{cf28e2b}{RGB}{242,142,43}
+\definecolor{ce15759}{RGB}{225,87,89}
+\definecolor{c000000}{RGB}{0,0,0}
+\begin{document}
+\noindent%
+\begin{tikzpicture}[x=1cm, y=1cm]
+\useasboundingbox (0, 0) rectangle (8.4667, 5.2917);
+\begin{pgfinterruptboundingbox}
+\clip (0, 0) rectangle (8.4667, 5.2917);
+\path[draw=c000000, line width=0.0265cm] (1.0716, 0.8996) -- (1.0716, 1.0451) -- (7.4216, 1.0451) -- (7.4216, 0.8996);
+\draw[draw=c000000, line width=0.0265cm] (2.1299, 1.0583) -- (2.1299, 0.8996);
+\node[inner sep=0pt, text=c000000, anchor=north, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (2.1299, 0.8176) {NOUN};
+\draw[draw=c000000, line width=0.0265cm] (4.2466, 1.0583) -- (4.2466, 0.8996);
+\node[inner sep=0pt, text=c000000, anchor=north, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (4.2466, 0.8176) {VERB};
+\draw[draw=c000000, line width=0.0265cm] (6.3632, 1.0583) -- (6.3632, 0.8996);
+\node[inner sep=0pt, text=c000000, anchor=north, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (6.3632, 0.8176) {ADJ};
+\path[draw=c000000, line width=0.0265cm] (0.8996, 1.0451) -- (1.0716, 1.0451) -- (1.0716, 4.7493) -- (0.8996, 4.7493);
+\draw[draw=c000000, line width=0.0265cm] (1.0583, 1.0451) -- (0.8996, 1.0451);
+\node[inner sep=0pt, text=c000000, anchor=base east, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (0.8202, 0.9604) {0};
+\draw[draw=c000000, line width=0.0265cm] (1.0583, 2.8972) -- (0.8996, 2.8972);
+\node[inner sep=0pt, text=c000000, anchor=base east, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (0.8202, 2.8125) {600};
+\draw[draw=c000000, line width=0.0265cm] (1.0583, 4.7493) -- (0.8996, 4.7493);
+\node[inner sep=0pt, text=c000000, anchor=base east, font=\fontsize{7.50pt}{9.00pt}\selectfont\sffamily] at (0.8202, 4.6646) {1200};
+\path[fill=c4e79a7] (1.4817, 4.3392) rectangle (2.7517, 1.0583);
+\path[fill=cf28e2b] (3.5983, 2.5665) rectangle (4.8683, 1.0583);
+\path[fill=ce15759] (5.7150, 2.1167) rectangle (6.9850, 1.0583);
+\end{pgfinterruptboundingbox}
+\end{tikzpicture}
+\end{document}</code></pre>
+          </div>
+        </div>
+        <h3 id="vectikz-how">How it works</h3>
+        <p>The converter (<code>org.texttechnologylab.udav.widgets.svgtolatex</code>) walks the SVG DOM in two passes. The first pass folds <code>&lt;style&gt;</code> rules into each element, indexes every id and collects gradients, patterns, markers and clip paths. The second pass dispatches each element to a specialised handler and appends TikZ commands. Coordinates are converted from SVG pixels to centimetres (1 px = 2.54⁄96 cm) with the y-axis flipped; the <code>viewBox</code> is fitted with the default <code>xMidYMid meet</code> and the picture is clipped to the viewport.</p>
+        <div class="grid-2">
+          <div class="card"><h4>Shapes &amp; paths</h4><p><code>rect</code>, <code>circle</code>, <code>ellipse</code>, <code>line</code>, <code>polyline</code>, <code>polygon</code> and full <code>path</code> data (moves, lines, cubic and quadratic Béziers, arcs, closes) with transforms, fill rules, opacity, dash patterns, line caps and joins.</p></div>
+          <div class="card"><h4>Text</h4><p><code>text</code>, <code>tspan</code> (absolute and relative positioning, anchors, baseline shifts) and <code>foreignObject</code> become <code>\node</code>s with font size, family, weight, style, colour and rotation. Advance widths come from a checked-in metrics table, so output is identical on every machine.</p></div>
+          <div class="card"><h4>Paint servers</h4><p>Linear and radial gradients are declared as TikZ shadings, <code>&lt;pattern&gt;</code> tiles map onto the <code>patterns</code> library (dots, hatching, crosshatch, grid) with a flat-fill fallback, and <code>&lt;marker&gt;</code>s become <code>arrows.meta</code> arrow heads (Inkscape stock arrows included).</p></div>
+          <div class="card"><h4>Structure</h4><p><code>g</code>, <code>a</code>, <code>use</code>, <code>symbol</code>, <code>switch</code>, <code>defs</code>, rectangular <code>clipPath</code>s, masks, <code>image</code> (embedded rasters end up as assets), Gaussian blur detection, visibility and CSS selectors with type, class, id, descendant and child combinators and <code>!important</code>.</p></div>
+        </div>
+        <p>Inside UDAV the converter sits behind <code>POST /api/convertions/tikz</code>. The endpoint first asks the widget class for a native TeX representation and only falls back to VecTikZ when there is none — so tables stay tables and highlighted text stays text, while every D3 chart is converted faithfully. The chart's filter metadata is prepended as a comment block.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="batch-export">
+        <h2 data-toc="Batch export API (headless)">Batch export API: headless browser exports</h2>
+        <p>Exporting a dashboard by hand — open the view, click every widget's menu, choose a format, save the file — does not scale to dozens of pipelines and several formats. The <strong>batch export API</strong> does it in one HTTP call: UDAV opens the pipeline's view in a <em>headless Chromium</em>, lets every widget render with its real data, runs the widgets' own export code and returns the artefacts as a ZIP. Because it reuses the browser-side <code>ExportHandler</code> verbatim, the files are identical to what the toolbar produces.</p>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/batch/export/{format}</div><div class="desc">One widget. Body: <code>{ "pipeline", "widget": { id | generatorId [+ type] }, "bulk" }</code>. Returns the file, or a ZIP when the widget has several pages and <code>bulk</code> is true.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/batch/export/pipeline/{format}</div><div class="desc">All generator-backed widgets of a pipeline. Body: <code>{ "pipeline", "bulk" }</code>. Returns a ZIP.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/batch/export/pipeline/{pipelineId}/{format}?bulk=true</div><div class="desc">Same as above for <code>curl</code>, browsers and CI. <code>bulk</code> defaults to <code>true</code>.</div></div>
+        </div>
+        <p><code>{format}</code> is one of <code>svg</code>, <code>png</code>, <code>tex</code>, <code>csv</code>, <code>json</code>.</p>
+        <h3 id="batch-builder">Build a request</h3>
+        <div class="demo">
+          <div class="demo-head"><svg viewBox="0 0 24 24"><path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg>Interactive: request builder</div>
+          <div class="demo-body two">
+            <div style="display:grid;gap:.7rem">
+              <label class="field"><span>Base URL</span><input id="bb-base" value="http://localhost:8080"></label>
+              <label class="field"><span>Scope</span><select id="bb-scope"><option value="pipeline">whole pipeline</option><option value="widget">single widget</option></select></label>
+              <label class="field"><span>Pipeline id</span><input id="bb-pipeline" value="0c1953d4-843b-4de4-a44e-1c607ed5a584"></label>
+              <label class="field"><span>Format</span><select id="bb-format"><option>svg</option><option>png</option><option>tex</option><option>csv</option><option>json</option></select></label>
+              <label class="field row"><span class="switch"><input id="bb-bulk" type="checkbox" checked><span class="track"></span></span><span>bulk — export every page of grouped widgets</span></label>
+              <label class="field"><span>HTTP method (pipeline scope)</span><select id="bb-method"><option value="get">GET (path parameters)</option><option value="post">POST (JSON body)</option></select></label>
+              <div id="bb-selector-wrap" style="display:grid;gap:.7rem">
+                <label class="field"><span>Widget selector</span><select id="bb-selector"><option value="id">by widget id</option><option value="gen-type">by generator id + widget type</option><option value="gen">by generator id (first match)</option></select></label>
+                <label class="field"><span>Widget id</span><input id="bb-id" value="BarChart-cspd570"></label>
+                <label class="field"><span>Generator id</span><input id="bb-gen" value="CategoryNumber-eky02g0"></label>
+                <label class="field"><span>Widget type</span><input id="bb-type" value="BarChart"></label>
+              </div>
+            </div>
+            <div style="display:grid;gap:.8rem;align-content:start">
+              <pre id="bb-out" data-title="curl" style="border-radius:6px"></pre>
+              <div class="demo-out"><div class="k">What comes back</div><div id="bb-expect"></div></div>
+            </div>
+          </div>
+        </div>
+        <h3 id="batch-flow">What happens during a request</h3>
+        <figure class="diagram">
+          <svg viewBox="0 0 940 300" role="img" aria-label="Batch export flow from request to ZIP">
+            <rect class="box" x="10" y="20" width="170" height="86" rx="8"/><text class="t" x="95" y="44" text-anchor="middle">1 · Request</text><text class="s" x="95" y="62" text-anchor="middle">pipeline, format, bulk,</text><text class="s" x="95" y="78" text-anchor="middle">optional widget selector</text>
+            <rect class="box" x="200" y="20" width="170" height="86" rx="8"/><text class="t" x="285" y="44" text-anchor="middle">2 · Admission</text><text class="s" x="285" y="62" text-anchor="middle">sessions + waiters slots;</text><text class="s" x="285" y="78" text-anchor="middle">excess → HTTP 503</text>
+            <rect class="box accent" x="390" y="20" width="170" height="86" rx="8"/><text class="t" x="475" y="44" text-anchor="middle">3 · Session pool</text><text class="s" x="475" y="62" text-anchor="middle">warm Chromium or launch;</text><text class="s" x="475" y="78" text-anchor="middle">fresh context + page</text>
+            <rect class="box" x="580" y="20" width="170" height="86" rx="8"/><text class="t" x="665" y="44" text-anchor="middle">4 · Load view</text><text class="s" x="665" y="62" text-anchor="middle">/view/{id}?export=1</text><text class="s" x="665" y="78" text-anchor="middle">wait until widgets + fonts ready</text>
+            <rect class="box" x="770" y="20" width="160" height="86" rx="8"/><text class="t" x="850" y="44" text-anchor="middle">5 · Select widgets</text><text class="s" x="850" y="62" text-anchor="middle">by id, generator + type,</text><text class="s" x="850" y="78" text-anchor="middle">or generator</text>
+            <rect class="box ok" x="770" y="180" width="160" height="96" rx="8"/><text class="t" x="850" y="204" text-anchor="middle">6 · Export</text><text class="s" x="850" y="222" text-anchor="middle">N widgets concurrently,</text><text class="s" x="850" y="238" text-anchor="middle">UI ExportHandler with the</text><text class="s" x="850" y="254" text-anchor="middle">download sinks replaced</text>
+            <rect class="box" x="580" y="180" width="170" height="96" rx="8"/><text class="t" x="665" y="204" text-anchor="middle">7 · Stream files</text><text class="s" x="665" y="222" text-anchor="middle">text formats as UTF-8,</text><text class="s" x="665" y="238" text-anchor="middle">PNG as base64, per file</text><text class="s" x="665" y="254" text-anchor="middle">as soon as it is produced</text>
+            <rect class="box" x="390" y="180" width="170" height="96" rx="8"/><text class="t" x="475" y="204" text-anchor="middle">8 · ZIP</text><text class="s" x="475" y="222" text-anchor="middle">NNN-name entries in order,</text><text class="s" x="475" y="238" text-anchor="middle">_summary.json, _errors.json;</text><text class="s" x="475" y="254" text-anchor="middle">PNGs stored, text deflated</text>
+            <rect class="box brand" x="200" y="180" width="170" height="96" rx="8"/><text class="t" x="285" y="204" text-anchor="middle">9 · Response</text><text class="s" x="285" y="222" text-anchor="middle">attachment + optional</text><text class="s" x="285" y="238" text-anchor="middle">X-UDAV-Export-Metrics;</text><text class="s" x="285" y="254" text-anchor="middle">session returned to pool</text>
+            <path class="arrow" d="M180,63 L198,63"/><path class="arrow" d="M370,63 L388,63"/><path class="arrow" d="M560,63 L578,63"/><path class="arrow" d="M750,63 L768,63"/>
+            <path class="arrow" d="M850,106 L850,178"/>
+            <path class="arrow" d="M770,228 L752,228"/><path class="arrow" d="M580,228 L562,228"/><path class="arrow" d="M390,228 L372,228"/>
+            <path class="arrow dashed" d="M665,180 L665,108"/><text class="lbl" x="672" y="150">/api/data, /api/convertions</text>
+          </svg>
+          <figcaption>The headless page calls back into the same application for data and conversions, which is why pool size and concurrency are bounded against the servlet thread pool.</figcaption>
+        </figure>
+        <h3 id="batch-details">Details worth knowing</h3>
+        <ul>
+          <li><strong>Selectors.</strong> A widget is found by <code>id</code>, else by <code>generatorId</code> + <code>type</code>, else by <code>generatorId</code> alone. Pipeline exports select every widget that has a <code>generator</code>; static widgets are never exported and their external media is not even loaded.</li>
+          <li><strong>ZIP layout.</strong> Entries are named <code>NNN-&lt;filename&gt;</code> in widget order (pages of a group get <code>-000</code>, <code>-001</code>, … suffixes), so names are stable from run to run. <code>_summary.json</code> holds pipeline id, counts and timestamp; <code>_errors.json</code> lists failed widgets with the reason. Asking a Table or Highlight Text for svg/png is such an expected failure — those widgets render no SVG — and does not fail the request.</li>
+          <li><strong>Pooling.</strong> Browsers are launched lazily, kept for reuse (<code>EXPORT_POOL_MAX_SESSIONS</code>, roughly 150–300 MB RSS each) and closed after <code>EXPORT_POOL_IDLE_TIMEOUT_MS</code> of inactivity, so an idle server holds no Chromium. Every request gets its own browser context and page. Each session is pinned to a dedicated thread because Playwright's objects are not thread-safe.</li>
+          <li><strong>Concurrency and admission.</strong> Within one page up to <code>EXPORT_CONCURRENCY</code> widgets export in parallel (<code>1</code> restores sequential export). At most <code>max-sessions + max-waiters</code> requests are admitted; the rest get <code>503</code> immediately rather than queueing unboundedly. This matters because the page's data requests share the servlet thread pool: budget ≈ <code>(sessions + waiters) + 6 × sessions</code> workers (Chromium caps ~6 connections per origin), kept below <code>TOMCAT_MAX_THREADS</code> (200).</li>
+          <li><strong>Browser discovery.</strong> UDAV looks for Chromium, Chrome or Edge in the usual places on Linux, macOS and Windows; <code>BROWSER_EXECUTABLE_PATH</code> pins a binary. If none launches, Playwright's own Chromium is downloaded on first use. The Docker image ships Alpine's Chromium and sets <code>EXPORT_NO_SANDBOX=true</code> because the sandbox needs unprivileged user namespaces, which Docker's default seccomp profile blocks — a deliberate trade-off (the browser only ever loads this application's own pages); keep the sandbox by setting it to <code>false</code> and running the container with a profile that allows user namespaces.</li>
+          <li><strong>Timeouts.</strong> <code>EXPORT_READY_TIMEOUT_MS</code> bounds the wait for the view to signal readiness, <code>EXPORT_WIDGET_TIMEOUT_MS</code> a single widget export, <code>EXPORT_POOL_BORROW_TIMEOUT_MS</code> the wait for a free session.</li>
+          <li><strong>Metrics.</strong> With <code>EXPORT_METRICS=true</code> every response carries <code>X-UDAV-Export-Metrics</code> — wall time, browser init, page ready, export phase, per-widget median, JVM and browser CPU, heap peak, allocation, GC, output and ZIP bytes, counts, concurrency and whether the session was reused — and logs the same block. The evaluation harness reads it.</li>
+          <li><strong>Viewport.</strong> Artefact dimensions follow the render viewport (<code>EXPORT_VIEWPORT_WIDTH</code> × <code>EXPORT_VIEWPORT_HEIGHT</code>, default 1600 × 1000).</li>
+        </ul>
+        <h3 id="batch-config">Configuration</h3>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>UDAV_BASE_URL</code></td><td><code>http://localhost:8080</code></td><td>Origin the headless browser uses to reach this application; change it with <code>server.port</code>.</td></tr>
+            <tr><td><code>BROWSER_EXECUTABLE_PATH</code></td><td>auto-detect (<code>/usr/lib/chromium/chromium</code> in Docker)</td><td>Browser binary to launch.</td></tr>
+            <tr><td><code>EXPORT_CONCURRENCY</code></td><td><code>4</code></td><td>Widgets exported in parallel within one page.</td></tr>
+            <tr><td><code>EXPORT_POOL_MAX_SESSIONS</code></td><td><code>2</code></td><td>Browsers kept alive for reuse; created lazily.</td></tr>
+            <tr><td><code>EXPORT_POOL_MAX_WAITERS</code></td><td><code>8</code></td><td>Requests allowed to queue before the API sheds load with 503.</td></tr>
+            <tr><td><code>EXPORT_POOL_BORROW_TIMEOUT_MS</code></td><td><code>120000</code></td><td>How long a request waits for a free session.</td></tr>
+            <tr><td><code>EXPORT_POOL_IDLE_TIMEOUT_MS</code></td><td><code>300000</code></td><td>Idle time after which a pooled browser is closed; <code>0</code> disables eviction.</td></tr>
+            <tr><td><code>EXPORT_WIDGET_TIMEOUT_MS</code></td><td><code>30000</code></td><td>Safety net for a widget export that never settles.</td></tr>
+            <tr><td><code>EXPORT_READY_TIMEOUT_MS</code></td><td><code>30000</code></td><td>Wait for the view to signal readiness.</td></tr>
+            <tr><td><code>EXPORT_VIEWPORT_WIDTH</code> / <code>_HEIGHT</code></td><td><code>1600</code> / <code>1000</code></td><td>Render viewport; affects exported dimensions.</td></tr>
+            <tr><td><code>EXPORT_NO_SANDBOX</code></td><td><code>false</code> (<code>true</code> in Docker)</td><td>Passes <code>--no-sandbox</code>.</td></tr>
+            <tr><td><code>EXPORT_DISABLE_GPU</code></td><td><code>true</code></td><td>Headless Chromium rasterises on the CPU anyway.</td></tr>
+            <tr><td><code>EXPORT_METRICS</code></td><td><code>false</code></td><td>Per-request measurements (log block + response header).</td></tr>
+            <tr><td><code>EXPORT_CPU_SAMPLE_MS</code></td><td><code>250</code></td><td>Sampling interval of the browser-process CPU tracker.</td></tr>
+            <tr><td><code>PIPELINE_CACHE_TTL_MS</code></td><td><code>5000</code></td><td>Short-TTL cache of the pipeline JSON (one export reads it 2 + 2·W times); <code>0</code> disables.</td></tr>
+            <tr><td><code>TOMCAT_MAX_THREADS</code></td><td><code>200</code></td><td>Servlet worker pool the budget above is expressed against.</td></tr>
+          </tbody>
+        </table></div>
+        <h3 id="batch-evaluation">Evaluation</h3>
+        <p>The batch export was evaluated for latency, resource use and correctness with a JUnit harness (<code>BatchExportEvaluationIT</code>) that drives a running instance over HTTP against twelve sampled pipelines (5–46 widgets, 5–212 files per export) plus the pagination pipeline. The campaign of 26 August 2026 (8 cores, JVM 21, report in <code>evaluation/evaluation-report-2026-08-26.txt</code>) is the basis of the paper's numbers:</p>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Format</th><th>Median per pipeline export</th><th>Batch vs. one request per widget (large pipelines)</th><th>Cost per additional file</th></tr></thead>
+          <tbody>
+            <tr><td>SVG</td><td>0.94 s</td><td>2.24 s vs. 30.79 s</td><td>≈ 10 ms</td></tr>
+            <tr><td>PNG</td><td>1.14 s</td><td>—</td><td>≈ 14 ms</td></tr>
+            <tr><td>JSON</td><td>0.85 s</td><td>1.85 s vs. 29.85 s</td><td>≈ 9 ms</td></tr>
+            <tr><td>CSV</td><td>0.91 s</td><td>—</td><td>≈ 9 ms</td></tr>
+            <tr><td>TeX</td><td>1.06 s</td><td>2.55 s vs. 31.63 s</td><td>≈ 12 ms</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small muted">Browser start-up (pooled) took ~55 ms and view initialisation ~425 ms per request; the pagination experiment measured 9.45 ms per additional page. All 2,577 exports of the campaign returned exactly the expected files; the only "failures" were the expected svg/png refusals of Table and Highlight Text widgets.</p>
+        <p>The harness, the thirteen evaluation pipelines and their JSON sources are part of the repository and the Docker image, so the evaluation runs anywhere with one command:</p>
+<pre data-title="terminal"><code class="language-bash">tools/run-evaluation.sh --docker --smoke        # start the stack on port 18080, verify every export once (minutes)
+tools/run-evaluation.sh --docker                # same, then the full measurement campaign (hours)
+tools/run-evaluation.sh --url http://localhost:8080   # against an instance started with EXPORT_METRICS=true
+# harness knobs are passed through, e.g. -Dudav.eval.analysisRuns=5 -Dudav.eval.pipelines=P1,P5</code></pre>
+        <p class="small muted">On Windows run the script from Git Bash or WSL, or do its two steps by hand: <code>docker compose -f docker-compose.yml -f tools/docker-compose.evaluation.yml up -d --build</code> and <code>mvn test -Dtest=BatchExportEvaluationIT -DUDAV_BASE_URL=http://localhost:18080</code> (add <code>-Dudav.eval.bugHunt=true</code> for the smoke variant). <code>tools/make_eval_pipelines.py</code> regenerates the pipelines and sources bit-exactly.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="chartbot">
+        <h2 data-toc="ChartBot (LLM assistant)">ChartBot: an LLM assistant for your charts</h2>
+        <p>ChartBot is a chat panel at the bottom of every pipeline view. It is instructed to act as a precise assistant for the charts on the dashboard — explain what a chart shows, interpret trends and anomalies, answer questions about values and comparisons, and say clearly when something cannot be read from the chart.</p>
+        <div class="grid-2">
+          <div class="card"><h4>Attach a chart as context</h4><p>The <em>Add Context</em> dropdown lists every SVG-drawing widget of the view. The selected chart is rasterised in the browser and sent with your question as an image, so a vision-capable model sees exactly what you see — including your current filters and page.</p></div>
+          <div class="card"><h4>Choose the model</h4><p>The model dropdown is filled from the configured server's model list; any model it offers can be used, per message.</p></div>
+          <div class="card"><h4>Markdown answers</h4><p>Responses are rendered as Markdown (lists, tables, emphasis, code) and sanitised before display.</p></div>
+          <div class="card"><h4>Stays out of the way</h4><p>Collapsed by default, expandable to a large panel, <kbd>Enter</kbd> sends, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a line. It is not loaded in headless export mode.</p></div>
+        </div>
+        <h3 id="chartbot-config">Enabling it</h3>
+        <p>ChartBot appears as soon as both variables are set. UDAV proxies the requests server-side (the token never reaches the browser) to an <a href="https://github.com/open-webui/open-webui" target="_blank" rel="noopener">Open WebUI</a>-style API: <code>GET {LLM_BASE_URL}/api/models</code> and <code>POST {LLM_BASE_URL}/api/chat/completions</code> with a bearer token.</p>
+<pre data-title=".env"><code class="language-ini">LLM_BASE_URL=https://llm.example.org
+LLM_API_TOKEN=sk-…</code></pre>
+        <p class="small muted">The whole conversation, including the system instruction and any attached chart images, is sent to that server with every message — choose an endpoint you trust with your data.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="duui-importer">
+        <h2 data-toc="DUUI importer">Importing corpora: the DUUI importer</h2>
+        <p>Annotated corpora enter UDAV as UIMA CAS files — XMI or gzip-compressed XMI as written by a <a href="https://github.com/texttechnologylab/DockerUnifiedUIMAInterface" target="_blank" rel="noopener">DUUI</a> pipeline (or any DKPro/UIMA <code>XmiWriter</code>). The importer runs at start-up when enabled and processes every matching file of the input folder.</p>
+        <h3 id="duui-quickstart">Quick start</h3>
+        <ol class="steps">
+          <li><strong>Point the importer at your files.</strong> <code>DUUI_IMPORTER_PATH</code> is a path on the host, absolute or relative to the repository (default: the empty <code>data/input</code> folder); Docker Compose mounts it into the container.
+<pre data-title=".env"><code class="language-ini">DUUI_IMPORTER_PATH=/data/my-corpus/xmi-files</code></pre></li>
+          <li><strong>Set the file extension</strong> — <code>.xmi</code> for uncompressed, <code>.gz</code> for gzip-compressed files.
+<pre data-title=".env"><code class="language-ini">DUUI_IMPORTER_FILE_ENDING=.gz</code></pre></li>
+          <li><strong>Type system.</strong> Running from source, the bundled <code>PlenumTypeSystem.xml</code> is used by default; set <code>DUUI_IMPORTER_TYPE_SYSTEM_PATH</code> to your own TypeSystem XML <em>file</em>, or leave it empty to auto-detect the type system from the XMI files. In Docker the variable names the host path that is mounted into the container; point it at your type-system file (the compose default mounts the empty <code>data/types</code> folder).</li>
+          <li><strong>Enable and start.</strong>
+<pre data-title=".env + terminal"><code class="language-bash">DUUI_IMPORTER=true
+docker compose up -d
+docker compose logs -f udav    # import progress</code></pre></li>
+        </ol>
+        <h3 id="duui-pipeline">What the importer does</h3>
+        <ol>
+          <li><code>DUUIFileReaderLazy</code> reads documents in batches (<code>DUUI_IMPORTER_READER_BATCH_SIZE</code>).</li>
+          <li><code>RemoveMetaInformation</code> drops annotator meta-data (<code>AnnotatorMetaData</code>, <code>SpacyAnnotatorMetaData</code>) that would otherwise become tables.</li>
+          <li>Optionally an <code>XmiWriter</code> stage writes each processed CAS back to disk for debugging.</li>
+          <li>A single-threaded <em>schema-preparation</em> writer creates all tables and columns for the type system (DDL is not safe from parallel workers).</li>
+          <li><code>DUUI_IMPORTER_DB_WORKERS</code> parallel <code>JooqDatabaseWriter</code>s stream annotations with PostgreSQL <code>COPY</code>, flushing every <code>DB_BATCH_SIZE</code> rows or 16 MB.</li>
+          <li>After the run, secondary indexes are built in bulk and row counts per type are updated.</li>
+        </ol>
+        <p><strong>Database layout.</strong> <code>documents</code> (id, URI, language, content hash, pipeline hash), <code>sofas</code> (the document texts), <code>uima_type_registry</code> (type URI → table name, super-type, row count) and one table per annotation type whose name is an 8-character hash of the type URI; feature columns are named <code>&lt;table&gt;_f_&lt;feature&gt;_&lt;hash&gt;</code>. The <strong>pipeline hash</strong> — a SHA-256 over writer version, file ending, type system path, debug and covered-text flags and <code>DUUI_IMPORTER_PIPELINE_HASH_EXTRA</code> — is stored per document; documents whose hash changed are re-imported on the next run, so changing the extra value forces a full re-import.</p>
+        <h3 id="duui-reference">Configuration reference</h3>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Variable</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>DUUI_IMPORTER</code></td><td>boolean</td><td><code>false</code></td><td>Enable the importer on start-up. Off: no overhead at all.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_PATH</code></td><td>path</td><td><code>src/main/resources/input</code> (source) · <code>./data/input</code> mounted to <code>/app/data/input</code> (Docker)</td><td>Folder with the XMI/GZ files.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_FILE_ENDING</code></td><td><code>.xmi</code> | <code>.gz</code></td><td><code>.xmi</code></td><td>Extension used to discover input files.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_TYPE_SYSTEM_PATH</code></td><td>path</td><td><code>src/main/resources/types/PlenumTypeSystem.xml</code> (source) · <code>/app/data/types</code> (Docker mount)</td><td>External TypeSystem XML file. Empty = auto-detect from the XMI files. Start-up fails with an explicit error when the path does not name an existing file.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_WORKERS</code></td><td>integer</td><td><code>4</code></td><td>Parallel UIMA workers; rule of thumb one per core.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_CAS_POOL_SIZE</code></td><td>integer</td><td><code>workers × 2</code></td><td>CAS objects in flight; more pool, more heap.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_READER_BATCH_SIZE</code></td><td>integer</td><td><code>10</code></td><td>Documents read per batch.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_DB_WORKERS</code></td><td>integer</td><td><code>1</code></td><td>Parallel COPY writers, each with its own connection.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_PREPARE_DB_SCHEMA</code></td><td>boolean</td><td><code>true</code></td><td>Run the DDL stage before the parallel writers; <code>false</code> only when the schema already exists completely.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_STORE_COVERED_TEXT</code></td><td>boolean</td><td><code>false</code></td><td>Also store each annotation's covered text (part of the pipeline hash).</td></tr>
+            <tr><td><code>DUUI_IMPORTER_SKIP_VERIFICATION</code></td><td>boolean</td><td><code>false</code></td><td>Skip DUUI's component readiness checks.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_DEBUG_XMI</code></td><td>boolean</td><td><code>false</code></td><td>Write every processed CAS as gzip XMI to <code>DUUI_IMPORTER_DEBUG_XMI_PATH</code> (default <code>/tmp/export</code>). Debugging only.</td></tr>
+            <tr><td><code>DUUI_IMPORTER_PIPELINE_HASH_EXTRA</code></td><td>string</td><td><em>empty</em></td><td>Extra value in the pipeline hash; change it to force a re-import.</td></tr>
+            <tr><td><code>DB_BATCH_SIZE</code></td><td>integer</td><td><code>3000</code> (<code>5000</code> Docker)</td><td>Rows per COPY buffer; 1 000–15 000 is a sensible range.</td></tr>
+            <tr><td><code>DB_MAX_IDENT</code></td><td>integer</td><td><code>255</code> (capped at 63 for PostgreSQL)</td><td>Maximum length of generated identifiers.</td></tr>
+            <tr><td><code>DB_SCHEMA</code></td><td>string</td><td><code>public</code></td><td>Schema for the app tables; the UIMA tables always live in <code>public</code>.</td></tr>
+            <tr><td><code>DB_DIALECT</code></td><td>string</td><td><code>POSTGRES</code></td><td>Only PostgreSQL is supported by the writer.</td></tr>
+          </tbody>
+        </table></div>
+        <details class="ref"><summary>Example: high-throughput import of a gzip corpus</summary><div class="ref-body">
+<pre data-title=".env"><code class="language-ini">DUUI_IMPORTER=true
+DUUI_IMPORTER_PATH=/data/my-corpus/gz
+DUUI_IMPORTER_FILE_ENDING=.gz
+DUUI_IMPORTER_TYPE_SYSTEM_PATH=/data/my-corpus/TypeSystem.xml
+DUUI_IMPORTER_WORKERS=8
+DUUI_IMPORTER_CAS_POOL_SIZE=16
+DUUI_IMPORTER_READER_BATCH_SIZE=20
+DUUI_IMPORTER_DB_WORKERS=2
+DB_BATCH_SIZE=10000
+
+JAVA_OPTS=-Xmx20G -Xms2G
+PG_SHARED_BUFFERS=8GB
+PG_MAINTENANCE_WORK_MEM=2GB
+PG_EFFECTIVE_CACHE_SIZE=24GB
+PG_MAX_WAL_SIZE=8GB</code></pre>
+        </div></details>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="configuration">
+        <h2 data-toc="Configuration reference">Configuration reference</h2>
+        <p>All settings are environment variables, read from <code>.env</code> (Spring imports it as a properties file) or from the Docker environment. Variables of the <a href="#batch-config">batch export</a> and the <a href="#duui-reference">DUUI importer</a> are listed in their sections.</p>
+        <div class="table-wrap compact"><table>
+          <thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>DB_URL</code></td><td><code>jdbc:postgresql://localhost:5432/postgres</code> (<code>…//postgres:5432/udav</code> in Docker)</td><td>JDBC URL of the database.</td></tr>
+            <tr><td><code>DB_USER</code> / <code>DB_PASS</code></td><td><code>postgres</code> / <code>postgres</code></td><td>Credentials; also used to initialise the Docker database (<code>POSTGRES_DB</code> names it).</td></tr>
+            <tr><td><code>DB_SCHEMA</code></td><td><code>public</code></td><td>Schema of the app tables (<code>pipeline</code>, <code>json_data</code>); set as the connection's <code>search_path</code>.</td></tr>
+            <tr><td><code>PIPELINE_IMPORTER</code></td><td><code>true</code></td><td>Import pipeline definitions at start-up.</td></tr>
+            <tr><td><code>PIPELINE_IMPORTER_FOLDER</code></td><td><code>src/main/resources/pipelines</code> · <code>/app/pipelines</code></td><td>Folder with <code>*.json</code> pipelines.</td></tr>
+            <tr><td><code>PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT</code></td><td><code>false</code></td><td>Update a stored pipeline when the file changed (else duplicates of an existing id are stored under <code>id-2</code>, <code>id-3</code>, …; duplicate names are skipped).</td></tr>
+            <tr><td><code>JSON_IMPORTER</code></td><td><code>true</code></td><td>Import JSON/XML sources at start-up.</td></tr>
+            <tr><td><code>JSON_IMPORTER_FOLDER</code></td><td><code>src/main/resources/sourcefilesJSON</code> · <code>/app/sourcefilesJSON</code></td><td>Folder with the source files.</td></tr>
+            <tr><td><code>JSON_IMPORTER_REPLACE_IF_DIFFERENT</code></td><td><code>false</code></td><td>Update a stored source when the file changed.</td></tr>
+            <tr><td><code>LLM_BASE_URL</code> / <code>LLM_API_TOKEN</code></td><td><em>empty</em></td><td>Enable <a href="#chartbot">ChartBot</a>.</td></tr>
+            <tr><td><code>JAVA_OPTS</code></td><td><code>-Xmx4G -Xms1024m</code> (compose)</td><td>JVM options; raise the heap for large imports.</td></tr>
+            <tr><td><code>PG_SHARED_BUFFERS</code>, <code>PG_MAINTENANCE_WORK_MEM</code>, <code>PG_EFFECTIVE_CACHE_SIZE</code>, <code>PG_MAX_WAL_SIZE</code></td><td><code>1GB</code>, <code>256MB</code>, <code>4GB</code>, <code>2GB</code></td><td>PostgreSQL memory settings of the Docker service.</td></tr>
+            <tr><td><code>server.port</code></td><td><code>8080</code></td><td>Any Spring property can be put into <code>.env</code>; remember <code>UDAV_BASE_URL</code> for the batch API when changing the port.</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small muted">Health probes for orchestration are exposed at <code>/actuator/health</code>, <code>/actuator/health/liveness</code> and <code>/actuator/health/readiness</code>; <code>/actuator/info</code> reports the git commit.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="api">
+        <h2 data-toc="REST API">REST API reference</h2>
+        <p>The frontend is a plain client of this API, so everything the UI does can be scripted. Errors are returned as <code>{ "timestamp", "status", "error", "message" }</code>.</p>
+        <h3 id="api-pages">Pages</h3>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/</div><div class="desc">Start page: pipeline list, create, upload.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/view/{id}?export=1</div><div class="desc">Pipeline view; <code>export=1</code> is the headless mode used by the batch API.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/editor · /editor/{id}</div><div class="desc">Editor for a new or an existing pipeline.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/editor</div><div class="desc">Multipart <code>file</code>: opens the editor with an uploaded pipeline JSON (a fresh id is assigned).</div></div>
+        </div>
+        <h3 id="api-pipelines">Pipelines</h3>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/pipelines?page&amp;size&amp;q</div><div class="desc">Summaries <code>[{ id, name }]</code>, searchable by id or name.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/pipelines/{id}?pretty</div><div class="desc">The normalised pipeline JSON.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/pipelines</div><div class="desc">Create from a pipeline JSON; builds the generator data. 409 when the id exists.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method put">PUT</span>/api/pipelines</div><div class="desc">Replace an existing pipeline (by the id in the body) and rebuild.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method delete">DELETE</span>/api/pipelines/{id}</div><div class="desc">Delete the pipeline and drop its schema.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/source-build?pipeline=</div><div class="desc">Rebuild a pipeline's generator data.</div></div>
+        </div>
+        <h3 id="api-data">Data</h3>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/data?pipelineId&amp;generatorId&amp;chartType&amp;page&amp;size&amp;includeIds&amp;pretty</div><div class="desc">The dataset of a widget type over a generator (or group template). Body <code>{ "corpus": { "files": [...] }, "chart": { … } }</code>. Response <code>{ "meta": { total, pageSize, page, ids }, "data": [...] }</code>.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/data/export?pipelineId&amp;generatorId&amp;chartType&amp;format</div><div class="desc">ZIP with the datasets of every member of a group as <code>json</code>, <code>csv</code> or <code>tex</code> (tex only for widgets with a native representation).</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/data?id&amp;pipelineId&amp;…</div><div class="desc">Legacy query-parameter variant addressing a widget by index.</div></div>
+        </div>
+        <p class="small muted">Chart filters by widget: <code>sort</code>, <code>desc</code>, <code>min</code>, <code>max</code>, <code>limit</code> (Bar Chart, Pie Chart, Table); <code>hide</code> (Line Chart, Highlight Text); <code>types</code>, <code>categories</code>, <code>styles</code> (Highlight Text); <code>type</code> (type-specific colours) and <code>valueMode</code> (category numbers).</p>
+        <h3 id="api-batch">Batch export &amp; conversions</h3>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/batch/export/{format}</div><div class="desc">Headless export of one widget. See <a href="#batch-export">batch export</a>.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/batch/export/pipeline/{format}</div><div class="desc">Headless export of a pipeline (JSON body).</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/batch/export/pipeline/{pipelineId}/{format}?bulk</div><div class="desc">Headless export of a pipeline (path parameters).</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/convertions/tikz</div><div class="desc"><code>{ type, svg, data, meta }</code> → <code>{ content }</code>: native TeX of the widget or VecTikZ of the SVG.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/convertions/csv</div><div class="desc"><code>{ type, data, meta }</code> → <code>{ content }</code>.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/convertions/zip</div><div class="desc">Multipart <code>files</code> → <code>archive.zip</code>.</div></div>
+        </div>
+        <h3 id="api-misc">Corpus, editor helpers, chat</h3>
+        <div class="endpoint-list">
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/annotations?q&amp;page&amp;size</div><div class="desc">Available sources: UIMA types with row counts plus imported JSON/XML files (<code>rowCount: -1</code>).</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/files/documents?q&amp;page&amp;size</div><div class="desc">Document ids of the imported corpus (used by the corpus filter and the TextFormatting form).</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/api/chat/models</div><div class="desc">Models of the configured LLM server.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method post">POST</span>/api/chat/completions</div><div class="desc"><code>{ model, messages }</code>, proxied to the LLM server.</div></div>
+          <div class="endpoint-row"><div class="endpoint"><span class="method get">GET</span>/actuator/health · /actuator/info</div><div class="desc">Liveness/readiness probes and the running commit.</div></div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="development">
+        <h2 data-toc="Developer guide">Developer guide</h2>
+        <h3 id="dev-structure">Project structure</h3>
+        <div class="two-col">
+          <div>
+            <h4>Backend (<code>org.texttechnologylab.udav</code>)</h4>
+            <div class="dl">
+              <dt>api</dt><dd>REST controllers, services, repositories; <code>browser</code> and <code>export</code> (batch export), <code>charts</code> (ChartHandler registry, value transforms).</dd>
+              <dt>generators</dt><dd><code>Generator</code> base class, the three generators, <code>sources</code> (UIMA, JSON, grouped, derived), <code>settings</code> (merging grammar), shared colour palettes.</dd>
+              <dt>pipeline</dt><dd><code>Pipeline</code>: parses definitions, expands groups, wires sources and generators.</dd>
+              <dt>importer</dt><dd>DUUI importer and <code>JooqDatabaseWriter</code>, JSON and pipeline importers, schema scanner.</dd>
+              <dt>widgets</dt><dd>Server-side handler per widget type, <code>svgtolatex</code> (VecTikZ), <code>jsontocsv</code>.</dd>
+              <dt>sources · db · database</dt><dd>Schema build and swap, table/column naming, type-table resolution.</dd>
+            </div>
+          </div>
+          <div>
+            <h4>Frontend (<code>src/main/resources</code>)</h4>
+<pre data-title="folder structure"><code class="language-plaintext">static/
+├─ css/  pages/ · shared/ · variables.css
+├─ data/ sample datasets per widget, world.geojson
+├─ js/
+│  ├─ api/      HTTP clients per endpoint group
+│  ├─ pages/
+│  │  ├─ editor/  configs/ (generator forms) · controller/ · utils/ · Editor.js
+│  │  ├─ index/   Menu.js
+│  │  └─ view/    filter/ · toolbar/ · utils/ · View.js
+│  ├─ shared/   classes/ (ChatBot, FormBuilder, Modal, WidgetPagination …)
+│  │            modules/ (inputFactories, clustering, convert …)
+│  └─ widgets/  charts/ · static/ · D3Visualization.js · WidgetInterface.js · widgets.js
+└─ packages/    vendored bootstrap, d3, gridstack, floating-ui, marked, dompurify
+templates/      FreeMarker: pages/{index,view,editor} · shared/ · error/</code></pre>
+          </div>
+        </div>
+        <p>Global colours and spacing live in <code>variables.css</code>; the app's primary colour is <code>--primary: #00618f</code>.</p>
+        <h3 id="dev-widget">Adding a widget</h3>
+        <ol class="steps">
+          <li><strong>Frontend class</strong> in <code>js/widgets/charts/</code>. Extend <code>D3Visualization</code> if the widget draws an SVG (it provides the SVG, resizing, tooltips, axes, zoom and the multi-page export), otherwise <code>WidgetInterface</code>. Declare <code>defaultConfig</code> (type must equal the class name, plus title, generator, options, icon, w, h) and <code>formConfig</code> (property paths → input type, label, options), implement <code>init()</code> and <code>render(data)</code>:
+<pre data-title="js/widgets/charts/NewChart.js"><code class="language-javascript">import D3Visualization from "../D3Visualization.js";
+import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
+
+export default class NewChart extends D3Visualization {
+  static defaultConfig = {
+    type: "NewChart", title: "New Chart", generator: { id: "" },
+    options: { smooth: true }, icon: "bi bi-graph-up", w: 8, h: 6,
+  };
+  static formConfig = {
+    title: { type: "text", label: "Title" },
+    "generator.id": { type: "select", label: "Generator",
+      options: () => getGeneratorOptions(["CategoryNumber"]) },
+    "options.smooth": { type: "switch", label: "Smooth" },
+  };
+
+  constructor(root, config) {
+    super(root, config, { top: 20, right: 20, bottom: 40, left: 40 });
+    this.smooth = config.options.smooth ?? true;
+  }
+
+  async init() {
+    const { data, meta } = await this.fetch();   // page 0 of the generator (group)
+    this.render(data[0]);
+    this.exports.init(meta.total &gt; 1);           // "export all" when there are pages
+    this.pagination.init(meta.ids);              // pager when there are pages
+    this.filter = { limit: 100 };                // sent as the "chart" filter
+    this.controls.append([{ type: "number", label: "Limit", value: 100,
+      options: { min: 1, max: 1000 },
+      onchange: (e) =&gt; { this.filter.limit = e.target.value; this.rerender(true); } }]);
+  }
+
+  render(data) {
+    this.clear();                                // fresh this.plotArea
+    // draw into this.plotArea with d3, this.width / this.height are the inner size
+    this.enableTooltip("rect", (d) =&gt; `&lt;strong&gt;${d.label}&lt;/strong&gt; ${d.value}`);
+    this.data = data;
+  }
+}</code></pre></li>
+          <li><strong>Register it</strong> in <code>js/widgets/widgets.js</code>; it now appears in the editor's widget list.</li>
+          <li><strong>Server-side handler.</strong> Add a Spring bean named like the type that extends <code>Widget</code> and implements <code>render(generatorId, filters, files, valueMode, schema)</code> using <code>GeneratorDataRepository</code>; the bean name is the lookup key of <code>ChartRegistry</code>. Override <code>toTex</code> / <code>toCsv</code> for native conversions.
+<pre data-title="widgets/NewChart.java"><code class="language-java">@Component("NewChart")
+public class NewChart extends Widget {
+    public NewChart(GeneratorDataRepository repo, ObjectMapper mapper) { super(repo, mapper); }
+
+    @Override
+    public JsonNode render(String generatorId, Map&lt;String, String&gt; filters,
+                           Set&lt;String&gt; files, ValueMode valueMode, String schema) {
+        var data = repo.loadCategoryNumber(schema, generatorId, files, null);
+        var values = ValueTransforms.apply(data.values(), valueMode, null, files);
+        ArrayNode out = mapper.createArrayNode();
+        values.forEach((label, value) -&gt; out.addObject().put("label", label).put("value", value)
+                .put("color", data.colors().get(label)));
+        return out;
+    }
+}</code></pre></li>
+          <li>Optionally add a sample dataset <code>static/data/NewChart.json</code>; the frontend falls back to it when a generator has no data yet (e.g. in the editor before the first build).</li>
+        </ol>
+        <h3 id="dev-generator">Adding a generator</h3>
+        <ol class="steps">
+          <li><strong>Java class</strong> in <code>org.texttechnologylab.udav.generators</code> extending <code>Generator</code> (or <code>GeneratorUIMA</code> for feature-column resolution), with the five-argument constructor. Aggregate in <code>setup_step1/2/3()</code> — read from <code>source</code> (a <code>SourceUIMA</code>, <code>SourceJson</code> or <code>SourceDerived</code>) and the merged <code>settings</code> — and persist in <code>writeToDB()</code> into tables of the pipeline schema (<code>dbAccess.getSchema()</code>). Declare shared properties (<code>preSetup_getAllCommonPropertyClasses</code>) to share e.g. a colour palette with sibling generators.</li>
+          <li><strong>Editor config</strong> in <code>js/pages/editor/configs/</code>: a class with <code>token</code> (the two-letter badge), <code>description</code> (shown in the <kbd>?</kbd> popover), <code>defaultConfig</code> and <code>formConfig</code>; register it in <code>configs.js</code>.</li>
+          <li><strong>Widgets</strong> that read the new tables (a handler per widget type, see above) and, if the generator should read JSON sources, use <code>JsonSourceSupport</code> for the key-mapping grammar and <code>SourceJsonN</code> support comes for free.</li>
+        </ol>
+        <h3 id="dev-tests">Tests and tooling</h3>
+        <ul>
+          <li><code>mvn test</code> runs the unit tests (converter, pooling, JSON-backed generators, importer, evaluation report parsing).</li>
+          <li>Tests tagged <code>browser</code> launch Playwright's Chromium (downloaded on first run) and are opt-in: <code>mvn test -Pbrowser-tests</code>.</li>
+          <li><code>tools/run-evaluation.sh</code> runs the batch export evaluation; <code>tools/make_eval_pipelines.py</code> regenerates its pipelines; <code>tools/docker-compose.evaluation.yml</code> overlays the stack with measurements on and ports 18080/15432.</li>
+          <li>The Docker image is a multi-stage build (<code>eclipse-temurin:21</code>, Alpine, Chromium + Node.js for the Playwright driver); the JAR is <code>target/UDAV-1.0.jar</code>.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="screenshots">
+        <h2 data-toc="Screenshots">Screenshots</h2>
+        <figure class="shot"><img src="img/menu.png" alt="Start page with the pipeline list and the JSON upload area"><figcaption>The start page: select, edit, download or delete a pipeline, create a new one, or start from an uploaded JSON configuration.</figcaption></figure>
+        <figure class="shot"><img src="img/example3.png" alt="View with a bar chart, a highlight text combining POS and named entities, and a pie chart with open controls"><figcaption>Part-of-speech and named-entity annotations: static title and captions, a bar chart, one highlight text overlaying both annotation layers (a derived TextFormatting generator), and a bar chart with its controls panel open.</figcaption></figure>
+        <figure class="shot"><img src="img/example2.png" alt="Voronoi diagram, medial axis and boundary approximation widgets"><figcaption>Geometry widgets over JSON sources: Voronoi diagram, medial axis and boundary approximation with method-specific controls.</figcaption></figure>
+        <figure class="shot"><img src="img/example1.png" alt="Highlight text and doughnut chart sharing one colour palette"><figcaption>A highlight text and a doughnut chart built from the same source share their category colours.</figcaption></figure>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="paper">
+        <h2 data-toc="Paper &amp; citation">Paper and citation</h2>
+        <p>Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. <em>Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer.</em> In <em>Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)</em>, pages 6695–6705, Palma, Mallorca, Spain. European Language Resources Association (ELRA).</p>
+        <div class="badge-row">
+          <a class="btn" href="https://doi.org/10.63317/5ce2aaity4yz" target="_blank" rel="noopener">DOI 10.63317/5ce2aaity4yz</a>
+          <a class="btn" href="http://www.lrec-conf.org/proceedings/lrec2026/pdf/2026.lrec2026-1.533.pdf" target="_blank" rel="noopener">PDF</a>
+        </div>
+<pre data-title="BibTeX"><code class="language-latex">@inproceedings{Dahmann:et:al:2026,
+  title     = {Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer},
+  booktitle = {Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)},
+  year      = {2026},
+  pages     = {6695--6705},
+  author    = {Dahmann, Thiemo and Schneider, Julian and Stephan, Philipp and Abrami, Giuseppe and Mehler, Alexander},
+  address   = {Palma, Mallorca, Spain},
+  publisher = {European Language Resources Association (ELRA)},
+  editor    = {Piperidis, Stelios and Bel, N{\'u}ria and van den Heuvel, Henk and Ide, Nancy and Krek, Simon and Toral, Antonio},
+  doi       = {10.63317/5ce2aaity4yz},
+  keywords  = {NLP, UIMA, Annotations, dynamic visualization, uce},
+  pdf       = {http://www.lrec-conf.org/proceedings/lrec2026/pdf/2026.lrec2026-1.533.pdf}
+}</code></pre>
+        <p class="small muted">Abstract: The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields and is supported by a variety of existing software solutions. Despite this variety, few solutions currently support annotation visualization, especially for dynamic generation and interaction. To bridge this gap and visualize annotated corpora based on user-, project-, or corpus-specific aspects, we developed Unified Dynamic Annotation Visualizer (UDAV). UDAV is a web-based solution that implements features not supported by comparable tools, enabling a customizable and extensible toolbox for interacting with annotations and allowing integration into existing big-data frameworks. We exemplify UDAV through a range of visualizations and also provide an evaluation of corpus import and processing performance.</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <section class="doc-section" id="about">
+        <h2 data-toc="Authors &amp; license">Authors and license</h2>
+        <div class="authors">
+          <div class="author"><span class="av">TD</span><div><div class="nm">Thiemo Dahmann</div></div><div class="links"><a href="https://github.com/LociStar" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a></div></div>
+          <div class="author"><span class="av">JS</span><div><div class="nm">Julian Schneider</div></div><div class="links"><a href="https://github.com/Julian99S" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a><a href="https://www.researchgate.net/profile/Julian-Schneider-28" target="_blank" rel="noopener" title="ResearchGate"><svg viewBox="0 0 24 24"><path d="M19.6 2H4.4A2.4 2.4 0 0 0 2 4.4v15.2A2.4 2.4 0 0 0 4.4 22h15.2a2.4 2.4 0 0 0 2.4-2.4V4.4A2.4 2.4 0 0 0 19.6 2zM9.9 17.2c-.3 0-.6-.1-.9-.4l-2.3-3H5.9v3.2H4.5V8.4h2.9c1.9 0 3.2 1 3.2 2.7 0 1.2-.7 2.1-1.8 2.5l2.1 2.7c.2.3.1.6-.1.8-.3.1-.6.1-.9.1zM6 9.7v2.9h1.3c1 0 1.7-.5 1.7-1.5 0-.9-.6-1.4-1.7-1.4H6zm12.6 1.9c0 1-.5 1.6-1.5 1.6h-1.3v-1h1.1c.4 0 .5-.2.5-.6 0-.4-.2-.6-.6-.6H15v3.5c0 .5.3.8.8.8.6 0 .9-.3.9-.8h1.3c0 1.2-.8 2-2.2 2s-2.2-.8-2.2-2V7.4h1.4v1.5h1.7c1.4 0 1.9 1 1.9 2.7z"/></svg></a></div></div>
+          <div class="author"><span class="av">PS</span><div><div class="nm">Philipp Stephan</div></div><div class="links"><a href="https://github.com/phpp28" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a><a href="https://www.researchgate.net/profile/Philipp-Stephan-4" target="_blank" rel="noopener" title="ResearchGate"><svg viewBox="0 0 24 24"><path d="M19.6 2H4.4A2.4 2.4 0 0 0 2 4.4v15.2A2.4 2.4 0 0 0 4.4 22h15.2a2.4 2.4 0 0 0 2.4-2.4V4.4A2.4 2.4 0 0 0 19.6 2zM9.9 17.2c-.3 0-.6-.1-.9-.4l-2.3-3H5.9v3.2H4.5V8.4h2.9c1.9 0 3.2 1 3.2 2.7 0 1.2-.7 2.1-1.8 2.5l2.1 2.7c.2.3.1.6-.1.8-.3.1-.6.1-.9.1zM6 9.7v2.9h1.3c1 0 1.7-.5 1.7-1.5 0-.9-.6-1.4-1.7-1.4H6zm12.6 1.9c0 1-.5 1.6-1.5 1.6h-1.3v-1h1.1c.4 0 .5-.2.5-.6 0-.4-.2-.6-.6-.6H15v3.5c0 .5.3.8.8.8.6 0 .9-.3.9-.8h1.3c0 1.2-.8 2-2.2 2s-2.2-.8-2.2-2V7.4h1.4v1.5h1.7c1.4 0 1.9 1 1.9 2.7z"/></svg></a></div></div>
+          <div class="author"><span class="av">GA</span><div><div class="nm">Giuseppe Abrami</div><div class="rl">Supervision</div></div><div class="links"><a href="https://github.com/abrami" target="_blank" rel="noopener" title="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.17c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a><a href="https://www.researchgate.net/profile/Giuseppe-Abrami" target="_blank" rel="noopener" title="ResearchGate"><svg viewBox="0 0 24 24"><path d="M19.6 2H4.4A2.4 2.4 0 0 0 2 4.4v15.2A2.4 2.4 0 0 0 4.4 22h15.2a2.4 2.4 0 0 0 2.4-2.4V4.4A2.4 2.4 0 0 0 19.6 2zM9.9 17.2c-.3 0-.6-.1-.9-.4l-2.3-3H5.9v3.2H4.5V8.4h2.9c1.9 0 3.2 1 3.2 2.7 0 1.2-.7 2.1-1.8 2.5l2.1 2.7c.2.3.1.6-.1.8-.3.1-.6.1-.9.1zM6 9.7v2.9h1.3c1 0 1.7-.5 1.7-1.5 0-.9-.6-1.4-1.7-1.4H6zm12.6 1.9c0 1-.5 1.6-1.5 1.6h-1.3v-1h1.1c.4 0 .5-.2.5-.6 0-.4-.2-.6-.6-.6H15v3.5c0 .5.3.8.8.8.6 0 .9-.3.9-.8h1.3c0 1.2-.8 2-2.2 2s-2.2-.8-2.2-2V7.4h1.4v1.5h1.7c1.4 0 1.9 1 1.9 2.7z"/></svg></a></div></div>
+          <div class="author"><span class="av">AM</span><div><div class="nm">Prof. Dr. Alexander Mehler</div><div class="rl">Supervision</div></div><div class="links"><a href="https://www.researchgate.net/profile/Alexander-Mehler-2" target="_blank" rel="noopener" title="ResearchGate"><svg viewBox="0 0 24 24"><path d="M19.6 2H4.4A2.4 2.4 0 0 0 2 4.4v15.2A2.4 2.4 0 0 0 4.4 22h15.2a2.4 2.4 0 0 0 2.4-2.4V4.4A2.4 2.4 0 0 0 19.6 2zM9.9 17.2c-.3 0-.6-.1-.9-.4l-2.3-3H5.9v3.2H4.5V8.4h2.9c1.9 0 3.2 1 3.2 2.7 0 1.2-.7 2.1-1.8 2.5l2.1 2.7c.2.3.1.6-.1.8-.3.1-.6.1-.9.1zM6 9.7v2.9h1.3c1 0 1.7-.5 1.7-1.5 0-.9-.6-1.4-1.7-1.4H6zm12.6 1.9c0 1-.5 1.6-1.5 1.6h-1.3v-1h1.1c.4 0 .5-.2.5-.6 0-.4-.2-.6-.6-.6H15v3.5c0 .5.3.8.8.8.6 0 .9-.3.9-.8h1.3c0 1.2-.8 2-2.2 2s-2.2-.8-2.2-2V7.4h1.4v1.5h1.7c1.4 0 1.9 1 1.9 2.7z"/></svg></a></div></div>
+        </div>
+        <p>UDAV is developed at the <a href="https://www.texttechnologylab.org/" target="_blank" rel="noopener">Text Technology Lab</a>, Goethe University Frankfurt, and published under the <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0 license</a>. Issues and pull requests are welcome on <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer" target="_blank" rel="noopener">GitHub</a>.</p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>© Text Technology Lab · UDAV is free software under AGPL-3.0.</span>
+    <span><a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer" target="_blank" rel="noopener">Source</a> · <a href="https://demo.udav.texttechnologylab.org/" target="_blank" rel="noopener">Demo</a> · <a href="https://vectikz.lovable.app/" target="_blank" rel="noopener">VecTikZ</a> · <a href="#paper">Paper</a></span>
+  </footer>
+</div>
+
+<button id="back-top" class="back-top" type="button" aria-label="Back to top"><svg viewBox="0 0 24 24"><path d="M12 5l7 7-1.41 1.41L13 8.83V19h-2V8.83l-4.59 4.58L5 12l7-7z"/></svg></button>
+<div id="lightbox" class="lightbox"><img src="" alt=""></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/latex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ini.min.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>
