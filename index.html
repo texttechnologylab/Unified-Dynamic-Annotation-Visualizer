@@ -232,8 +232,9 @@
             <text class="s" x="640" y="562" text-anchor="middle">curl → ZIP of svg · png · tex · csv · json</text>
             <text class="s" x="640" y="578" text-anchor="middle">evaluation harness</text>
             <rect class="box" x="780" y="520" width="140" height="68" rx="8"/>
-            <text class="t" x="850" y="548" text-anchor="middle">LLM server</text>
-            <text class="s" x="850" y="566" text-anchor="middle">Open WebUI API</text>
+            <text class="t" x="850" y="544" text-anchor="middle">LLM server</text>
+            <text class="s" x="850" y="562" text-anchor="middle">external service</text>
+            <text class="s" x="850" y="578" text-anchor="middle">Open WebUI API</text>
             <!-- arrows: inputs -> importers -->
             <path class="arrow" d="M225,84 L225,106"/>
             <path class="arrow" d="M495,84 L495,106"/>
@@ -241,22 +242,23 @@
             <!-- importers -> storage -->
             <path class="arrow" d="M225,160 L225,218"/>
             <path class="arrow" d="M495,160 L495,218"/>
-            <path class="arrow" d="M780,160 L780,218"/>
+            <path class="arrow" d="M780,160 L780,176 L575,176 L575,218"/>
             <!-- storage -> build -->
-            <path class="arrow" d="M237,306 L237,364 L238,364"/>
+            <path class="arrow" d="M270,306 L270,334"/>
             <path class="arrow" d="M497,306 L497,334"/>
             <path class="arrow brand" d="M700,364 L775,364 L775,308"/>
             <!-- pipeline schema -> data api -->
-            <path class="arrow brand" d="M910,263 L925,263 L925,455 L757,455 L757,424"/>
-            <path class="arrow" d="M207,394 L207,424"/>
+            <path class="arrow brand" d="M870,306 L870,409 L207,409 L207,424"/>
+            <text class="lbl" x="858" y="422" text-anchor="end">reads the pipeline's generator data</text>
             <!-- api <-> clients -->
             <path class="arrow" d="M207,484 L207,518"/>
-            <path class="arrow dashed" d="M445,484 L445,518"/>
-            <path class="arrow" d="M640,484 L640,518"/>
-            <path class="arrow" d="M845,484 L850,518"/>
-            <text class="lbl" x="452" y="504">opens /view/{id}?export=1</text>
+            <path class="arrow dashed" d="M400,484 L400,518"/>
+            <path class="arrow" d="M540,484 L540,518"/>
+            <path class="arrow" d="M665,484 L665,518"/>
+            <path class="arrow" d="M845,484 L845,518"/>
+            <text class="lbl" x="393" y="504" text-anchor="end">opens /view/{id}?export=1</text>
           </svg>
-          <figcaption>Data flows top-down: corpora and files are imported once, each pipeline's generators are built into their own PostgreSQL schema, and the API serves that pre-aggregated data to the browser, to scripts (batch export) and to the LLM assistant.</figcaption>
+          <figcaption>Data flows top-down: corpora, files and pipeline definitions are imported once, each pipeline's generators are built into their own PostgreSQL schema, and the data API serves that pre-aggregated data to the browser and — through the batch export API — to scripts and CI. ChartBot is the only outbound call: <code>/api/chat</code> is proxied to an external LLM server.</figcaption>
         </figure>
         <h3 id="architecture-components">Components</h3>
         <div class="dl">
@@ -269,8 +271,8 @@
           <dt>Batch export</dt><dd>A pool of Playwright-driven headless Chromium sessions loads the view in export mode and runs the same export code the toolbar uses. <a href="#batch-export">Details</a>.</dd>
         </div>
         <figure class="shot">
-          <img src="img/architecture.png" alt="Architecture figure from the LREC 2026 paper" style="max-width:min(520px, 100%);display:block;margin:0 auto">
-          <figcaption>The component diagram from the paper: importer at the end of a DUUI pipeline, generators created by the SourceBuilder, and the controller/service layers behind editor, visualization and menu.</figcaption>
+          <img src="img/architecture.png" alt="UDAV component diagram: DUUI pipeline and importer, SourceBuilder and generators, controller and service layers" style="max-width:min(520px, 100%);display:block;margin:0 auto">
+          <figcaption>Component diagram: the importer at the end of a DUUI pipeline, the generators created by the SourceBuilder, and the controller and service layers behind editor, visualization and menu.</figcaption>
         </figure>
       </section>
 
@@ -1242,7 +1244,10 @@ public class NewChart extends Widget {
           <a class="btn" href="https://doi.org/10.63317/5ce2aaity4yz" target="_blank" rel="noopener">DOI 10.63317/5ce2aaity4yz</a>
           <a class="btn" href="http://www.lrec-conf.org/proceedings/lrec2026/pdf/2026.lrec2026-1.533.pdf" target="_blank" rel="noopener">PDF</a>
         </div>
-<pre data-title="BibTeX"><code class="language-latex">@inproceedings{Dahmann:et:al:2026,
+        <h3 id="abstract">Abstract</h3>
+        <p>The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields and is supported by a variety of existing software solutions. Despite this variety, few solutions currently support annotation visualization, especially for dynamic generation and interaction. To bridge this gap and visualize annotated corpora based on user-, project-, or corpus-specific aspects, we developed Unified Dynamic Annotation Visualizer (UDAV). UDAV is a web-based solution that implements features not supported by comparable tools, enabling a customizable and extensible toolbox for interacting with annotations and allowing integration into existing big-data frameworks. We exemplify UDAV through a range of visualizations and also provide an evaluation of corpus import and processing performance.</p>
+        <h3 id="bibtex">BibTeX</h3>
+<pre data-title="citation.bib"><code class="language-latex">@inproceedings{Dahmann:et:al:2026,
   title     = {Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer},
   booktitle = {Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)},
   year      = {2026},
@@ -1255,7 +1260,6 @@ public class NewChart extends Widget {
   keywords  = {NLP, UIMA, Annotations, dynamic visualization, uce},
   pdf       = {http://www.lrec-conf.org/proceedings/lrec2026/pdf/2026.lrec2026-1.533.pdf}
 }</code></pre>
-        <p class="small muted">Abstract: The automatic and manual annotation of unstructured corpora is a routine task in many scientific fields and is supported by a variety of existing software solutions. Despite this variety, few solutions currently support annotation visualization, especially for dynamic generation and interaction. To bridge this gap and visualize annotated corpora based on user-, project-, or corpus-specific aspects, we developed Unified Dynamic Annotation Visualizer (UDAV). UDAV is a web-based solution that implements features not supported by comparable tools, enabling a customizable and extensible toolbox for interacting with annotations and allowing integration into existing big-data frameworks. We exemplify UDAV through a range of visualizations and also provide an evaluation of corpus import and processing performance.</p>
       </section>
 
       <!-- ============================================================ -->
