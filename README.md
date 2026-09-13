@@ -16,11 +16,13 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 ## Features
 
-- Dynamic and interactive charts
-- Visual editor
-- Different export options: svg, png, tex, csv, json
-- Widget pagination
-- LLM ChatBot
+- Dynamic and interactive charts on a drag-and-drop grid, described by a JSON pipeline definition
+- Visual pipeline editor
+- Sources: UIMA annotation types imported with DUUI, or your own JSON/XML files
+- Generator groups: one widget page per top-level key of a JSON/XML file
+- Export options: svg, png, tex (through the VecTikZ SVG-to-TikZ converter), csv, json
+- Headless batch export API for single widgets and whole pipelines
+- ChartBot, an LLM assistant for the charts of a view
 
 ### Widgets
 
@@ -57,16 +59,21 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `UDAV_BASE_URL` | `http://localhost:8080` | Origin the headless browser uses to reach this application; change it together with `server.port`. |
 | `EXPORT_CONCURRENCY` | `4` | Widgets exported in parallel within one page. `1` restores sequential export. |
 | `EXPORT_POOL_MAX_SESSIONS` | `2` | Browsers kept alive for reuse (~150-300 MB RSS each). Created lazily. |
 | `EXPORT_POOL_MAX_WAITERS` | `8` | Requests allowed to queue before the API sheds load with `503`. |
+| `EXPORT_POOL_BORROW_TIMEOUT_MS` | `120000` | How long a request waits for a free browser session before failing. |
 | `EXPORT_POOL_IDLE_TIMEOUT_MS` | `300000` | Idle time after which a pooled browser is closed. `0` disables eviction. |
 | `EXPORT_WIDGET_TIMEOUT_MS` | `30000` | Safety net for a widget export that never settles. |
 | `EXPORT_READY_TIMEOUT_MS` | `30000` | How long to wait for the view to signal readiness. |
 | `EXPORT_VIEWPORT_WIDTH` / `EXPORT_VIEWPORT_HEIGHT` | `1600` / `1000` | Viewport used for rendering; affects exported artefact dimensions. |
 | `EXPORT_NO_SANDBOX` | `false` | Passes `--no-sandbox`. Often required in containers; see the note below. |
+| `EXPORT_DISABLE_GPU` | `true` | Passes `--disable-gpu`; headless Chromium rasterises on the CPU anyway. |
 | `EXPORT_METRICS` | `false` | Per-request measurements: a block in the log and the `X-UDAV-Export-Metrics` response header. The evaluation harness needs them. |
+| `EXPORT_CPU_SAMPLE_MS` | `250` | Sampling interval of the browser-process CPU tracker used by the metrics. |
 | `PIPELINE_CACHE_TTL_MS` | `5000` | Short-TTL cache for pipeline JSON. `0` disables. |
+| `TOMCAT_MAX_THREADS` | `200` | Servlet worker pool that the budget in the note below is expressed against. |
 
 > [!NOTE]
 > The headless page calls back into this same application for `/api/data` and `/api/convertions/*`.
@@ -92,13 +99,35 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 | API | `POST /api/batch/export/pipeline/{format}` / `GET /api/batch/export/pipeline/{pipelineId}/{format}` | All generator-backed widgets in pipeline | svg, png, tex, csv, json | ZIP (+ summary/errors) |
 | API | `POST /api/data/export?format=...` | Data-oriented group export | json, csv, tex | ZIP |
 
-### JSON sources for generators
+#### TeX export: VecTikZ
+
+The `tex` format of the toolbar and of the batch API is produced by `POST /api/convertions/tikz`.
+Widgets with a native LaTeX representation (Table, Highlight Text) generate it directly; every
+SVG-drawing widget is converted by **VecTikZ** (`org.texttechnologylab.udav.widgets.svgtolatex`),
+an SVG-to-TikZ converter that turns shapes, paths, text, gradients, patterns, markers, clip paths
+and CSS-styled elements into a standalone TikZ document. Text metrics come from a checked-in table,
+so the output is identical on every machine.
+
+### JSON and XML sources for generators
 
 Besides UIMA annotation types, every generator can read a JSON file that was imported into the
-`json_data` table (drop it into `sourcefilesJSON/` and it is imported at startup). The `uri` of the
-source is the file name. Field names can be renamed with the `keys` / `keysMap` mapping and constants
-injected with `fixedKeys`, as documented for `MapCoordinates`; `"generatorGroup": true` turns every
-top-level key of the file into one sub-generator (one dataset per page).
+`json_data` table: drop it into `sourcefilesJSON/` (`JSON_IMPORTER_FOLDER`) and it is imported at
+startup; `.xml` files are converted to JSON on import (`org.json`). The `uri` of the source is the
+file name. Files that already exist in the table are skipped unless
+`JSON_IMPORTER_REPLACE_IF_DIFFERENT=true`; `JSON_IMPORTER=false` disables the importer. Field names
+can be renamed: `keys` maps generator field names to source field names and works on list-shaped
+documents, `keysMap` follows the nesting of the document and maps source keys to target keys, and
+`fixedKeys` injects constants into every row.
+
+`"generatorGroup": true` turns the generator into a template that is instantiated once per
+top-level key of the JSON/XML document. Put `@ID@` into the generator id (`CategoryNumber-@ID@`);
+it is replaced by the key. Widgets reference the template id and get one page per sub-generator:
+the view shows a pager, the data API reports the group as `meta.total` / `meta.ids`, and the
+"Export all" toolbar entry and the batch API's `bulk=true` export every page. Only JSON/XML
+sources can be grouped.
+
+`CategoryNumber` and `TextFormatting` evaluate the filter lists `filesWhitelist` / `filesBlacklist`
+and `categoriesWhitelist` / `categoriesBlacklist`, set on the generator or on its source.
 
 | Generator | JSON document | Settings |
 | --- | --- | --- |
@@ -137,6 +166,21 @@ knobs (`-Dudav.eval.analysisRuns=15`, `-Dudav.eval.pipelines=P1,P5`, ...) are pa
 
 `mvn test` runs the unit tests. The tests tagged `browser` launch Playwright's own Chromium (downloaded
 on the first run, about 1 GB together with Firefox and WebKit) and are opt-in: `mvn test -Pbrowser-tests`.
+
+### ChartBot (LLM assistant)
+
+Every pipeline view can show **ChartBot**, a chat panel that explains and interprets the charts of
+the view. A chart can be attached to a question as an image (the widget's SVG is rasterised in the
+browser), the model is chosen per message from the server's model list, and answers are rendered as
+Markdown. The panel appears as soon as `LLM_BASE_URL` and `LLM_API_TOKEN` are set; requests are
+proxied server-side to an [Open WebUI](https://github.com/open-webui/open-webui)-style API
+(`GET {LLM_BASE_URL}/api/models`, `POST {LLM_BASE_URL}/api/chat/completions`, bearer token), so
+the token never reaches the browser.
+
+```env
+LLM_BASE_URL=https://llm.example.org
+LLM_API_TOKEN=...
+```
 
 ## Getting Started
 
@@ -244,14 +288,19 @@ DUUI_IMPORTER_FILE_ENDING=.xmi
 DUUI_IMPORTER_FILE_ENDING=.gz
 ```
 
-**3. (Optional) Set the path to an external TypeSystem XML** if you want to use a custom type system instead of letting UDAV auto-detect it from the XMI files:
+**3. Set the path to your TypeSystem XML file:**
 
 ```env
-DUUI_IMPORTER_TYPE_SYSTEM_PATH=/absolute/path/to/your/typesystem
+DUUI_IMPORTER_TYPE_SYSTEM_PATH=/absolute/path/to/your/TypeSystem.xml
 ```
 
 > [!NOTE]
-> If `DUUI_IMPORTER_TYPE_SYSTEM_PATH` is left empty, the type system is auto-detected from the XMI files. If you set it, point it to the **folder** containing your TypeSystem XML file.
+> The importer expects `DUUI_IMPORTER_TYPE_SYSTEM_PATH` to name the TypeSystem XML **file** and refuses to start
+> unless the path is an existing file. Running from source, the bundled
+> `src/main/resources/types/PlenumTypeSystem.xml` is used by default, and an empty value
+> (`DUUI_IMPORTER_TYPE_SYSTEM_PATH=` in `.env`) auto-detects the type system from the XMI files.
+> With Docker Compose the variable names the host path that is mounted into the container at
+> `/app/data/types`; point it at your type system file (the default `./data/types` is an empty folder).
 
 **4. Enable the importer and start:**
 
@@ -283,7 +332,7 @@ DUUI_IMPORTER_PATH=/data/my-corpus/xmi-files
 DUUI_IMPORTER_FILE_ENDING=.gz
 DUUI_IMPORTER_WORKERS=4
 DUUI_IMPORTER_CAS_POOL_SIZE=12
-DUUI_IMPORTER_TYPE_SYSTEM_PATH=
+DUUI_IMPORTER_TYPE_SYSTEM_PATH=/data/my-corpus/TypeSystem.xml
 
 # Java memory (adjust to your system)
 JAVA_OPTS=-Xmx10G -Xms1024m
@@ -296,32 +345,40 @@ This project is published under the AGPL-3.0 [license](/LICENSE).
 # Cite
 If you want to use the project please quote this as follows:
 
-Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. "Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer". Proceedings of the 15th International Conference on Language Resources and Evaluation (LREC 2026). _accepted_.
+Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. "Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer". In *Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)*, pages 6695–6705, Palma de Mallorca, Spain. ELRA Language Resource Association. [DOI 10.63317/5ce2aaity4yz](https://doi.org/10.63317/5ce2aaity4yz), [PDF](https://aclanthology.org/2026.lrec-1.533.pdf).
 
 ## BibTeX
 ```bib
 @inproceedings{Dahmann:et:al:2026,
   title     = {Towards the Generation and Application of Dynamic Web-Based Visualization
-               of UIMA-based Annotations for Big-Data Corpora with the Help of
+               of {UIMA}-based Annotations for Big-Data Corpora with the Help of
                Unified Dynamic Annotation Visualizer},
-  booktitle = {Proceedings of the 15th International Conference on Language Resources
-               and Evaluation (LREC 2026)},
+  booktitle = {Proceedings of the Fifteenth Language Resources and Evaluation
+               Conference (LREC 2026)},
   year      = {2026},
+  pages     = {6695--6705},
   author    = {Dahmann, Thiemo and Schneider, Julian and Stephan, Philipp and Abrami, Giuseppe
                and Mehler, Alexander},
+  month     = may,
+  address   = {Palma de Mallorca, Spain},
+  publisher = {ELRA Language Resource Association},
+  editor    = {Piperidis, Stelios and Bel, N{\'u}ria and van den Heuvel, Henk and Ide, Nancy
+               and Krek, Simon and Toral, Antonio},
+  doi       = {10.63317/5ce2aaity4yz},
+  url       = {https://aclanthology.org/2026.lrec-1.533/},
   keywords  = {NLP, UIMA, Annotations, dynamic visualization, uce},
-  abstract  = {The automatic and manual annotation of unstructured corpora is
-               a daily task in various scientific fields, which is supported
-               by a variety of existing software solutions. Despite this variety,
-               there are currently only limited solutions for visualizing annotations,
-               especially with regard to dynamic generation and interaction.
-               To bridge this gap and to visualize and provide annotated corpora
-               based on user-, project- or corpus-specific aspects, Unified Dynamic
-               Annotation Visualizer (UDAV) was developed. UDAV is designed as
-               a web-based solution that implements a number of essential features
-               which comparable tools do not support to enable a customizable
-               and extensible toolbox for interacting with annotations, allowing
-               the integration into existing big data frameworks.},
-  note      = {accepted}
+  abstract  = {The automatic and manual annotation of unstructured corpora is a routine
+               task in many scientific fields and is supported by a variety of existing
+               software solutions. Despite this variety, few solutions currently support
+               annotation visualization, especially for dynamic generation and interaction.
+               To bridge this gap and visualize annotated corpora based on user-, project-,
+               or corpus-specific aspects, we developed Unified Dynamic Annotation
+               Visualizer (UDAV). UDAV is a web-based solution that implements features
+               not supported by comparable tools, enabling a customizable and extensible
+               toolbox for interacting with annotations and allowing integration into
+               existing big-data frameworks. We exemplify UDAV through a range of
+               visualizations and also provide an evaluation of corpus import and
+               processing performance.},
+  pdf       = {https://aclanthology.org/2026.lrec-1.533.pdf}
 }
 ```
