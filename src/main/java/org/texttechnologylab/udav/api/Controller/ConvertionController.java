@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.texttechnologylab.udav.widgets.Widget;
 import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
-import org.texttechnologylab.udav.widgets.svgtolatex.SvgToLaTeXConverter;
+import org.texttechnologylab.udav.widgets.svgtolatex.VecTikZConverter;
 
 @RestController
 @RequestMapping("/api/convertions")
@@ -69,7 +69,7 @@ public class ConvertionController {
         JsonNode node = mapper.readTree(body);
         String widgetType = node.get("type").asText();
 
-        // widget-intrinsic native tex if defined, otherwise the general SvgToLaTeXConverter
+        // widget-intrinsic native tex if defined, otherwise the general VecTikZConverter
         String tex = Widget.tryConstructWidget(widgetType)
                 .map(widget -> {
                     try {
@@ -82,7 +82,7 @@ public class ConvertionController {
 
         if (tex == null) {
             String svg = node.get("svg").asText();
-            SvgToLaTeXConverter converter = new SvgToLaTeXConverter();
+            VecTikZConverter converter = new VecTikZConverter();
             tex = converter.convert(svg);
         }
 

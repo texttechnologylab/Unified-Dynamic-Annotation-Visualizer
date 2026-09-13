@@ -1,13 +1,13 @@
 package org.texttechnologylab.udav.widgets.svgtolatex;
 
 import org.w3c.dom.Element;
-
+import java.nio.file.Path;
 import java.util.*;
 
 /**
  * Shared mutable state for a single SVG → LaTeX conversion pass.
  * <p>
- * This object is created once per {@link SvgToLaTeXConverter#convert(String)}
+ * This object is created once per {@link VecTikZConverter#convert(String)}
  * call and passed to all sub-processors so they can read and append to the
  * shared body, colour definitions, defs map, etc.
  */
@@ -41,7 +41,7 @@ public class ConversionContext {
     /** id → [x, y, width, height] of the first {@code <rect>} child of each {@code <clipPath>}. */
     public final Map<String, double[]> clipRects = new LinkedHashMap<>();
 
-    /** id → Element, collected from all {@code <defs>} blocks; used by {@code <use>}. */
+    /** id to Element for every element carrying an id; used by {@code <use>} and paint servers. */
     public final Map<String, Element> defsMap = new LinkedHashMap<>();
 
     /** gradient id → list of parsed stops (sorted by offset). */
@@ -55,6 +55,28 @@ public class ConversionContext {
 
     /** shading name → {@code \pgfdeclarehorizontalshading} declaration. */
     public final Map<String, String> pendingShadings = new LinkedHashMap<>();
+
+    /**
+     * Directory the SVG was loaded from, used to resolve relative {@code <image>} hrefs.
+     * Null when the caller supplied only a string, in which case external references
+     * are skipped.
+     */
+    public Path baseDir;
+
+    /**
+     * Raster files the generated document needs alongside it, keyed by file name.
+     * TikZ cannot inline a bitmap, so an {@code <image>} becomes an
+     * {@code \includegraphics} of a file written next to the {@code .tex}. A caller
+     * that wants the images has to write them out; see
+     * {@link VecTikZConverter#getAssets()}.
+     */
+    public final Map<String, byte[]> assets = new LinkedHashMap<>();
+
+    /** pattern name to {@code \pgfdeclarepatternformonly} declaration for the preamble. */
+    public final Map<String, String> pendingPatterns = new LinkedHashMap<>();
+
+    /** True once a TikZ pattern is used, so the preamble loads the patterns library. */
+    public boolean usesPatternLibrary = false;
 
     /** Extra LaTeX packages needed by the body (e.g. "dejavu"). */
     public final Set<String> pendingPackages = new LinkedHashSet<>();
@@ -79,6 +101,10 @@ public class ConversionContext {
         markerExtensions.clear();
         pendingShadings.clear();
         pendingPackages.clear();
+        usesPatternLibrary = false;
+        pendingPatterns.clear();
+        assets.clear();
+        baseDir = null;
         body.setLength(0);
     }
 

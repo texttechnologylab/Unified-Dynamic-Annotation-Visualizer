@@ -8,8 +8,16 @@ package org.texttechnologylab.udav.widgets.svgtolatex;
  */
 public class InheritedAttrs {
 
-    /** SVG fill value (hex, named colour, "none", "currentColor", or url(…)). */
-    public String fill = "currentColor";
+    /**
+     * SVG fill value (hex, named colour, "none", or url(...)).
+     * The initial value is black, the SVG default for {@code fill}.
+     * <p>
+     * Always a resolved paint: {@code currentColor} is substituted where the fill is
+     * specified, not where it is painted, because SVG resolves it against the
+     * {@code color} in force at the point of specification. So
+     * {@code <g fill="currentColor" color="lime"><rect color="red"/></g>} is green.
+     */
+    public String fill = ColorManager.CURRENT_COLOR_HEX;
 
     /** SVG stroke value. Default per SVG spec is "none". */
     public String stroke = "none";
@@ -61,6 +69,25 @@ public class InheritedAttrs {
      */
     public String forceFill = null;
 
+    /**
+     * The CSS {@code color} property as a hex value, the value
+     * {@code currentColor} resolves to.
+     * <p>
+     * Inherited, and meaningful on the element that sets it as well, including one
+     * that says {@code fill="currentColor" color="..."}; it is therefore updated
+     * before the paint is resolved.
+     */
+    public String color = ColorManager.CURRENT_COLOR_HEX;
+
+    /**
+     * CSS {@code visibility}: "visible", "hidden" or "collapse".
+     * <p>
+     * Inherited, unlike {@code display}, and a descendant can set it back to
+     * visible. That is why it travels here while {@code display:none} is handled by
+     * not descending at all.
+     */
+    public String visibility = "visible";
+
     /** Create a shallow copy with all fields duplicated. */
     public InheritedAttrs copy() {
         InheritedAttrs c = new InheritedAttrs();
@@ -70,6 +97,8 @@ public class InheritedAttrs {
         c.fontSize      = fontSize;
         c.fontFamily    = fontFamily;
         c.fontWeight    = fontWeight;
+        c.visibility    = visibility;
+        c.color         = color;
         c.strokeWidth   = strokeWidth;
         c.texMode       = texMode;
         c.forceNoStroke = forceNoStroke;

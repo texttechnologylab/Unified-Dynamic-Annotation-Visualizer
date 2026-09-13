@@ -41,3 +41,5 @@ docs/
 exports/
 batch-api/
 /evaluation-report*.txt
+
+/vectikz/

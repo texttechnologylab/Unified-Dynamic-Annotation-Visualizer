@@ -2,12 +2,8 @@ package org.texttechnologylab.udav.widgets.svgtolatex;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.regex.*;
 
 import static org.texttechnologylab.udav.widgets.svgtolatex.ParseUtils.*;
 import static org.texttechnologylab.udav.widgets.svgtolatex.TransformUtils.*;
@@ -30,7 +26,11 @@ public class MarkerHandler {
         m.put("Arrow2",            "Stealth[round]");
         m.put("Arrow1",            "Latex[open]");
         m.put("Wide arrow",        "Latex[open]");
-        m.put("Stop",              "Bar[width=8\\pgflinewidth]");
+        // arrows.meta's "<dimension> <factor>" form: 0pt plus 8 line widths, so the
+        // bar scales with the stroke. "8\pgflinewidth" does not compile here: the
+        // arrow specification is stringified into a \csname lookup, and a control
+        // sequence inside it gives "Missing \endcsname".
+        m.put("Stop",              "Bar[width=0pt 8]");
         INKSCAPE_STOCK_TO_TIKZ = Collections.unmodifiableMap(m);
     }
 

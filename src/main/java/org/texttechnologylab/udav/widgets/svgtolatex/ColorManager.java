@@ -1,15 +1,8 @@
 package org.texttechnologylab.udav.widgets.svgtolatex;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.w3c.dom.*;
+import java.util.*;
+import java.util.regex.*;
 
 /**
  * Manages colour registration and resolution for the SVG → TikZ conversion.
@@ -64,13 +57,15 @@ public class ColorManager {
 
     /**
      * Recursively walk the DOM tree and register every hex, rgb(), or named
-     * colour found in {@code fill} and {@code stroke} attributes (including
-     * inside {@code style}).
+     * colour found in {@code fill}, {@code stroke} and {@code color} attributes
+     * (including inside {@code style}).
      */
     public void collectColors(Node node) {
         if (node instanceof Element) {
             Element el = (Element) node;
-            for (String attr : new String[]{"fill", "stroke"}) {
+            // "color" is included because currentColor resolves to it, so it needs a
+            // \definecolor of its own even when no fill or stroke names it directly.
+            for (String attr : new String[]{"fill", "stroke", "color"}) {
                 String v = el.getAttribute(attr).trim();
                 if (v.startsWith("#")) {
                     registerHex(expandShortHex(v));
@@ -105,17 +100,22 @@ public class ColorManager {
     // -----------------------------------------------------------------------
 
     /**
-     * Resolve an SVG fill attribute value (from an element) to a TikZ colour name.
-     * Checks the element's direct attribute, then style, then falls back to inherited.
+     * Resolve an SVG fill value to a TikZ colour name: style declaration first, then
+     * the presentation attribute, then whatever was inherited.
      * If {@link InheritedAttrs#forceFill} is set, that colour overrides everything.
+     * <p>
+     * The style-before-attribute order is required by SVG 1.1 section 6.1:
+     * {@code style="fill:red"} outranks {@code fill="blue"}. Since {@link StyleSheet}
+     * flattens the document's CSS into the style attribute, stylesheet rules outrank
+     * presentation attributes the same way.
      */
     public String resolveFill(Element el, InheritedAttrs inh) {
-        if (inh.forceFill != null) return resolveColorValue(inh.forceFill);
-        String v = directColor(el, "fill");
+        if (inh.forceFill != null) return resolveColorValue(inh.forceFill, inh.color);
+        String v = styleColor(el, "fill", inh.color);
         if (v != null) return v;
-        v = styleColor(el, "fill");
+        v = directColor(el, "fill", inh.color);
         if (v != null) return v;
-        return resolveColorValue(inh.fill);
+        return resolveColorValue(inh.fill, inh.color);
     }
 
     /**
@@ -125,11 +125,12 @@ public class ColorManager {
      */
     public String resolveStroke(Element el, InheritedAttrs inh) {
         if (inh.forceNoStroke) return "none";
-        String v = directColor(el, "stroke");
+        // Style before attribute, for the same reason as resolveFill.
+        String v = styleColor(el, "stroke", inh.color);
         if (v != null) return v;
-        v = styleColor(el, "stroke");
+        v = directColor(el, "stroke", inh.color);
         if (v != null) return v;
-        return resolveColorValue(inh.stroke);
+        return resolveColorValue(inh.stroke, inh.color);
     }
 
     /**
@@ -137,12 +138,18 @@ public class ColorManager {
      * Handles hex, rgb(), named colours, and currentColor.
      */
     public String resolveColorHex(String v) {
-        if (v == null || v.isEmpty()) return CURRENT_COLOR_HEX;
+        return resolveColorHex(v, CURRENT_COLOR_HEX);
+    }
+
+    /** As {@link #resolveColorHex(String)}, with the CSS {@code color} in force. */
+    public String resolveColorHex(String v, String currentHex) {
+        if (v == null || v.isEmpty()) return currentHex;
         v = v.trim();
+        if (v.equalsIgnoreCase("currentColor")) return currentHex;
         if (v.startsWith("#")) return expandShortHex(v).toLowerCase();
-        if (v.startsWith("rgb")) { String h = rgbToHex(v); return h != null ? h : CURRENT_COLOR_HEX; }
+        if (v.startsWith("rgb")) { String h = rgbToHex(v); return h != null ? h : currentHex; }
         String h = CSS_NAMED_COLORS.get(v.toLowerCase());
-        return h != null ? h : CURRENT_COLOR_HEX;
+        return h != null ? h : currentHex;
     }
 
     /**
@@ -151,8 +158,20 @@ public class ColorManager {
      * fallback, and currentColor.
      */
     public String resolveColorValue(String v) {
+        return resolveColorValue(v, CURRENT_COLOR_HEX);
+    }
+
+    /**
+     * As {@link #resolveColorValue(String)}, with the CSS {@code color} in force so
+     * {@code currentColor} resolves to it rather than to black.
+     */
+    public String resolveColorValue(String v, String currentHex) {
         if (v == null || v.isEmpty()) return "none";
         v = v.trim();
+        if (v.equalsIgnoreCase("currentColor")) {
+            registerHex(currentHex);
+            return colorName(currentHex);
+        }
         if (v.startsWith("#")) {
             v = expandShortHex(v);
             return colorName(v);
@@ -166,10 +185,10 @@ public class ColorManager {
             int paren = v.indexOf(')');
             if (paren >= 0 && paren + 1 < v.length()) {
                 String fallback = v.substring(paren + 1).trim();
-                if (!fallback.isEmpty()) return resolveColorValue(fallback);
+                if (!fallback.isEmpty()) return resolveColorValue(fallback, currentHex);
             }
-            // No fallback: try to sample the referenced gradient at t=0.5
-            // so gradient strokes get a representative colour instead of vanishing.
+            // No fallback: sample the referenced gradient at t=0.5 so gradient
+            // strokes get a representative colour instead of vanishing.
             Matcher gm = Pattern.compile("url\\(#([^)]+)\\)").matcher(v);
             if (gm.find() && ctx != null) {
                 String gradId = gm.group(1);
@@ -196,20 +215,32 @@ public class ColorManager {
      */
     public String getRawFill(Element el, InheritedAttrs inh) {
         if (inh.forceFill != null) return inh.forceFill;
-        String v = el.getAttribute("fill").trim();
-        if (v.isEmpty()) {
-            String style = el.getAttribute("style");
-            if (!style.isEmpty()) {
-                Matcher m = Pattern.compile("fill\\s*:\\s*([^;]+)").matcher(style);
-                if (m.find()) v = m.group(1).trim();
-            }
-        }
-        return v.isEmpty() ? inh.fill : v;
+        // Style before attribute, for the same reason as resolveFill.
+        String v = ParseUtils.getStyleOrAttr(el, "fill");
+        return (v == null || v.isEmpty()) ? inh.fill : v.trim();
     }
 
     // -----------------------------------------------------------------------
     // Conversion helpers
     // -----------------------------------------------------------------------
+
+    /**
+     * Mixes a colour with white and registers the result, returning its hex.
+     * Used to approximate a partially covering pattern with a flat fill: a tile that
+     * is one-fifth blue dots reads as a pale blue, not as solid blue.
+     *
+     * @param coverage 0 gives white, 1 gives the colour unchanged
+     */
+    public String blendTowardsWhite(String hex, double coverage) {
+        double f = Math.max(0.0, Math.min(1.0, coverage));
+        int[] rgb = hexToRgb(expandShortHex(hex));
+        String blended = String.format("#%02x%02x%02x",
+                (int) Math.round(255 + (rgb[0] - 255) * f),
+                (int) Math.round(255 + (rgb[1] - 255) * f),
+                (int) Math.round(255 + (rgb[2] - 255) * f));
+        registerHex(blended);
+        return blended;
+    }
 
     /**
      * Converts "rgb(255, 84, 0)" or "rgb(255,84,0)" to "#ff5400".
@@ -274,18 +305,18 @@ public class ColorManager {
     // Internals
     // -----------------------------------------------------------------------
 
-    private String directColor(Element el, String attr) {
+    private String directColor(Element el, String attr, String currentHex) {
         String v = el.getAttribute(attr).trim();
         if (v.isEmpty()) return null;
-        return resolveColorValue(v);
+        return resolveColorValue(v, currentHex);
     }
 
-    private String styleColor(Element el, String attr) {
+    private String styleColor(Element el, String attr, String currentHex) {
         String style = el.getAttribute("style");
         if (style.isEmpty()) return null;
         Matcher m = Pattern.compile(attr + "\\s*:\\s*([^;]+)").matcher(style);
         if (!m.find()) return null;
-        return resolveColorValue(m.group(1).trim());
+        return resolveColorValue(m.group(1).trim(), currentHex);
     }
 
     private static String deriveColorName(String hex) {
