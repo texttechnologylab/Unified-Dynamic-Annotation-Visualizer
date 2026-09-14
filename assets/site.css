@@ -425,6 +425,10 @@ figure.diagram svg { width: 100%; height: auto; display: block; font-family: var
 .diagram .arrow { stroke: var(--text-2); stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
 .diagram .arrow.brand { stroke: var(--brand); marker-end: url(#arrowhead-brand); }
 .diagram .arrow.dashed { stroke-dasharray: 4 3; }
+.diagram .box.decide { fill: var(--surface); stroke: var(--text-3); }
+.diagram .box.note { fill: var(--surface); stroke-dasharray: 3 2; }
+.diagram .region.sub { fill: var(--surface-3); fill-opacity: 0.55; stroke-dasharray: none; }
+.diagram .line { stroke: var(--text-2); stroke-width: 1.5; fill: none; }
 .ah { fill: var(--text-2); }
 .ah.brand { fill: var(--brand); }
 .lightbox { position: fixed; inset: 0; background: rgba(5, 10, 20, 0.88); display: none; align-items: center; justify-content: center; z-index: 100; padding: 2rem; cursor: zoom-out; }
