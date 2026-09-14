@@ -1135,26 +1135,61 @@ PG_MAX_WAL_SIZE=8GB</code></pre>
           </div>
           <div>
             <h4>Frontend (<code>src/main/resources</code>)</h4>
-<pre data-title="folder structure"><code class="language-plaintext">static/
-├─ css/  pages/ · shared/ · variables.css
-├─ data/ sample datasets per widget, world.geojson
-├─ js/
-│  ├─ api/      HTTP clients per endpoint group
-│  ├─ pages/
-│  │  ├─ editor/  configs/ (generator forms) · controller/ · utils/ · Editor.js
-│  │  ├─ index/   Menu.js
-│  │  └─ view/    filter/ · toolbar/ · utils/ · View.js
-│  ├─ shared/   classes/ (ChatBot, FormBuilder, Modal, WidgetPagination …)
-│  │            modules/ (inputFactories, clustering, convert …)
-│  └─ widgets/  charts/ · static/ · D3Visualization.js · WidgetInterface.js · widgets.js
-└─ packages/    vendored bootstrap, d3, gridstack, floating-ui, marked, dompurify
-templates/      FreeMarker: pages/{index,view,editor} · shared/ · error/</code></pre>
+            <div class="dl">
+              <dt>static/css</dt><dd>Stylesheets, global css variables.</dd>
+              <dt>static/data</dt><dd>Sample datasets per widget, <code>world.geojson</code>.</dd>
+              <dt>static/img</dt><dd>Images.</dd>
+              <dt>static/js/api</dt><dd>HTTP clients per endpoint group.</dd>
+              <dt>static/js/pages</dt><dd>Page-specific code for each page.</dd>
+              <dt>static/js/shared</dt><dd>Reusable code used across multiple pages.</dd>
+              <dt>static/js/widgets</dt><dd>Available widgets divided into <code>charts</code> and <code>static</code> widgets.</dd>
+              <dt>static/packages</dt><dd>Third-party dependencies.</dd>
+              <dt>templates</dt><dd>FreeMarker templates to render the <code>HTML</code> pages.</dd>
+            </div>
           </div>
         </div>
-        <p>Global colours and spacing live in <code>variables.css</code>; the app's primary colour is <code>--primary: #00618f</code>.</p>
-        <h3 id="dev-widget">Adding a widget</h3>
+        <p>Global colours, spacing and other general properties live in <code>variables.css</code>; the app's primary colour is <code>--primary: #00618f</code>.</p>
+        <h3 id="dev-widget">Adding a new widget</h3>
         <ol class="steps">
-          <li><strong>Frontend class</strong> in <code>js/widgets/charts/</code>. Extend <code>D3Visualization</code> if the widget draws an SVG (it provides the SVG, resizing, tooltips, axes, zoom and the multi-page export), otherwise <code>WidgetInterface</code>. Declare <code>defaultConfig</code> (type must equal the class name, plus title, generator, options, icon, w, h) and <code>formConfig</code> (property paths → input type, label, options), implement <code>init()</code> and <code>render(data)</code>:
+          <li><strong>Frontend class</strong>
+            <p>
+              Create a new JavaScript class in the <code>js/widgets/charts/</code> folder. This class will define the widget's configuration and rendering.
+            </p>
+          
+            <p>
+              Define the <code>defaultConfig</code> object. This is the initial configuration for the widget after creation. Include:
+              <ul>
+                <li><strong>title</strong>: The display title of the chart.</li>
+                <li><strong>type</strong>: The chart's type (must match the class name).</li>
+                <li><strong>generator</strong>: Will be set by the user later.</li>
+                <li><strong>options</strong>: Chart-specific options.</li>
+                <li><strong>icon</strong>: The icon will be displayed in the editor.</li>
+                <li><strong>w</strong>: The initial width of the widget in grid cells.</li>
+                <li><strong>h</strong>: The initial height of the widget in grid cells.</li>
+              </ul>
+            </p>
+          
+            <p>
+              Define the <code>formConfig</code> object. This configures the modal form where users can edit the chart's settings. Use the property paths in <code>defaultConfig</code> as the keys. Each field requires:
+              <ul>
+                <li><strong>type</strong>: The input type (see <code>inputFactories.js</code> for available types).</li>
+                <li><strong>label</strong>: The label displayed to the user.</li>
+                <li><strong>options</strong> (optional): Additional configuration for the input.</li>
+              </ul>
+            </p>
+          
+            <p>
+              Extend the <code>WidgetInterface</code> class and implement an <code>init</code> and a <code>render</code> method.
+              <ul>
+                <li>The <strong>init</strong> method will be called once after creation of the widget and should contain the first data fetch and rendering, as well as the configuration of the controls.</li>
+                <li>The <strong>render</strong> method will be called every time the chart data changes, for example after a filter is applied.</li>
+              </ul>
+            </p>
+          
+            <p>
+              If your new widget uses <strong>d3.js</strong> to create an SVG, you can extend the <code>D3Visualization</code> class instead. This class already provides helpful functions for SVG initialization and resizing, tooltips, or axis creation.
+            </p>
+
 <pre data-title="js/widgets/charts/NewChart.js"><code class="language-javascript">import D3Visualization from "../D3Visualization.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
 
@@ -1212,12 +1247,67 @@ public class NewChart extends Widget {
 }</code></pre></li>
           <li>Optionally add a sample dataset <code>static/data/NewChart.json</code>; the frontend falls back to it when a generator has no data yet (e.g. in the editor before the first build).</li>
         </ol>
-        <h3 id="dev-generator">Adding a generator</h3>
+        <h3 id="dev-generator">Adding a new generator</h3>
         <ol class="steps">
+          <li><strong>Frontend class</strong>
+              <p>
+                Create a new JavaScript class in the <code>js/pages/editor/configs/</code> folder of the editor page. This class will define the generator's configuration.
+              </p>
+            
+              <p>
+                Define the generator's <strong>token</strong> (the two-letter badge) and <strong>description</strong> (shown in the <kbd>?</kbd> popover).
+              </p>
+            
+              <p>
+                Define the <code>defaultConfig</code> object. This is the initial configuration for the generator after creation. Include:
+                <ul>
+                  <li><strong>name</strong>: The display name of the generator.</li>
+                  <li><strong>type</strong>: The generator's type (must match the class name).</li>
+                  <li><strong>generatorGroup</strong>: Mark the generator definition as a group to instantiate multiple generators for pagination.</li>
+                  <li><strong>settings</strong>: Generator-specific settings.</li>
+                  <li><strong>extends</strong>: An array of other generators this one extends (optional).</li>
+                </ul>
+              </p>
+            
+              <p>
+                Define the <code>formConfig</code> object. This configures the modal form where users can edit the generator's settings. Use the property paths in <code>defaultConfig</code> as the keys. Each field requires:
+                <ul>
+                  <li><strong>type</strong>: The input type (see <code>inputFactories.js</code> for available types).</li>
+                  <li><strong>label</strong>: The label displayed to the user.</li>
+                  <li><strong>options</strong> (optional): Additional configuration for the input.</li>
+                </ul>
+              </p>
+<pre data-title="js/pages/editor/configs/NewGenerator.js"><code class="language-javascript">export default class NewGenerator {
+  static token = "NG";
+  static description = `
+  Generator description.
+  <br> Compatible with: <b>Line Chart, Simple Map, Network Graph, Table</b>`;
+  static defaultConfig = {
+    name: "New Generator",
+    type: "NewGenerator",
+    generatorGroup: false,
+    settings: {},
+    extends: [],
+  };
+  static formConfig = {
+    name: {
+      type: "text",
+      label: "Name",
+    },
+    generatorGroup: {
+      type: "switch",
+      label: "Generator group",
+    },
+  };
+}</code></pre>
+          </li>
+          <li><strong>Register it</strong> in <code>js/pages/editor/configs/configs.js</code>; it now appears in the editor's generators list.</li>
           <li><strong>Java class</strong> in <code>org.texttechnologylab.udav.generators</code> extending <code>Generator</code> (or <code>GeneratorUIMA</code> for feature-column resolution), with the five-argument constructor. Aggregate in <code>setup_step1/2/3()</code> — read from <code>source</code> (a <code>SourceUIMA</code>, <code>SourceJson</code> or <code>SourceDerived</code>) and the merged <code>settings</code> — and persist in <code>writeToDB()</code> into tables of the pipeline schema (<code>dbAccess.getSchema()</code>). Declare shared properties (<code>preSetup_getAllCommonPropertyClasses</code>) to share e.g. a colour palette with sibling generators.</li>
-          <li><strong>Editor config</strong> in <code>js/pages/editor/configs/</code>: a class with <code>token</code> (the two-letter badge), <code>description</code> (shown in the <kbd>?</kbd> popover), <code>defaultConfig</code> and <code>formConfig</code>; register it in <code>configs.js</code>.</li>
           <li><strong>Widgets</strong> that read the new tables (a handler per widget type, see above) and, if the generator should read JSON sources, use <code>JsonSourceSupport</code> for the key-mapping grammar and <code>SourceJsonN</code> support comes for free.</li>
         </ol>
+        <h3 id="dev-formular">Formular configuration</h3>
+        <p>The widget controls and option modals in the editor are defined through a JSON structure. This structure is used by the <code>ControlsHandler</code> for widgets, as well as by the <code>formConfig</code> parameter of widgets, source and generator configurations. It defines the form input fields, including their types, labels, and available options.</p>
+        <p>Available input types are implemented in <code>inputFactories.js</code>, which acts as a central registry for creating the form inputs. If additional input types are needed, they can be easily extended by adding new implementations to <code>inputFactories.js</code>.</p>
         <h3 id="dev-tests">Tests and tooling</h3>
         <ul>
           <li><code>mvn test</code> runs the unit tests (converter, pooling, JSON-backed generators, importer, evaluation report parsing).</li>
