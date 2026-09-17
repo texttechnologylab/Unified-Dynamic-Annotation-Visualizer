@@ -186,17 +186,17 @@
             <text class="s" x="495" y="148" text-anchor="middle">XML → JSON, one row per file</text>
             <rect class="box" x="640" y="108" width="280" height="52" rx="8"/>
             <text class="t" x="780" y="130" text-anchor="middle">Pipeline importer · PipelineService</text>
-            <text class="s" x="780" y="148" text-anchor="middle">normalises legacy formats, assigns ids</text>
+            <text class="s" x="780" y="148" text-anchor="middle">store the definition, start the build</text>
             <!-- storage -->
             <rect class="region" x="90" y="188" width="840" height="130" rx="10"/>
             <text class="region-lbl" x="110" y="208">PostgreSQL</text>
             <rect class="box" x="110" y="220" width="255" height="86" rx="8"/>
-            <text class="t" x="237" y="242" text-anchor="middle">UIMA schema (public)</text>
+            <text class="t" x="237" y="242" text-anchor="middle">UIMA tables (public schema)</text>
             <text class="m" x="237" y="260" text-anchor="middle">documents · sofas</text>
             <text class="m" x="237" y="276" text-anchor="middle">uima_type_registry</text>
             <text class="m" x="237" y="292" text-anchor="middle">one table per annotation type</text>
             <rect class="box" x="385" y="220" width="225" height="86" rx="8"/>
-            <text class="t" x="497" y="242" text-anchor="middle">App schema (public)</text>
+            <text class="t" x="497" y="242" text-anchor="middle">App tables (public schema)</text>
             <text class="m" x="497" y="260" text-anchor="middle">json_data</text>
             <text class="m" x="497" y="276" text-anchor="middle">pipeline</text>
             <text class="m" x="497" y="292" text-anchor="middle">pipeline_locks</text>
@@ -234,7 +234,7 @@
             <rect class="box" x="780" y="520" width="140" height="68" rx="8"/>
             <text class="t" x="850" y="544" text-anchor="middle">LLM server</text>
             <text class="s" x="850" y="562" text-anchor="middle">external service</text>
-            <text class="s" x="850" y="578" text-anchor="middle">Open WebUI API</text>
+            <text class="s" x="850" y="578" text-anchor="middle">Open WebUI-style API</text>
             <!-- arrows: inputs -> importers -->
             <path class="arrow" d="M225,84 L225,106"/>
             <path class="arrow" d="M495,84 L495,106"/>
@@ -264,16 +264,174 @@
         <div class="dl">
           <dt>DUUI importer</dt><dd>Reads XMI or gzip-compressed XMI written by a <a href="https://github.com/texttechnologylab/DockerUnifiedUIMAInterface" target="_blank" rel="noopener">DUUI</a> pipeline, strips annotator meta-data, and writes every annotation type into its own table via PostgreSQL <code>COPY</code>. Tables are registered in <code>uima_type_registry</code> together with their super-type and row count; documents and their text (SOFAs) land in <code>documents</code> and <code>sofas</code>. <a href="#duui-importer">Details</a>.</dd>
           <dt>JSON data importer</dt><dd>Imports every <code>.json</code> and <code>.xml</code> file of a folder into the <code>json_data</code> table (XML is converted to JSON with <code>org.json</code>). The file name is the source's <code>uri</code>. <a href="#sources">Details</a>.</dd>
-          <dt>Pipeline importer</dt><dd>Imports pipeline definitions from a folder at start-up, resolves duplicate ids, normalises the legacy <code>createsGenerators</code> format and triggers a build. Pipelines created through the editor or the API take the same path.</dd>
-          <dt>Source build</dt><dd><code>SourceBuildService</code> instantiates the generators of a pipeline, lets them aggregate their data (<code>setup</code>) and write it (<code>writeToDB</code>) into a temporary schema, then atomically renames it to the pipeline id. A pipeline whose annotations are not imported yet is retried at the next start (<code>MissingSchemaScanner</code>).</dd>
+          <dt>Pipeline importer</dt><dd>Imports pipeline definitions from a folder at start-up, resolves duplicate ids and triggers a build; pipelines created through the editor or the API are stored and built the same way by <code>PipelineService</code>. Both the flat <code>generators</code> list and the legacy nested <code>createsGenerators</code> form are accepted: the build reads either, and <code>PipelineService</code> hands every pipeline to the editor and the API in the flat form.</dd>
+          <dt>Source build</dt><dd><code>SourceBuildService</code> loads the pipeline definition, whose <code>Pipeline</code> instantiates the generators, lets them aggregate their data (<code>setup</code>) and write it (<code>writeToDB</code>) into a temporary schema, then atomically renames it to the pipeline id. A pipeline whose annotations are not imported yet is retried at the next start (<code>MissingSchemaScanner</code>).</dd>
           <dt>Data API</dt><dd>One <code>ChartHandler</code> per widget type (the classes in <code>org.texttechnologylab.udav.widgets</code>) reads generator data, applies chart filters and corpus filters, and returns the widget's payload. <a href="#api">Reference</a>.</dd>
           <dt>Frontend</dt><dd>FreeMarker templates plus vanilla ES modules: <a href="https://d3js.org/" target="_blank" rel="noopener">D3.js</a> for the charts, <a href="https://gridstackjs.com/" target="_blank" rel="noopener">gridstack.js</a> for the grid, <a href="https://floating-ui.com/" target="_blank" rel="noopener">Floating UI</a>, <a href="https://getbootstrap.com/" target="_blank" rel="noopener">Bootstrap</a> (icons, styling), and <a href="https://marked.js.org/" target="_blank" rel="noopener">Marked</a> + <a href="https://github.com/cure53/DOMPurify" target="_blank" rel="noopener">DOMPurify</a> for ChartBot's Markdown. All packages are vendored; no build step.</dd>
           <dt>Batch export</dt><dd>A pool of Playwright-driven headless Chromium sessions loads the view in export mode and runs the same export code the toolbar uses. <a href="#batch-export">Details</a>.</dd>
         </div>
-        <figure class="shot">
-          <img src="img/architecture.png" alt="UDAV component diagram: DUUI pipeline and importer, SourceBuilder and generators, controller and service layers" style="max-width:min(520px, 100%);display:block;margin:0 auto">
-          <figcaption>Component diagram: the importer at the end of a DUUI pipeline, the generators created by the SourceBuilder, and the controller and service layers behind editor, visualization and menu.</figcaption>
+        <!-- diagram:components -->
+        <figure class="diagram">
+          <svg viewBox="0 0 940 800" role="img" aria-label="UDAV class map: the four importers, the source build, the services and their jOOQ repositories, the ten controllers with their routes and the three server-rendered pages, all inside one Spring Boot container next to PostgreSQL">
+            <rect class="region" x="16" y="8" width="684" height="782" rx="10"/>
+            <text class="region-lbl" x="28" y="28">UDAV</text>
+            <text class="m" x="688" y="28" text-anchor="end">Spring Boot · Java 21</text>
+            <rect class="region sub" x="28" y="42" width="660" height="98" rx="10"/>
+            <text class="region-lbl" x="40" y="62">Importers</text>
+            <text class="m" x="676" y="62" text-anchor="end">ApplicationRunner</text>
+            <rect class="box" x="40" y="70" width="151" height="58" rx="8"/>
+            <text class="t" x="115.5" y="89" text-anchor="middle">DUUIImporter</text>
+            <text class="s" x="115.5" y="103" text-anchor="middle">reads XMI · XMI.GZ,</text>
+            <text class="s" x="115.5" y="117" text-anchor="middle">COPY per annotation type</text>
+            <rect class="box" x="201" y="70" width="151" height="58" rx="8"/>
+            <text class="t" x="276.5" y="89" text-anchor="middle">JsonDataImporter</text>
+            <text class="s" x="276.5" y="103" text-anchor="middle">.json and .xml files</text>
+            <text class="m" x="276.5" y="117" text-anchor="middle">→ json_data</text>
+            <rect class="box" x="362" y="70" width="151" height="58" rx="8"/>
+            <text class="t" x="437.5" y="89" text-anchor="middle">PipelineJsonImporter</text>
+            <text class="s" x="437.5" y="103" text-anchor="middle">definitions in a folder</text>
+            <text class="m" x="437.5" y="117" text-anchor="middle">→ pipeline</text>
+            <rect class="box" x="523" y="70" width="151" height="58" rx="8"/>
+            <text class="t" x="598.5" y="89" text-anchor="middle">MissingSchemaScanner</text>
+            <text class="s" x="598.5" y="103" text-anchor="middle">builds what is missing</text>
+            <text class="s" x="598.5" y="117" text-anchor="middle">at the next start-up</text>
+            <rect class="region sub" x="28" y="164" width="660" height="106" rx="10"/>
+            <text class="region-lbl" x="40" y="184">Source build</text>
+            <text class="m" x="676" y="184" text-anchor="end">on save · on import · on demand</text>
+            <rect class="box ok" x="40" y="192" width="194" height="66" rx="8"/>
+            <text class="t" x="137" y="211" text-anchor="middle">SourceBuildService</text>
+            <text class="s" x="137" y="225" text-anchor="middle">builds into «id»__tmp,</text>
+            <text class="s" x="137" y="239" text-anchor="middle">then renames the schema</text>
+            <text class="m" x="137" y="253" text-anchor="middle">+ SourceBuildOps</text>
+            <rect class="box ok" x="246" y="192" width="184" height="66" rx="8"/>
+            <text class="t" x="338" y="211" text-anchor="middle">Pipeline</text>
+            <text class="s" x="338" y="225" text-anchor="middle">reads the definition,</text>
+            <text class="s" x="338" y="239" text-anchor="middle">creates the generators</text>
+            <text class="m" x="338" y="253" text-anchor="middle">setup() · writeToDB()</text>
+            <rect class="box ok" x="442" y="192" width="234" height="66" rx="8"/>
+            <text class="t" x="559" y="211" text-anchor="middle">Generators</text>
+            <text class="s" x="559" y="225" text-anchor="middle">CategoryNumber · TextFormatting</text>
+            <text class="s" x="559" y="239" text-anchor="middle">MapCoordinates · derived</text>
+            <text class="m" x="559" y="253" text-anchor="middle">Source · SourceUIMA · SourceJson</text>
+            <path class="arrow" d="M234,219 L244,219"/>
+            <path class="arrow" d="M430,219 L440,219"/>
+            <rect class="region sub" x="28" y="286" width="660" height="216" rx="10"/>
+            <text class="region-lbl" x="40" y="306">Services</text>
+            <text class="m" x="676" y="306" text-anchor="end">@Service</text>
+            <rect class="box" x="40" y="314" width="151" height="62" rx="8"/>
+            <text class="t" x="115.5" y="333" text-anchor="middle">PipelineService</text>
+            <text class="s" x="115.5" y="347" text-anchor="middle">CRUD, cache and locks;</text>
+            <text class="s" x="115.5" y="361" text-anchor="middle">starts a rebuild</text>
+            <rect class="box" x="201" y="314" width="151" height="62" rx="8"/>
+            <text class="t" x="276.5" y="333" text-anchor="middle">DataService</text>
+            <text class="s" x="276.5" y="347" text-anchor="middle">ChartRegistry picks the</text>
+            <text class="s" x="276.5" y="361" text-anchor="middle">handler; filters, paging</text>
+            <rect class="box" x="362" y="314" width="151" height="62" rx="8"/>
+            <text class="t" x="437.5" y="333" text-anchor="middle">Widgets</text>
+            <text class="s" x="437.5" y="347" text-anchor="middle">implement ChartHandler:</text>
+            <text class="s" x="437.5" y="361" text-anchor="middle">BarChart … MedialAxis</text>
+            <rect class="box" x="523" y="314" width="151" height="62" rx="8"/>
+            <text class="t" x="598.5" y="333" text-anchor="middle">BrowserExportService</text>
+            <text class="s" x="598.5" y="347" text-anchor="middle">pooled headless Chromium</text>
+            <text class="s" x="598.5" y="361" text-anchor="middle">Playwright, in the image</text>
+            <path class="arrow" d="M352,345 L360,345"/>
+            <rect class="box" x="40" y="386" width="212" height="50" rx="8"/>
+            <text class="t" x="146" y="405" text-anchor="middle">VisualisationsService</text>
+            <text class="m" x="146" y="419" text-anchor="middle">VISUALIZATIONJSONS</text>
+            <rect class="box" x="264" y="386" width="204" height="50" rx="8"/>
+            <text class="t" x="366" y="405" text-anchor="middle">UIMATypeService</text>
+            <text class="m" x="366" y="419" text-anchor="middle">uima_type_registry</text>
+            <rect class="box" x="480" y="386" width="196" height="50" rx="8"/>
+            <text class="t" x="578" y="405" text-anchor="middle">FileService</text>
+            <text class="m" x="578" y="419" text-anchor="middle">documents · sofas</text>
+            <rect class="box" x="40" y="446" width="636" height="44" rx="8"/>
+            <text class="t" x="358" y="465" text-anchor="middle">jOOQ repositories</text>
+            <text class="m" x="358" y="479" text-anchor="middle">GeneratorData · Document · UIMAType · Visualisations</text>
+            <rect class="region sub" x="28" y="518" width="660" height="140" rx="10"/>
+            <text class="region-lbl" x="40" y="538">API</text>
+            <text class="m" x="676" y="538" text-anchor="end">every class ends in Controller</text>
+            <rect class="box accent" x="40" y="546" width="120" height="46" rx="8"/>
+            <text class="t" x="100" y="565" text-anchor="middle">Pipeline</text>
+            <text class="m" x="100" y="579" text-anchor="middle">/pipelines</text>
+            <rect class="box accent" x="169" y="546" width="120" height="46" rx="8"/>
+            <text class="t" x="229" y="565" text-anchor="middle">SourceBuild</text>
+            <text class="m" x="229" y="579" text-anchor="middle">/source-build</text>
+            <rect class="box accent" x="298" y="546" width="120" height="46" rx="8"/>
+            <text class="t" x="358" y="565" text-anchor="middle">Data</text>
+            <text class="m" x="358" y="579" text-anchor="middle">/data</text>
+            <rect class="box accent" x="427" y="546" width="120" height="46" rx="8"/>
+            <text class="t" x="487" y="565" text-anchor="middle">Visualisations</text>
+            <text class="m" x="487" y="579" text-anchor="middle">/visualisations</text>
+            <rect class="box accent" x="556" y="546" width="120" height="46" rx="8"/>
+            <text class="t" x="616" y="565" text-anchor="middle">Annotation</text>
+            <text class="m" x="616" y="579" text-anchor="middle">/annotations</text>
+            <rect class="box accent" x="40" y="600" width="120" height="46" rx="8"/>
+            <text class="t" x="100" y="619" text-anchor="middle">File</text>
+            <text class="m" x="100" y="633" text-anchor="middle">/files</text>
+            <rect class="box accent" x="169" y="600" width="120" height="46" rx="8"/>
+            <text class="t" x="229" y="619" text-anchor="middle">Convertion</text>
+            <text class="m" x="229" y="633" text-anchor="middle">/convertions</text>
+            <rect class="box accent" x="298" y="600" width="120" height="46" rx="8"/>
+            <text class="t" x="358" y="619" text-anchor="middle">App</text>
+            <text class="s" x="358" y="633" text-anchor="middle">serves the pages</text>
+            <rect class="box accent" x="427" y="600" width="120" height="46" rx="8"/>
+            <text class="t" x="487" y="619" text-anchor="middle">BrowserExport</text>
+            <text class="m" x="487" y="633" text-anchor="middle">/batch</text>
+            <rect class="box accent" x="556" y="600" width="120" height="46" rx="8"/>
+            <text class="t" x="616" y="619" text-anchor="middle">Chat</text>
+            <text class="m" x="616" y="633" text-anchor="middle">/chat</text>
+            <rect class="region sub" x="28" y="674" width="660" height="104" rx="10"/>
+            <text class="region-lbl" x="40" y="694">Frontend</text>
+            <text class="m" x="676" y="694" text-anchor="end">FreeMarker + ES modules</text>
+            <rect class="box brand" x="40" y="702" width="194" height="64" rx="8"/>
+            <text class="t" x="137" y="721" text-anchor="middle">Menu</text>
+            <text class="m" x="137" y="735" text-anchor="middle">pages/index</text>
+            <text class="s" x="137" y="749" text-anchor="middle">pipeline list, search,</text>
+            <text class="s" x="137" y="763" text-anchor="middle">create and delete</text>
+            <rect class="box brand" x="246" y="702" width="220" height="64" rx="8"/>
+            <text class="t" x="356" y="721" text-anchor="middle">Editor</text>
+            <text class="m" x="356" y="735" text-anchor="middle">pages/editor</text>
+            <text class="s" x="356" y="749" text-anchor="middle">sources, generators, widgets;</text>
+            <text class="s" x="356" y="763" text-anchor="middle">drag and drop, live preview</text>
+            <rect class="box brand" x="478" y="702" width="198" height="64" rx="8"/>
+            <text class="t" x="577" y="721" text-anchor="middle">Visualization</text>
+            <text class="m" x="577" y="735" text-anchor="middle">pages/view</text>
+            <text class="s" x="577" y="749" text-anchor="middle">grid of D3 widgets, filters,</text>
+            <text class="s" x="577" y="763" text-anchor="middle">exports, ChartBot</text>
+            <rect class="box" x="740" y="8" width="184" height="782" rx="8"/>
+            <text class="t" x="832" y="383" text-anchor="middle">PostgreSQL</text>
+            <text class="s" x="832" y="397" text-anchor="middle">own container</text>
+            <text class="s" x="832" y="411" text-anchor="middle">corpus, app and one</text>
+            <text class="s" x="832" y="425" text-anchor="middle">schema per pipeline</text>
+            <path class="arrow" d="M688,99 L738,99"/>
+            <text class="lbl" x="720" y="93" text-anchor="middle">writes</text>
+            <path class="arrow" d="M688,225 L738,225"/>
+            <text class="lbl" x="720" y="219" text-anchor="middle">writes</text>
+            <path class="arrow brand" d="M738,345 L688,345"/>
+            <text class="lbl" x="720" y="339" text-anchor="middle">reads</text>
+            <path class="arrow" d="M688,468 L738,468"/>
+            <text class="lbl" x="720" y="462" text-anchor="middle">jOOQ</text>
+            <path class="arrow" d="M437,140 L437,152 L150,152 L150,190"/>
+            <text class="lbl" x="292" y="147" text-anchor="middle">triggers a build</text>
+            <path class="arrow" d="M598,140 L598,158 L210,158 L210,190"/>
+            <path class="arrow" d="M175,312 L175,276 L130,276 L130,260"/>
+            <text class="lbl" x="300" y="284" text-anchor="middle">rebuild after save</text>
+            <path class="arrow" d="M100,544 L100,498"/>
+            <path class="arrow" d="M229,544 L229,498"/>
+            <path class="arrow" d="M358,544 L358,498"/>
+            <path class="arrow" d="M487,544 L487,498"/>
+            <path class="arrow" d="M616,544 L616,498"/>
+            <text class="lbl" x="292" y="513" text-anchor="middle">call the services</text>
+            <path class="arrow" d="M120,700 L120,650"/>
+            <path class="arrow" d="M330,700 L330,650"/>
+            <path class="arrow" d="M560,700 L560,650"/>
+            <text class="lbl" x="180" y="669" text-anchor="middle">fetch</text>
+            <path class="arrow" d="M390,650 L390,676"/>
+            <text class="lbl" x="470" y="669" text-anchor="middle">renders the pages</text>
+          </svg>
+          <figcaption>The classes behind the flow above. Four <code>ApplicationRunner</code>s import at start-up; the build turns a pipeline definition into generator tables in a schema of its own; the services read those back through jOOQ repositories, ten controllers expose them, and three server-rendered pages consume them — all in one Spring Boot process beside the database.</figcaption>
         </figure>
+        <!-- /diagram -->
       </section>
 
       <!-- ============================================================ -->
@@ -1142,7 +1300,7 @@ DB_PASS=postgres</code></pre></li>
             <rect class="box" x="770" y="20" width="160" height="86" rx="8"/><text class="t" x="850" y="44" text-anchor="middle">5 · Select widgets</text><text class="s" x="850" y="62" text-anchor="middle">by id, generator + type,</text><text class="s" x="850" y="78" text-anchor="middle">or generator</text>
             <rect class="box ok" x="770" y="180" width="160" height="96" rx="8"/><text class="t" x="850" y="204" text-anchor="middle">6 · Export</text><text class="s" x="850" y="222" text-anchor="middle">N widgets concurrently,</text><text class="s" x="850" y="238" text-anchor="middle">UI ExportHandler with the</text><text class="s" x="850" y="254" text-anchor="middle">download sinks replaced</text>
             <rect class="box" x="580" y="180" width="170" height="96" rx="8"/><text class="t" x="665" y="204" text-anchor="middle">7 · Stream files</text><text class="s" x="665" y="222" text-anchor="middle">text formats as UTF-8,</text><text class="s" x="665" y="238" text-anchor="middle">PNG as base64, per file</text><text class="s" x="665" y="254" text-anchor="middle">as soon as it is produced</text>
-            <rect class="box" x="390" y="180" width="170" height="96" rx="8"/><text class="t" x="475" y="204" text-anchor="middle">8 · ZIP</text><text class="s" x="475" y="222" text-anchor="middle">NNN-name entries in order,</text><text class="s" x="475" y="238" text-anchor="middle">_summary.json, _errors.json;</text><text class="s" x="475" y="254" text-anchor="middle">PNGs stored, text deflated</text>
+            <rect class="box" x="390" y="180" width="170" height="96" rx="8"/><text class="t" x="475" y="204" text-anchor="middle">8 · ZIP</text><text class="s" x="475" y="222" text-anchor="middle">NNN-name entries in order,</text><text class="s" x="475" y="238" text-anchor="middle">_summary.json, _errors.json;</text><text class="s" x="475" y="254" text-anchor="middle">png at level 1, text default</text>
             <rect class="box brand" x="200" y="180" width="170" height="96" rx="8"/><text class="t" x="285" y="204" text-anchor="middle">9 · Response</text><text class="s" x="285" y="222" text-anchor="middle">attachment + optional</text><text class="s" x="285" y="238" text-anchor="middle">X-UDAV-Export-Metrics;</text><text class="s" x="285" y="254" text-anchor="middle">session returned to pool</text>
             <path class="arrow" d="M180,63 L198,63"/><path class="arrow" d="M370,63 L388,63"/><path class="arrow" d="M560,63 L578,63"/><path class="arrow" d="M750,63 L768,63"/>
             <path class="arrow" d="M850,106 L850,178"/>
