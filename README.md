@@ -18,11 +18,14 @@ UDAV is designed to enable different disciplines to display their automatic pre-
 
 - Dynamic and interactive charts on a drag-and-drop grid, described by a JSON pipeline definition
 - Visual pipeline editor
-- Sources: UIMA annotation types imported with DUUI, or your own JSON/XML files
-- Generator groups: one widget page per top-level key of a JSON/XML file
+- Sources: UIMA annotation types imported with DUUI, or custom JSON/XML files with a key-mapping grammar
+- Grouped generator templates (`"generatorGroup": true`) and paginated widgets
 - Export options: svg, png, tex (through the VecTikZ SVG-to-TikZ converter), csv, json
 - Headless batch export API for single widgets and whole pipelines
 - ChartBot, an LLM assistant for the charts of a view
+
+The [documentation page](https://texttechnologylab.github.io/Unified-Dynamic-Annotation-Visualizer/)
+describes every feature in detail.
 
 ### Widgets
 
