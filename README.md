@@ -2,7 +2,7 @@
   <a href="/LICENSE"> <img src="https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer/releases"> <img src="https://img.shields.io/github/v/release/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://lrec2026.info/"> <img src="https://img.shields.io/badge/conference-LREC--2026-4b44ce.svg"></a>
-  <a href="https://lrec2026.info/"> <img src="https://img.shields.io/badge/paper-LREC--2026-fb44ce.svg"></a>
+  <a href="https://aclanthology.org/2026.lrec-1.533.pdf"> <img src="https://img.shields.io/badge/paper-LREC--2026-fb44ce.svg"></a>
 </div>
 
 <div align="center">
@@ -348,7 +348,7 @@ This project is published under the AGPL-3.0 [license](/LICENSE).
 # Cite
 If you want to use the project please quote this as follows:
 
-Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. "Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer". In *Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)*, pages 6695–6705, Palma de Mallorca, Spain. ELRA Language Resource Association. [DOI 10.63317/5ce2aaity4yz](https://doi.org/10.63317/5ce2aaity4yz), [PDF](https://aclanthology.org/2026.lrec-1.533.pdf).
+Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander Mehler. 2026. "Towards the Generation and Application of Dynamic Web-Based Visualization of UIMA-based Annotations for Big-Data Corpora with the Help of Unified Dynamic Annotation Visualizer". In *Proceedings of the Fifteenth Language Resources and Evaluation Conference (LREC 2026)*, pages 6695–6705, Palma, Mallorca, Spain. European Language Resources Association (ELRA). [DOI 10.63317/5ce2aaity4yz](https://doi.org/10.63317/5ce2aaity4yz), [PDF](https://aclanthology.org/2026.lrec-1.533.pdf).
 
 ## BibTeX
 ```bib
@@ -363,8 +363,8 @@ Thiemo Dahmann, Julian Schneider, Philipp Stephan, Giuseppe Abrami and Alexander
   author    = {Dahmann, Thiemo and Schneider, Julian and Stephan, Philipp and Abrami, Giuseppe
                and Mehler, Alexander},
   month     = may,
-  address   = {Palma de Mallorca, Spain},
-  publisher = {ELRA Language Resource Association},
+  address   = {Palma, Mallorca, Spain},
+  publisher = {European Language Resources Association (ELRA)},
   editor    = {Piperidis, Stelios and Bel, N{\'u}ria and van den Heuvel, Henk and Ide, Nancy
                and Krek, Simon and Toral, Antonio},
   doi       = {10.63317/5ce2aaity4yz},
