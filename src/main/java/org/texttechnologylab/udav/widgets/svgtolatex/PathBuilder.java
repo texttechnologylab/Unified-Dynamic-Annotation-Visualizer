@@ -1,8 +1,7 @@
 package org.texttechnologylab.udav.widgets.svgtolatex;
 
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 
 import static org.texttechnologylab.udav.widgets.svgtolatex.ParseUtils.*;
 import static org.texttechnologylab.udav.widgets.svgtolatex.TransformUtils.*;
@@ -10,9 +9,19 @@ import static org.texttechnologylab.udav.widgets.svgtolatex.TransformUtils.*;
 /**
  * Converts SVG path {@code d} strings into TikZ path strings.
  * <p>
- * Supported commands: M m  L l  H h  V v  Z z  C c  S s  A a
+ * Supported commands: M m  L l  H h  V v  Z z  C c  S s  Q q  T t  A a
+ * <p>
+ * TikZ has no quadratic segment, so Q/q/T/t are raised to the equivalent cubic,
+ * see {@link #appendQuadratic}.
  */
 public class PathBuilder {
+
+    /** Previous command drew no curve, so S/T have nothing to reflect. */
+    private static final int PREV_NONE = 0;
+    /** Previous command was C/c/S/s; only S may reflect its control point. */
+    private static final int PREV_CUBIC = 1;
+    /** Previous command was Q/q/T/t; only T may reflect its control point. */
+    private static final int PREV_QUAD = 2;
 
     private final ConversionContext ctx;
 
@@ -30,10 +39,13 @@ public class PathBuilder {
         double cx = 0, cy = 0;
         double startX = 0, startY = 0;
         double lastCtrlX = 0, lastCtrlY = 0;
-        boolean lastWasCubic = false;
+        // Which kind of curve the previous command was. S may only reflect a preceding
+        // cubic's control point and T only a preceding quadratic's; after anything else
+        // the reflected control point collapses onto the current point.
+        int prevCurve = PREV_NONE;
         boolean firstSeg = true;
 
-        Matcher m = Pattern.compile("([MmLlHhVvZzCcSsAa])([^MmLlHhVvZzCcSsAa]*)").matcher(d);
+        Matcher m = Pattern.compile("([MmLlHhVvZzCcSsQqTtAa])([^MmLlHhVvZzCcSsQqTtAa]*)").matcher(d);
         while (m.find()) {
             char cmd  = m.group(1).charAt(0);
             double[] a = parseNumbers(m.group(2));
@@ -49,7 +61,7 @@ public class PathBuilder {
                         cx = a[i]; cy = a[i+1];
                         sb.append(" -- ").append(tikzPt(ctm, cx, cy));
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'm': {
@@ -62,7 +74,7 @@ public class PathBuilder {
                         cx += a[i]; cy += a[i+1];
                         sb.append(" -- ").append(tikzPt(ctm, cx, cy));
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'L': {
@@ -70,7 +82,7 @@ public class PathBuilder {
                         cx = a[i]; cy = a[i+1];
                         sb.append(" -- ").append(tikzPt(ctm, cx, cy));
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'l': {
@@ -78,33 +90,33 @@ public class PathBuilder {
                         cx += a[i]; cy += a[i+1];
                         sb.append(" -- ").append(tikzPt(ctm, cx, cy));
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'H': {
                     for (double v : a) { cx = v; sb.append(" -- ").append(tikzPt(ctm, cx, cy)); }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'h': {
                     for (double v : a) { cx += v; sb.append(" -- ").append(tikzPt(ctm, cx, cy)); }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'V': {
                     for (double v : a) { cy = v; sb.append(" -- ").append(tikzPt(ctm, cx, cy)); }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'v': {
                     for (double v : a) { cy += v; sb.append(" -- ").append(tikzPt(ctm, cx, cy)); }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'Z': case 'z': {
                     sb.append(" -- cycle");
                     cx = startX; cy = startY;
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'C': {
@@ -118,7 +130,7 @@ public class PathBuilder {
                                 ctx.toX(w1[0]),ctx.toY(w1[1]), ctx.toX(w2[0]),ctx.toY(w2[1]), ctx.toX(we[0]),ctx.toY(we[1])));
                         lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y;
                     }
-                    lastWasCubic = true;
+                    prevCurve = PREV_CUBIC;
                     break;
                 }
                 case 'c': {
@@ -132,34 +144,66 @@ public class PathBuilder {
                                 ctx.toX(w1[0]),ctx.toY(w1[1]), ctx.toX(w2[0]),ctx.toY(w2[1]), ctx.toX(we[0]),ctx.toY(we[1])));
                         lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y;
                     }
-                    lastWasCubic = true;
+                    prevCurve = PREV_CUBIC;
                     break;
                 }
                 case 'S': {
                     for (int i = 0; i + 3 < a.length; i += 4) {
-                        double x1 = lastWasCubic ? 2*cx - lastCtrlX : cx;
-                        double y1 = lastWasCubic ? 2*cy - lastCtrlY : cy;
+                        double x1 = prevCurve == PREV_CUBIC ? 2*cx - lastCtrlX : cx;
+                        double y1 = prevCurve == PREV_CUBIC ? 2*cy - lastCtrlY : cy;
                         double x2 = a[i], y2 = a[i+1];
                         double x  = a[i+2], y = a[i+3];
                         double[] w1 = applyMtxAbs(ctm,x1,y1), w2 = applyMtxAbs(ctm,x2,y2), we = applyMtxAbs(ctm,x,y);
                         sb.append(String.format(Locale.US,
                                 ".. controls (%.4f, %.4f) and (%.4f, %.4f) .. (%.4f, %.4f)",
                                 ctx.toX(w1[0]),ctx.toY(w1[1]), ctx.toX(w2[0]),ctx.toY(w2[1]), ctx.toX(we[0]),ctx.toY(we[1])));
-                        lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y; lastWasCubic = true;
+                        lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y; prevCurve = PREV_CUBIC;
                     }
                     break;
                 }
                 case 's': {
                     for (int i = 0; i + 3 < a.length; i += 4) {
-                        double x1 = lastWasCubic ? 2*cx - lastCtrlX : cx;
-                        double y1 = lastWasCubic ? 2*cy - lastCtrlY : cy;
+                        double x1 = prevCurve == PREV_CUBIC ? 2*cx - lastCtrlX : cx;
+                        double y1 = prevCurve == PREV_CUBIC ? 2*cy - lastCtrlY : cy;
                         double x2 = cx+a[i], y2 = cy+a[i+1];
                         double x  = cx+a[i+2], y = cy+a[i+3];
                         double[] w1 = applyMtxAbs(ctm,x1,y1), w2 = applyMtxAbs(ctm,x2,y2), we = applyMtxAbs(ctm,x,y);
                         sb.append(String.format(Locale.US,
                                 ".. controls (%.4f, %.4f) and (%.4f, %.4f) .. (%.4f, %.4f)",
                                 ctx.toX(w1[0]),ctx.toY(w1[1]), ctx.toX(w2[0]),ctx.toY(w2[1]), ctx.toX(we[0]),ctx.toY(we[1])));
-                        lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y; lastWasCubic = true;
+                        lastCtrlX = x2; lastCtrlY = y2; cx = x; cy = y; prevCurve = PREV_CUBIC;
+                    }
+                    break;
+                }
+                case 'Q': case 'q': {
+                    boolean rel = cmd == 'q';
+                    for (int i = 0; i + 3 < a.length; i += 4) {
+                        double qx = rel ? cx + a[i]   : a[i];
+                        double qy = rel ? cy + a[i+1] : a[i+1];
+                        double x  = rel ? cx + a[i+2] : a[i+2];
+                        double y  = rel ? cy + a[i+3] : a[i+3];
+                        appendQuadratic(sb, ctm, cx, cy, qx, qy, x, y);
+                        // T reflects the quadratic control point, so remember q, not the
+                        // elevated cubic's second control point.
+                        lastCtrlX = qx; lastCtrlY = qy; cx = x; cy = y;
+                        prevCurve = PREV_QUAD;
+                    }
+                    break;
+                }
+                case 'T': case 't': {
+                    boolean rel = cmd == 't';
+                    for (int i = 0; i + 1 < a.length; i += 2) {
+                        // With no preceding quadratic there is nothing to reflect: the
+                        // control point is the current point and the segment degenerates
+                        // to a straight line, as the spec requires.
+                        double qx = prevCurve == PREV_QUAD ? 2*cx - lastCtrlX : cx;
+                        double qy = prevCurve == PREV_QUAD ? 2*cy - lastCtrlY : cy;
+                        double x  = rel ? cx + a[i]   : a[i];
+                        double y  = rel ? cy + a[i+1] : a[i+1];
+                        appendQuadratic(sb, ctm, cx, cy, qx, qy, x, y);
+                        lastCtrlX = qx; lastCtrlY = qy; cx = x; cy = y;
+                        // Set inside the loop so a repeated T chains off its own control point.
+                        prevCurve = PREV_QUAD;
                     }
                     break;
                 }
@@ -174,7 +218,7 @@ public class PathBuilder {
                         sb.append(svgArcToBezier(ws[0], ws[1], rx2, ry2, a[i+2], la, sw, we[0], we[1]));
                         cx = ex; cy = ey;
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
                 case 'a': {
@@ -188,12 +232,50 @@ public class PathBuilder {
                         sb.append(svgArcToBezier(ws[0], ws[1], rx2, ry2, a[i+2], la, sw, we[0], we[1]));
                         cx = ex; cy = ey;
                     }
-                    lastWasCubic = false; lastCtrlX = cx; lastCtrlY = cy;
+                    prevCurve = PREV_NONE; lastCtrlX = cx; lastCtrlY = cy;
                     break;
                 }
             }
         }
         return sb.toString();
+    }
+
+    // -----------------------------------------------------------------------
+    // Quadratic to cubic
+    // -----------------------------------------------------------------------
+
+    /**
+     * Appends one quadratic Bézier as the cubic that draws the same curve.
+     * <p>
+     * Degree elevation from quadratic to cubic is exact:
+     * <pre>
+     *   C1 = P0 + 2/3 * (Q - P0)
+     *   C2 = P2 + 2/3 * (Q - P2)
+     * </pre>
+     * Using Q for both control points would draw a different curve. Elevation is
+     * affine-invariant, so the control points are computed in local space and then
+     * mapped through the CTM.
+     *
+     * @param x0 current point, the segment's start
+     * @param qx the quadratic control point
+     * @param x  the segment's end point
+     */
+    private void appendQuadratic(StringBuilder sb, double[] ctm,
+                                 double x0, double y0, double qx, double qy, double x, double y) {
+        final double TWO_THIRDS = 2.0 / 3.0;
+        double c1x = x0 + TWO_THIRDS * (qx - x0);
+        double c1y = y0 + TWO_THIRDS * (qy - y0);
+        double c2x = x  + TWO_THIRDS * (qx - x);
+        double c2y = y  + TWO_THIRDS * (qy - y);
+
+        double[] w1 = applyMtxAbs(ctm, c1x, c1y);
+        double[] w2 = applyMtxAbs(ctm, c2x, c2y);
+        double[] we = applyMtxAbs(ctm, x, y);
+        sb.append(String.format(Locale.US,
+                ".. controls (%.4f, %.4f) and (%.4f, %.4f) .. (%.4f, %.4f)",
+                ctx.toX(w1[0]), ctx.toY(w1[1]),
+                ctx.toX(w2[0]), ctx.toY(w2[1]),
+                ctx.toX(we[0]), ctx.toY(we[1])));
     }
 
     // -----------------------------------------------------------------------

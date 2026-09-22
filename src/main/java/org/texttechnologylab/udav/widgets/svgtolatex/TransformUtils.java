@@ -72,8 +72,8 @@ public final class TransformUtils {
     // -----------------------------------------------------------------------
 
     /**
-     * Parse any SVG transform string (translate, scale, rotate, matrix, or
-     * combinations thereof) into a single 6-element affine matrix.
+     * Parse any SVG transform string (translate, scale, rotate, skewX, skewY,
+     * matrix, or combinations thereof) into a single 6-element affine matrix.
      * Multiple transforms are composed left-to-right (first applied first).
      */
     public static double[] parseTransformMtx(String transform) {
@@ -114,6 +114,17 @@ public final class TransformUtils {
                     } else {
                         mtx = new double[]{cos, sin, -sin, cos, 0, 0};
                     }
+                    break;
+                }
+                case "skewX": {
+                    // The shear factor is the tangent of the angle, not the angle.
+                    double ang = n.length >= 1 ? Math.toRadians(n[0]) : 0;
+                    mtx = new double[]{1, 0, Math.tan(ang), 1, 0, 0};
+                    break;
+                }
+                case "skewY": {
+                    double ang = n.length >= 1 ? Math.toRadians(n[0]) : 0;
+                    mtx = new double[]{1, Math.tan(ang), 0, 1, 0, 0};
                     break;
                 }
                 default: mtx = identityMtx();

@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.texttechnologylab.udav.api.export.ExportMetricsSnapshot;
 import org.texttechnologylab.udav.api.service.BrowserExportService;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -62,7 +64,7 @@ public class BrowserExportController {
 
         if (result.files.size() == 1) {
             BrowserExportService.ExportedFile file = result.files.getFirst();
-            return ResponseEntity.ok()
+            return withMetricsHeader(ResponseEntity.ok(), result.metrics, file.content.length)
                     .header(HttpHeaders.CONTENT_TYPE, file.contentType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.name + "\"")
                     .body(file.content);
@@ -70,7 +72,7 @@ public class BrowserExportController {
 
         byte[] zip = zipFiles(result.files, null, null);
         String filename = safeFilename(result.widget.title != null ? result.widget.title : result.widget.id) + "-export.zip";
-        return ResponseEntity.ok()
+        return withMetricsHeader(ResponseEntity.ok(), result.metrics, zip.length)
                 .header(HttpHeaders.CONTENT_TYPE, "application/zip")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(zip);
@@ -105,10 +107,24 @@ public class BrowserExportController {
         byte[] zip = zipFiles(result.files, result.failures, pipelineId);
         String filename = safeFilename(pipelineId) + "-" + safeFilename(format) + "-exports.zip";
 
-        return ResponseEntity.ok()
+        return withMetricsHeader(ResponseEntity.ok(), result.metrics, zip.length)
                 .header(HttpHeaders.CONTENT_TYPE, "application/zip")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(zip);
+    }
+
+    /**
+     * Header carrying the request's measurements. Only present when
+     * {@code app.export.metrics.enabled} is set; the evaluation harness reads it.
+     */
+    public static final String METRICS_HEADER = "X-UDAV-Export-Metrics";
+
+    private static ResponseEntity.BodyBuilder withMetricsHeader(
+            ResponseEntity.BodyBuilder builder, ExportMetricsSnapshot metrics, long zipBytes) {
+        if (metrics != null) {
+            builder.header(METRICS_HEADER, metrics.withZipBytes(zipBytes).toJson());
+        }
+        return builder;
     }
 
     private byte[] zipFiles(
@@ -116,9 +132,15 @@ public class BrowserExportController {
             List<BrowserExportService.ExportFailure> failures,
             String pipelineId
     ) throws Exception {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        // Pre-size the buffer. ByteArrayOutputStream doubles from 32 bytes, so a 60 MB export
+        // would otherwise perform ~21 reallocations and copy ~120 MB of transient garbage.
+        long payloadBytes = files.stream().mapToLong(file -> file.content.length).sum();
+        int estimated = (int) Math.min(payloadBytes + 8192L, Integer.MAX_VALUE - 8);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(estimated);
         try (ZipOutputStream zip = new ZipOutputStream(outputStream)) {
             int index = 0;
+            int level = -2;
             for (BrowserExportService.ExportedFile file : files) {
                 String entryName = String.format(
                         Locale.ROOT,
@@ -126,9 +148,24 @@ public class BrowserExportController {
                         index++,
                         safeFilename(file.name)
                 );
+
+                // PNG payloads are already deflate-compressed; re-deflating them at the default
+                // level burns CPU for ~0% gain. Text payloads (svg/tex/csv/json) still compress well.
+                int wanted = isAlreadyCompressed(file.contentType)
+                        ? Deflater.BEST_SPEED
+                        : Deflater.DEFAULT_COMPRESSION;
+                if (wanted != level) {
+                    zip.setLevel(wanted);
+                    level = wanted;
+                }
+
                 zip.putNextEntry(new ZipEntry(entryName));
                 zip.write(file.content);
                 zip.closeEntry();
+            }
+
+            if (level != Deflater.DEFAULT_COMPRESSION) {
+                zip.setLevel(Deflater.DEFAULT_COMPRESSION);
             }
 
             if (failures != null && !failures.isEmpty()) {
@@ -149,6 +186,10 @@ public class BrowserExportController {
             }
         }
         return outputStream.toByteArray();
+    }
+
+    private static boolean isAlreadyCompressed(String contentType) {
+        return contentType != null && contentType.startsWith("image/");
     }
 
     private static String safeFilename(String input) {

@@ -353,12 +353,16 @@ public class DataService {
             }
 
             if ("csv".equals(format)) {
-                String csv;
-                try {
-                    Widget widget = Widget.constructWidget(chartType);
-                    csv = widget.toCsv(payload);
-                    if (csv == null) throw new IllegalStateException("Null widget CSV");
-                } catch (Exception ignored) {
+                String csv = Widget.tryConstructWidget(chartType)
+                        .map(widget -> {
+                            try {
+                                return widget.toCsv(payload);
+                            } catch (Exception ignored) {
+                                return null;
+                            }
+                        })
+                        .orElse(null);
+                if (csv == null) {
                     JsonToCsvConverter converter = new JsonToCsvConverter(mapper);
                     csv = converter.convert(data);
                 }
@@ -366,12 +370,16 @@ public class DataService {
             }
 
             if ("tex".equals(format)) {
-                String tex;
-                try {
-                    Widget widget = Widget.constructWidget(chartType);
-                    tex = widget.toTex(payload);
-                    if (tex == null) throw new IllegalStateException("Null widget TEX");
-                } catch (Exception ignored) {
+                String tex = Widget.tryConstructWidget(chartType)
+                        .map(widget -> {
+                            try {
+                                return widget.toTex(payload);
+                            } catch (Exception ignored) {
+                                return null;
+                            }
+                        })
+                        .orElse(null);
+                if (tex == null) {
                     tex = "% TEX export is not available for this widget without SVG source.\n";
                 }
                 return tex.getBytes(StandardCharsets.UTF_8);

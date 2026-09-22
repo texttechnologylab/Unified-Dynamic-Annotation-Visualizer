@@ -1,9 +1,7 @@
 package org.texttechnologylab.udav.widgets.svgtolatex;
 
 import org.w3c.dom.Element;
-
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static org.texttechnologylab.udav.widgets.svgtolatex.ParseUtils.*;
 import static org.texttechnologylab.udav.widgets.svgtolatex.TransformUtils.*;

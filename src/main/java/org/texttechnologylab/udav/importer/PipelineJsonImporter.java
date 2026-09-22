@@ -2,6 +2,7 @@ package org.texttechnologylab.udav.importer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
@@ -124,7 +125,7 @@ public class PipelineJsonImporter implements ApplicationRunner {
 
                 LOGGER.info("Pipeline with name {} and id {} has been inserted.", pipelineName, pipelineIdOriginal);
 
-                sourceBuildService.startBuild(pipelineIdOriginal, pipelineIdOriginal);
+                buildAfterImport(pipelineIdOriginal);
                 return;
             }
 
@@ -148,8 +149,8 @@ public class PipelineJsonImporter implements ApplicationRunner {
                 LOGGER.info("Pipeline with id {} has been {} from file {}.", pipelineIdOriginal,
                         updated == 1 ? "updated" : "not updated", pipelineName);
 
-                // 🔧 build sources for this pipeline in this schema
-                sourceBuildService.startBuild(pipelineIdOriginal, pipelineIdOriginal);
+                // build sources for this pipeline in this schema
+                buildAfterImport(pipelineIdOriginal);
                 return;
             }
 
@@ -157,15 +158,29 @@ public class PipelineJsonImporter implements ApplicationRunner {
             String uniqueId = ensureUniquePipelineId(dsl, T, F_ID, pipelineIdOriginal);
             dsl.insertInto(T)
                     .columns(F_NAME, F_JSON, F_ID)
-                    .values(pipelineName, canonicalJson, uniqueId)
+                    .values(pipelineName, withPipelineId(canonicalJson, uniqueId), uniqueId)
                     .execute();
 
             LOGGER.info("Inserted duplicate pipeline as id={} (original id {}, file {})", uniqueId, pipelineIdOriginal, pipelineName);
 
-            sourceBuildService.startBuild(uniqueId, uniqueId);
+            buildAfterImport(uniqueId);
 
         } catch (Exception e) {
             LOGGER.error("Failed to import pipeline from file {}: {}", p.getFileName(), e.getMessage());
+        }
+    }
+
+    /**
+     * Builds the generator data of a pipeline that was just stored. A failed build is not a failed
+     * import: the row is there, SourceBuildService has already logged why the data could not be
+     * built (typically annotations that are not imported yet), and MissingSchemaScanner retries
+     * pipelines without data at the next start.
+     */
+    private void buildAfterImport(String pipelineId) {
+        try {
+            sourceBuildService.startBuild(pipelineId, pipelineId);
+        } catch (RuntimeException e) {
+            LOGGER.info("Pipeline {} is stored; its data is built at the next start once the required annotations exist.", pipelineId);
         }
     }
 
@@ -256,6 +271,22 @@ public class PipelineJsonImporter implements ApplicationRunner {
     private String canonicalize(String json) throws Exception {
         JsonNode node = mapper.readTree(json);
         return mapper.writeValueAsString(node);
+    }
+
+    /**
+     * Sets the id inside the pipeline JSON. The view page, the editor and the data API read the
+     * pipeline id from the JSON, not from the row, so a duplicate stored under a fresh row id has
+     * to carry that id inside as well. Otherwise its widgets query the original pipeline's schema
+     * and come up empty.
+     */
+    String withPipelineId(String json, String pipelineId) throws Exception {
+        JsonNode root = mapper.readTree(json);
+        JsonNode pipelineNode = root.has("pipelines") ? root.get("pipelines").get(0) : root;
+        if (!(pipelineNode instanceof ObjectNode pipelineObject)) {
+            throw new IllegalArgumentException("Invalid pipeline JSON: pipeline entry is not an object.");
+        }
+        pipelineObject.put("id", pipelineId);
+        return mapper.writeValueAsString(root);
     }
 
     private record ParsedPipeline(String canonicalJson, String pipelineId, String pipelineName) {

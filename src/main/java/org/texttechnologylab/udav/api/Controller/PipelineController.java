@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.texttechnologylab.udav.api.service.PipelineService;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -45,14 +44,14 @@ public class PipelineController {
 
     // Create new pipeline
     @PostMapping
-    public ResponseEntity<JsonNode> create(@Valid @RequestBody JsonNode json) throws Exception {
+    public ResponseEntity<JsonNode> create(@RequestBody JsonNode json) throws Exception {
         service.create(json);
         return ResponseEntity.ok(json);
     }
 
     // Update/replace JSON of an existing pipeline
     @PutMapping()
-    public ResponseEntity<JsonNode> update(@Valid @RequestBody JsonNode json) throws Exception {
+    public ResponseEntity<JsonNode> update(@RequestBody JsonNode json) throws Exception {
         service.update(json);
         return ResponseEntity.ok(json);
     }

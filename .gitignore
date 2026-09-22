@@ -32,3 +32,14 @@ replay_pid*
 .env
 .env.*
 !.env.example
+
+# IDE settings
+.idea/
+
+# Local-only material: paper drafts, manual test exports, fresh evaluation reports
+docs/
+exports/
+batch-api/
+/evaluation-report*.txt
+
+/vectikz/

@@ -9,7 +9,9 @@ import org.texttechnologylab.udav.generators.common_properties.CommonFeatureCate
 import org.texttechnologylab.udav.generators.common_properties.CommonProperties;
 import org.texttechnologylab.udav.generators.settings.FilterList;
 import org.texttechnologylab.udav.generators.settings.GeneratorSettings;
+import org.texttechnologylab.udav.generators.sources.JsonSourceSupport;
 import org.texttechnologylab.udav.generators.sources.SourceDerived;
+import org.texttechnologylab.udav.generators.sources.SourceJson;
 import org.texttechnologylab.udav.generators.sources.SourceUIMA;
 import org.texttechnologylab.udav.pipeline.JSONView;
 import org.texttechnologylab.udav.sources.DBAccess;
@@ -27,6 +29,9 @@ public class CategoryNumber extends GeneratorUIMA {
     private Map<String, Feature> mapFileToRootFeatures;
 
     private CommonFeatureCategoryColors commonFeatureCategoryColors;
+
+    /** Colours given explicitly by a JSON source or its settings; they win over the shared palette. */
+    private Map<String, Color> explicitCategoryColors;
 
     public CategoryNumber(String id, JSONView configGenerator, JSONView configBundle, GeneratorSettings settingsBundle, DBAccess dbAccess) {
         super(id, configGenerator, configBundle, settingsBundle, dbAccess);
@@ -99,9 +104,119 @@ public class CategoryNumber extends GeneratorUIMA {
                 Feature newFeature = new Feature(tempFeatureName, entries, singleColor);
                 mapFileToRootFeatures.put(file, newFeature);
             }
+        } else if (source instanceof SourceJson sourceJson) {
+            // JSON generator:
+            setupFromJson(sourceJson);
         } else {
             throw new IllegalArgumentException("Unsupported source for generator \"" + id + "\".");
         }
+    }
+
+    /**
+     * Category numbers from a JSON source. Three document shapes are accepted:
+     * <ul>
+     *   <li>{@code {"NOUN": 12, "VERB": 7}} - one file (the source file name, or the {@code file}
+     *       setting), category to number;</li>
+     *   <li>{@code {"doc-1": {"NOUN": 12, ...}, "doc-2": {...}}} - file to category to number;</li>
+     *   <li>a list of rows {@code [{"category": "NOUN", "number": 12, "file": "doc-1", "color": "#hex"}, ...]},
+     *       optionally renamed through the {@code keys}/{@code keysMap}/{@code fixedKeys} grammar
+     *       that {@code MapCoordinates} uses.</li>
+     * </ul>
+     * Colours come from a row's {@code color} field, from a {@code colors} setting
+     * ({@code {"NOUN": "#4e79a7", ...}}), from the single {@code color} setting, or otherwise from
+     * the palette shared with the other generators of the same source. The {@code files} and
+     * {@code categories} white/blacklists apply exactly as for UIMA sources.
+     */
+    private void setupFromJson(SourceJson sourceJson) {
+        String featureName = settings.getStringSettingOrDefault("featureName", "category");
+        Color singleColor = JsonSourceSupport.color(settings.getStringSettingOrDefault("color", null));
+        String defaultFile = JsonSourceSupport.defaultFileLabel(sourceJson, settings);
+        Map<String, Map<String, Double>> perFile = new LinkedHashMap<>();
+        Map<String, Color> colors = new HashMap<>();
+
+        JSONView root = sourceJson.getSingleFileJSONView();
+        boolean mapped = JsonSourceSupport.nonEmpty(settings.getMapSetting("keys"))
+                || JsonSourceSupport.nonEmpty(settings.getMapSetting("keysMap"));
+        if (root.isMap() && !mapped) {
+            Map<String, Object> document = root.asMap();
+            boolean nested = document.values().stream().anyMatch(v -> v instanceof Map<?, ?>);
+            if (nested) {
+                for (Map.Entry<String, Object> fileEntry : document.entrySet()) {
+                    if (!(fileEntry.getValue() instanceof Map<?, ?> categories)) continue;
+                    Map<String, Double> numbers = perFile.computeIfAbsent(fileEntry.getKey(), k -> new LinkedHashMap<>());
+                    categories.forEach((category, value) -> {
+                        Double number = JsonSourceSupport.number(value);
+                        if (number != null) numbers.merge(String.valueOf(category), number, Double::sum);
+                    });
+                }
+            } else {
+                Map<String, Double> numbers = perFile.computeIfAbsent(defaultFile, k -> new LinkedHashMap<>());
+                document.forEach((category, value) -> {
+                    Double number = JsonSourceSupport.number(value);
+                    if (number != null) numbers.merge(category, number, Double::sum);
+                });
+            }
+        } else {
+            for (Map<String, Object> row : JsonSourceSupport.rows(sourceJson, settings)) {
+                String category = JsonSourceSupport.string(row.get("category"));
+                Double number = JsonSourceSupport.number(row.get("number"));
+                if (category == null || number == null) continue;
+                String file = JsonSourceSupport.string(row.get("file"));
+                perFile.computeIfAbsent(file == null ? defaultFile : file, k -> new LinkedHashMap<>())
+                        .merge(category, number, Double::sum);
+                Color rowColor = JsonSourceSupport.color(row.get("color"));
+                if (rowColor != null) colors.putIfAbsent(category, rowColor);
+            }
+        }
+        colors.putAll(JsonSourceSupport.colorMap(settings.getMapSettingOrDefault("colors", null)));
+
+        // files filter: same universal-set mechanism as the UIMA branch
+        settings.defineFilterListUniversalSetString("files", perFile.keySet());
+        Set<String> allowedFiles = settings.generateStringFilterList("files").getWhitelist();
+        if (allowedFiles != null) perFile.keySet().retainAll(allowedFiles);
+        this.sourceFiles = new HashSet<>(perFile.keySet());
+
+        // categories filter
+        FilterList<String> filterListCategories = settings.generateStringFilterList("categories");
+        for (Map<String, Double> numbers : perFile.values()) {
+            numbers.keySet().removeIf(category -> !JsonSourceSupport.categoryAllowed(filterListCategories, category));
+        }
+        perFile.values().removeIf(Map::isEmpty);
+        if (perFile.isEmpty()) {
+            throw new IllegalStateException("JSON source \"" + sourceJson.getSingleFileName()
+                    + "\" holds no category numbers for generator \"" + id + "\" (after filtering).");
+        }
+
+        commonFeatureCategoryColors.addFeatureToCategoryCountMap(featureName, calculateTotalFromCategoryCountMap(perFile));
+        tempFeatureName = featureName;
+        features = new String[]{featureName};
+        mapFileToRootFeatures = new HashMap<>();
+        for (Map.Entry<String, Map<String, Double>> fileEntry : perFile.entrySet()) {
+            Map<String, Entry> entries = new HashMap<>();
+            for (Map.Entry<String, Double> e : fileEntry.getValue().entrySet()) {
+                entries.put(e.getKey(), new Entry(e.getKey(), e.getValue(), null));
+            }
+            mapFileToRootFeatures.put(fileEntry.getKey(), new Feature(featureName, entries, singleColor));
+        }
+        explicitCategoryColors = colors.isEmpty() ? null : colors;
+    }
+
+    /** What will be written: file to category to number. Exposed for tests. */
+    Map<String, Map<String, Double>> categoryNumbersPerFile() {
+        Map<String, Map<String, Double>> out = new LinkedHashMap<>();
+        if (mapFileToRootFeatures == null) return out;
+        mapFileToRootFeatures.forEach((file, feature) -> {
+            Map<String, Double> numbers = new LinkedHashMap<>();
+            feature.entries.values().forEach(e -> numbers.put(e.categoryName, e.number));
+            out.put(file, numbers);
+        });
+        return out;
+    }
+
+    /** Colour a category will be written with. Exposed for tests. */
+    Color colorFor(String category) {
+        if (explicitCategoryColors != null && explicitCategoryColors.containsKey(category)) return explicitCategoryColors.get(category);
+        return commonFeatureCategoryColors.getCategoryColorMap(features[0]).get(category);
     }
 
     @Override
@@ -182,7 +297,10 @@ public class CategoryNumber extends GeneratorUIMA {
                 Feature feature = featureEntry.getValue();
                 Color singleColor = feature.singleColor;
                 for (Entry e : feature.entries.values()) {
-                    Color colorObj = singleColor == null ? categoryColorMap.get(e.categoryName) : singleColor;
+                    Color colorObj = singleColor != null ? singleColor
+                            : explicitCategoryColors != null && explicitCategoryColors.containsKey(e.categoryName)
+                            ? explicitCategoryColors.get(e.categoryName)
+                            : categoryColorMap.getOrDefault(e.categoryName, Color.GRAY);
                     String color = String.format("#%02x%02x%02x", colorObj.getRed(), colorObj.getGreen(), colorObj.getBlue());
                     batch.add(
                             dsl.insertInto(T)

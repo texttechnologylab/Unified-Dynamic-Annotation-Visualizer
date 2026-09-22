@@ -1,0 +1,685 @@
+{
+  "id": "e0000012-0000-4000-8000-000000000012",
+  "name": "pipeline_eval-p12",
+  "sources": [
+    {
+      "uri": "points.json",
+      "settings": {},
+      "id": "Source-eval-points"
+    },
+    {
+      "uri": "eval-src-pages05.json",
+      "settings": {},
+      "id": "Source-eval-p05"
+    },
+    {
+      "uri": "eval-annotations-text.json",
+      "settings": {},
+      "id": "Source-eval-annotations-text"
+    },
+    {
+      "uri": "eval-annotations-categories.json",
+      "settings": {},
+      "id": "Source-eval-annotations-categories"
+    }
+  ],
+  "generators": [
+    {
+      "name": "Points",
+      "type": "MapCoordinates",
+      "source": "Source-eval-points",
+      "settings": {
+        "keys": {
+          "coordinates": [
+            "x",
+            "y"
+          ],
+          "test": "x"
+        },
+        "fixedKeys": {
+          "fillColor": "#000000",
+          "strokeColor": "#000000",
+          "outsideColor": "#ffffff",
+          "scale": 1
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-points"
+    },
+    {
+      "name": "Group of 5",
+      "type": "MapCoordinates",
+      "source": "Source-eval-p05",
+      "generatorGroup": true,
+      "settings": {
+        "keysMap": {
+          "1_0": {
+            "X": "coordinates@0",
+            "Y": "coordinates@1",
+            "Z_abs": "scale",
+            "colors_S": [
+              "fillColor@Red",
+              "fillColor@Green",
+              "fillColor@Blue",
+              "fillColor@Alpha"
+            ],
+            "colors_SE": [
+              "strokeColor@Red",
+              "strokeColor@Green",
+              "strokeColor@Blue",
+              "strokeColor@Alpha"
+            ]
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-p05-@ID@"
+    },
+    {
+      "name": "Annotation layers",
+      "type": "TextFormatting",
+      "source": "Source-eval-annotations-text",
+      "settings": {
+        "styles": {
+          "POS": "highlight",
+          "NamedEntity": "underline",
+          "Lemma": "bold"
+        },
+        "colors": {
+          "POS": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          },
+          "NamedEntity": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          },
+          "Lemma": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          }
+        }
+      },
+      "extends": [],
+      "id": "TextFormatting-eval-annotations"
+    },
+    {
+      "name": "Category counts",
+      "type": "CategoryNumber",
+      "source": "Source-eval-annotations-categories",
+      "settings": {
+        "colors": {
+          "NOUN": "#4e79a7",
+          "VERB": "#f28e2b",
+          "ADJ": "#e15759",
+          "ADV": "#76b7b2",
+          "PRON": "#59a14f",
+          "DET": "#edc948",
+          "ADP": "#b07aa1",
+          "NUM": "#ff9da7",
+          "CONJ": "#9c755f",
+          "PART": "#bab0ac",
+          "PUNCT": "#86bcb6",
+          "X": "#d37295"
+        }
+      },
+      "extends": [],
+      "id": "CategoryNumber-eval-annotations"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 0",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 1,
+      "id": "ScrollTable-eval000"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 1",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 1,
+      "id": "VoronoiDiagram-eval001"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 2",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 1,
+      "id": "MedialAxis-eval002"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 3",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 1,
+      "id": "LineChart-eval003"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 4",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 6,
+      "id": "VoronoiDiagram-eval004"
+    },
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 5",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 6,
+      "id": "ScrollTable-eval005"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 6",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 6,
+      "id": "MedialAxis-eval006"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 7",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 6,
+      "id": "LineChart-eval007"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 8",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 11,
+      "id": "VoronoiDiagram-eval008"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 9",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 11,
+      "id": "MedialAxis-eval009"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 10",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 11,
+      "id": "LineChart-eval010"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 11",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 11,
+      "id": "VoronoiDiagram-eval011"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 12",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 16,
+      "id": "MedialAxis-eval012"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 13",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 16,
+      "id": "LineChart-eval013"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 14",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 16,
+      "id": "VoronoiDiagram-eval014"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 15",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 16,
+      "id": "MedialAxis-eval015"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 16",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 21,
+      "id": "LineChart-eval016"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 17",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 21,
+      "id": "VoronoiDiagram-eval017"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 18",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 21,
+      "id": "MedialAxis-eval018"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 19",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 21,
+      "id": "LineChart-eval019"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 20",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 26,
+      "id": "VoronoiDiagram-eval020"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 21",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 26,
+      "id": "MedialAxis-eval021"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 22",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 26,
+      "id": "LineChart-eval022"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 23",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 26,
+      "id": "VoronoiDiagram-eval023"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 24",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 31,
+      "id": "MedialAxis-eval024"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 25",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 31,
+      "id": "LineChart-eval025"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 26",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 31,
+      "id": "VoronoiDiagram-eval026"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 27",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 31,
+      "id": "MedialAxis-eval027"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 28",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 36,
+      "id": "LineChart-eval028"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 29",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 36,
+      "id": "VoronoiDiagram-eval029"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 30",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 36,
+      "id": "MedialAxis-eval030"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 31",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 36,
+      "id": "LineChart-eval031"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 32",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 41,
+      "id": "VoronoiDiagram-eval032"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 33",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 41,
+      "id": "MedialAxis-eval033"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 34",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 41,
+      "id": "LineChart-eval034"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 35",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 41,
+      "id": "VoronoiDiagram-eval035"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 36",
+      "generator": {
+        "id": "MapCoordinates-eval-p05-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 46,
+      "id": "MedialAxis-eval036"
+    },
+    {
+      "type": "HighlightText",
+      "title": "HighlightText (annotations)",
+      "generator": {
+        "id": "TextFormatting-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 51,
+      "id": "HighlightText-eval-annotations"
+    },
+    {
+      "type": "BarChart",
+      "title": "BarChart (annotations)",
+      "generator": {
+        "id": "CategoryNumber-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 51,
+      "id": "BarChart-eval-annotations"
+    },
+    {
+      "type": "PieChart",
+      "title": "PieChart (annotations)",
+      "generator": {
+        "id": "CategoryNumber-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 51,
+      "id": "PieChart-eval-annotations"
+    }
+  ]
+}

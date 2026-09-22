@@ -3,20 +3,23 @@ package org.texttechnologylab.udav.api.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
-import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitUntilState;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import org.texttechnologylab.udav.api.browser.BrowserExecutableResolver;
+import org.texttechnologylab.udav.api.browser.BrowserProcessCpuTracker;
+import org.texttechnologylab.udav.api.browser.BrowserSession;
+import org.texttechnologylab.udav.api.browser.BrowserSessionPool;
+import org.texttechnologylab.udav.api.export.ExportMetricsSnapshot;
+import org.texttechnologylab.udav.api.export.ExportProperties;
+import org.texttechnologylab.udav.api.export.ExportScripts;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -27,15 +30,18 @@ import java.util.Objects;
 public class BrowserExportService {
 
     private static final List<String> SUPPORTED_FORMATS = List.of("svg", "png", "tex", "csv", "json");
-    private static final long EXPORT_TIMEOUT_MS = 45_000L;
-    private static final String BASE_URL = System.getenv().getOrDefault("UDAV_BASE_URL", "http://localhost:8080");
 
     private final PipelineService pipelineService;
-    private final BrowserExecutableResolver browserExecutableResolver;
+    private final BrowserSessionPool sessionPool;
+    private final ExportProperties properties;
 
-    public BrowserExportService(PipelineService pipelineService) {
+    public BrowserExportService(
+            PipelineService pipelineService,
+            BrowserSessionPool sessionPool,
+            ExportProperties properties) {
         this.pipelineService = pipelineService;
-        this.browserExecutableResolver = new BrowserExecutableResolver();
+        this.sessionPool = sessionPool;
+        this.properties = properties;
     }
 
     public WidgetExportResult exportWidget(String pipelineId, WidgetSelection selection, String format, boolean bulk) {
@@ -45,34 +51,22 @@ public class BrowserExportService {
             throw new IllegalArgumentException("Widget selection must contain at least an id or generatorId.");
         }
 
-        try {
-            try (Playwright playwright = Playwright.create()) {
-                try (Browser browser = launchBrowser(playwright)) {
-                    try (BrowserContext context = browser.newContext()) {
-                        Page page = context.newPage();
-                        openPipelinePage(page, pipelineId);
-                        ExportCapture capture = captureWidgetExport(page, selection, normalizedFormat, bulk);
-                        if (capture.error != null) {
-                            return WidgetExportResult.failed(selection, capture.error);
-                        }
-                        return WidgetExportResult.success(selection, capture.files);
-                    }
-                }
-            }
-        } catch (ResponseStatusException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Headless widget export failed: " + rootCauseMessage(ex),
-                    ex
-            );
+        ExportRun run = execute(pipelineId, List.of(selection), normalizedFormat, bulk, "widget");
+        if (!run.failures().isEmpty()) {
+            return WidgetExportResult.failed(selection, run.failures().getFirst().error, run.metrics());
         }
+        return WidgetExportResult.success(selection, run.files(), run.metrics());
     }
 
     public PipelineExportResult exportPipeline(String pipelineId, String format, boolean bulk) {
         String normalizedFormat = normalizeFormat(format);
+        List<WidgetSelection> generatorWidgets = generatorWidgets(pipelineId);
 
+        ExportRun run = execute(pipelineId, generatorWidgets, normalizedFormat, bulk, "pipeline");
+        return new PipelineExportResult(pipelineId, normalizedFormat, run.files(), run.failures(), run.metrics());
+    }
+
+    private List<WidgetSelection> generatorWidgets(String pipelineId) {
         JsonNode pipeline;
         try {
             pipeline = pipelineService.get(pipelineId);
@@ -85,12 +79,12 @@ public class BrowserExportService {
                     ex
             );
         }
-        JsonNode widgets = pipeline.path("widgets");
+
         List<WidgetSelection> generatorWidgets = new ArrayList<>();
+        JsonNode widgets = pipeline.path("widgets");
         if (widgets.isArray()) {
             for (JsonNode widget : widgets) {
-                JsonNode generator = widget.path("generator");
-                String generatorId = textOrNull(generator.path("id"));
+                String generatorId = textOrNull(widget.path("generator").path("id"));
                 if (generatorId == null) {
                     continue;
                 }
@@ -103,230 +97,241 @@ public class BrowserExportService {
                 generatorWidgets.add(selection);
             }
         }
+        return generatorWidgets;
+    }
 
-        List<ExportedFile> files = new ArrayList<>();
-        List<ExportFailure> failures = new ArrayList<>();
+    /**
+     * Runs one export against a pooled browser session.
+     *
+     * <p>The browser and driver come from {@link BrowserSessionPool} and outlive the request; the
+     * context and page do not, which keeps each export isolated. All Playwright calls happen inside
+     * {@link BrowserSession#call} so they run on the session's owning thread.
+     */
+    private ExportRun execute(
+            String pipelineId, List<WidgetSelection> selections, String format, boolean bulk, String scope) {
+
+        ExportRun[] completed = new ExportRun[1];
+        BatchExportMetrics metrics = new BatchExportMetrics(pipelineId, format, scope);
+        metrics.setEnabled(properties.getMetrics().isEnabled());
+        metrics.setConcurrency(effectiveConcurrency(selections.size()));
+        metrics.setViewport(properties.getViewportWidth(), properties.getViewportHeight());
+        metrics.start();
 
         try {
-            try (Playwright playwright = Playwright.create()) {
-                try (Browser browser = launchBrowser(playwright)) {
-                    try (BrowserContext context = browser.newContext(
-                            new Browser.NewContextOptions().setViewportSize(1600, 1000)
-                    )) {
-                        Page page = context.newPage();
-                        openPipelinePage(page, pipelineId);
+            completed[0] = sessionPool.withSession(session -> {
+                long borrowedAtNs = System.nanoTime();
+                boolean reused = session.browser() != null;
+                session.ensureStarted();
+                metrics.setSessionReused(reused);
 
-                        for (WidgetSelection selection : generatorWidgets) {
-                            try {
-                                ExportCapture capture = captureWidgetExport(page, selection, normalizedFormat, bulk);
-                                if (capture.error != null) {
-                                    failures.add(new ExportFailure(selection, capture.error));
-                                    continue;
-                                }
-                                files.addAll(capture.files);
-                            } catch (Exception error) {
-                                failures.add(new ExportFailure(selection, error.getMessage() != null ? error.getMessage() : error.toString()));
-                            }
+                BrowserProcessCpuTracker cpuTracker = session.cpuTracker();
+                long cpuBeforeMs = cpuTracker != null ? cpuTracker.snapshotCpuMs() : -1;
+
+                try {
+                    return session.call(() -> {
+                        Browser browser = session.browser();
+                        try (BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                                .setViewportSize(properties.getViewportWidth(), properties.getViewportHeight()))) {
+
+                            FileSink sink = new FileSink();
+                            context.exposeBinding("__udavEmitFile", (source, args) -> sink.accept(args));
+
+                            Page page = context.newPage();
+                            metrics.recordBrowserInit(borrowedAtNs);
+
+                            long pageStartNs = System.nanoTime();
+                            openPipelinePage(page, pipelineId);
+                            metrics.recordPageReady(pageStartNs);
+
+                            long exportStartNs = System.nanoTime();
+                            Object evaluated = page.evaluate(ExportScripts.RUN_ALL, runArgs(selections, format, bulk));
+                            metrics.recordExportPhase(exportStartNs);
+
+                            return collect(selections, evaluated, sink, metrics);
                         }
+                    });
+                } finally {
+                    if (cpuTracker != null && cpuBeforeMs >= 0) {
+                        metrics.recordBrowserCpu(cpuTracker.snapshotCpuMs() - cpuBeforeMs);
                     }
                 }
-            }
+            });
         } catch (ResponseStatusException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Headless pipeline export failed: " + rootCauseMessage(ex),
+                    "Headless " + scope + " export failed: " + rootCauseMessage(ex),
                     ex
             );
+        } finally {
+            metrics.finish();
+            metrics.print();
         }
 
-        return new PipelineExportResult(pipelineId, normalizedFormat, files, failures);
+        // The snapshot is attached after the try/finally: inside the try it would be taken
+        // before metrics.finish() runs and carry a bogus wall time.
+        if (completed[0] == null) {
+            return null;
+        }
+        return properties.getMetrics().isEnabled() ? completed[0].withMetrics(metrics.snapshot()) : completed[0];
     }
 
-    private Browser launchBrowser(Playwright playwright) {
-        List<Path> candidates = browserExecutableResolver.resolveCandidates();
-        if (candidates.isEmpty()) {
-            throw new IllegalStateException("No Chromium/Edge executable found.");
-        }
-
-        List<String> errors = new ArrayList<>();
-        for (Path executablePath : candidates) {
-            try {
-                BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                        .setHeadless(true)
-                        .setExecutablePath(executablePath);
-                return playwright.chromium().launch(launchOptions);
-            } catch (RuntimeException ex) {
-                errors.add(executablePath + " -> " + rootCauseMessage(ex));
-            }
-        }
-
-        try {
-            return playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-        } catch (RuntimeException ex) {
-            errors.add("playwright-managed-browser -> " + rootCauseMessage(ex));
-        }
-
-        throw new IllegalStateException("Failed to launch any browser candidate: " + String.join(" | ", errors));
+    private int effectiveConcurrency(int widgetCount) {
+        return Math.max(1, Math.min(properties.getConcurrency(), Math.max(1, widgetCount)));
     }
 
-    private void openPipelinePage(Page page, String pipelineId) {
-        String url = BASE_URL + "/view/" + URLEncoder.encode(pipelineId, StandardCharsets.UTF_8);
-        page.navigate(url);
-        page.waitForLoadState(LoadState.LOAD);
-        page.waitForTimeout(250);
-        page.evaluate("async () => {\n" +
-                "  for (let i = 0; i < 100; i++) {\n" +
-                "    if (globalThis.__UDAV_READY__ && typeof globalThis.__UDAV_READY__.then === 'function') {\n" +
-                "      await globalThis.__UDAV_READY__;\n" +
-                "      return true;\n" +
-                "    }\n" +
-                "    await new Promise((resolve) => setTimeout(resolve, 50));\n" +
-                "  }\n" +
-                "  return true;\n" +
-                "}");
-    }
-
-    private ExportCapture captureWidgetExport(Page page, WidgetSelection selection, String format, boolean bulk) {
+    private Map<String, Object> runArgs(List<WidgetSelection> selections, String format, boolean bulk) {
         Map<String, Object> args = new LinkedHashMap<>();
         args.put("format", format);
         args.put("bulk", bulk);
-        args.put("selector", selection.toMap());
-        Object evaluated = page.evaluate(exportScript(), args);
-        return ExportCapture.fromEvaluated(evaluated);
+        args.put("selectors", selections.stream().map(WidgetSelection::toMap).toList());
+        args.put("concurrency", effectiveConcurrency(selections.size()));
+        // Playwright's Java value serializer rejects Long; doubles round-trip as JS numbers.
+        args.put("timeoutMs", (double) properties.getWidgetTimeoutMs());
+        return args;
     }
 
-    private String exportScript() {
-        return """
-                async ({ format, bulk, selector }) => {
-                  async function blobToBase64(blob) {
-                    return await new Promise((resolve, reject) => {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        const value = String(reader.result || "");
-                        const comma = value.indexOf(",");
-                        resolve(comma >= 0 ? value.slice(comma + 1) : value);
-                      };
-                      reader.onerror = () => reject(reader.error || new Error("Failed to read blob as base64."));
-                      reader.readAsDataURL(blob);
-                    });
-                  }
+    private void openPipelinePage(Page page, String pipelineId) {
+        String url = properties.getBaseUrl()
+                + "/view/" + URLEncoder.encode(pipelineId, StandardCharsets.UTF_8)
+                + "?export=1";
 
-                  async function blobToFile(blob, name) {
-                    return {
-                      name,
-                      contentType: blob.type || "application/octet-stream",
-                      base64: await blobToBase64(blob),
-                    };
-                  }
+        // DOMCONTENTLOADED rather than LOAD: LOAD blocks on every subresource, including the
+        // external image/video/iframe URLs Static* widgets point at, which are never exported.
+        page.navigate(url, new Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 
-                  function selectTarget(charts, selector) {
-                    let target = null;
-                    if (selector && selector.id) {
-                      target = charts.find((chart) => chart?.config?.id === selector.id) || null;
-                    }
-                    if (!target && selector && selector.generatorId && selector.type) {
-                      target = charts.find((chart) => {
-                        return chart?.config?.generator?.id === selector.generatorId
-                          && chart?.config?.type === selector.type;
-                      }) || null;
-                    }
-                    if (!target && selector && selector.generatorId) {
-                      target = charts.find((chart) => chart?.config?.generator?.id === selector.generatorId) || null;
-                    }
-                    return target;
-                  }
+        // Explicit polling interval: waitForFunction defaults to requestAnimationFrame, which an
+        // occluded headless renderer may throttle or never fire.
+        page.waitForFunction(ExportScripts.READY_PREDICATE, null, new Page.WaitForFunctionOptions()
+                .setTimeout(properties.getReadyTimeoutMs())
+                .setPollingInterval(20));
 
-                  async function exportChart(chart) {
-                    return await new Promise((resolve) => {
-                      let settled = false;
-                      const handler = chart.exports;
-                      if (!handler || typeof handler.startExport !== 'function') {
-                        resolve({ ok: false, error: 'Widget export handler is not available.' });
-                        return;
-                      }
+        page.evaluate(ExportScripts.INSTALL);
+    }
 
-                      const originalSingle = handler.downloadSingleBlob;
-                      const originalMany = handler.downloadBlobs;
+    /**
+     * Rebuilds the result in selector order.
+     *
+     * <p>Files arrive through the binding in completion order, which under concurrency is not
+     * selector order. {@code BrowserExportController.zipFiles} names ZIP entries by list position,
+     * so returning them unsorted would rename every entry from one run to the next.
+     */
+    private ExportRun collect(
+            List<WidgetSelection> selections, Object evaluated, FileSink sink, BatchExportMetrics metrics) {
 
-                      const restore = () => {
-                        handler.downloadSingleBlob = originalSingle;
-                        handler.downloadBlobs = originalMany;
-                      };
+        List<ExportedFile> files = new ArrayList<>();
+        List<ExportFailure> failures = new ArrayList<>();
 
-                      const timer = setTimeout(() => {
-                        if (!settled) {
-                          settled = true;
-                          restore();
-                          resolve({ ok: false, error: 'Export timeout after 45 seconds.' });
-                        }
-                      }, %d);
+        Map<Integer, List<FileSink.Entry>> byWidget = sink.groupedByWidget();
+        List<Map<String, Object>> entries = manifestEntries(evaluated);
 
-                      const finish = async (files, error) => {
-                        if (settled) {
-                          return;
-                        }
-                        settled = true;
-                        clearTimeout(timer);
-                        restore();
-                        resolve(error ? { ok: false, error } : { ok: true, files });
-                      };
+        for (int index = 0; index < selections.size(); index++) {
+            WidgetSelection selection = selections.get(index);
+            Map<String, Object> entry = index < entries.size() ? entries.get(index) : null;
 
-                      handler.downloadSingleBlob = async (blob, name) => {
-                        try {
-                          const file = await blobToFile(blob, name || `${handler.filename}.${format}`);
-                          await finish([file], null);
-                        } catch (error) {
-                          await finish([], String(error));
-                        }
-                      };
+            if (entry == null) {
+                failures.add(new ExportFailure(selection, "No export result was reported for this widget."));
+                metrics.recordWidgetFailure(0, 0);
+                continue;
+            }
 
-                      handler.downloadBlobs = async (blobs, type) => {
-                        try {
-                          const files = [];
-                          for (let i = 0; i < blobs.length; i++) {
-                            const blob = blobs[i];
-                            const name = `${handler.filename}-${String(i).padStart(3, '0')}.${type}`;
-                            files.push(await blobToFile(blob, name));
-                          }
-                          await finish(files, null);
-                        } catch (error) {
-                          await finish([], String(error));
-                        }
-                      };
+            double startMs = numberValue(entry.get("startMs"));
+            double endMs = numberValue(entry.get("endMs"));
 
-                      try {
-                        handler.startExport(format, bulk);
-                      } catch (error) {
-                        finish([], String(error));
-                      }
-                    });
-                  }
+            if (!Boolean.TRUE.equals(entry.get("ok"))) {
+                String error = textValue(entry.get("error"));
+                failures.add(new ExportFailure(selection, error != null ? error : "Export failed."));
+                metrics.recordWidgetFailure(startMs, endMs);
+                continue;
+            }
 
-                  const charts = globalThis.__UDAV_VIEW_STATE__?.charts || [];
-                  const target = selectTarget(charts, selector);
+            List<FileSink.Entry> widgetFiles = byWidget.getOrDefault(index, List.of());
+            long bytes = 0;
+            for (FileSink.Entry file : widgetFiles) {
+                files.add(new ExportedFile(file.name(), file.contentType(), file.content()));
+                bytes += file.content().length;
+            }
+            metrics.recordWidget(startMs, endMs, bytes);
+        }
 
-                  if (!target) {
-                    return {
-                      ok: false,
-                      error: 'Widget not found or not generator-backed in view state.',
-                      files: [],
-                    };
-                  }
+        return new ExportRun(files, failures, null);
+    }
 
-                  const result = await exportChart(target);
-                  return {
-                    ...result,
-                    widget: {
-                      id: target?.config?.id || null,
-                      type: target?.config?.type || null,
-                      title: target?.config?.title || null,
-                      generatorId: target?.config?.generator?.id || null,
-                    },
-                  };
-                }
-                """.formatted(EXPORT_TIMEOUT_MS);
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> manifestEntries(Object evaluated) {
+        if (!(evaluated instanceof Map<?, ?> map)) {
+            return List.of();
+        }
+        Object entries = map.get("entries");
+        if (!(entries instanceof List<?> list)) {
+            return List.of();
+        }
+        List<Map<String, Object>> out = new ArrayList<>(list.size());
+        for (Object item : list) {
+            out.add(item instanceof Map<?, ?> entry ? (Map<String, Object>) entry : null);
+        }
+        return out;
+    }
+
+    /** Collects artefacts pushed out of the page by {@code __udavEmitFile}. */
+    private static final class FileSink {
+
+        record Entry(int widgetIndex, int fileIndex, String name, String contentType, byte[] content) {
+        }
+
+        private final List<Entry> entries = new ArrayList<>();
+
+        /**
+         * Invoked from Playwright's dispatch loop, which is pumped by the session thread while it
+         * is blocked inside {@code page.evaluate}. It therefore runs on that same thread and needs
+         * no synchronization, but it also blocks the pump for its whole duration, stalling every
+         * other in-flight widget export. So it does nothing beyond decoding and appending: no
+         * Playwright calls (which would deadlock), no I/O.
+         */
+        Object accept(Object... args) {
+            if (args.length == 0 || !(args[0] instanceof Map<?, ?> payload)) {
+                return null;
+            }
+
+            String name = textValue(payload.get("name"));
+            String data = textValue(payload.get("data"));
+            if (name == null || data == null) {
+                return null;
+            }
+
+            String contentType = textValue(payload.get("contentType"));
+            byte[] content = "base64".equals(textValue(payload.get("encoding")))
+                    ? Base64.getDecoder().decode(data)
+                    : data.getBytes(StandardCharsets.UTF_8);
+
+            entries.add(new Entry(
+                    (int) numberValue(payload.get("index")),
+                    (int) numberValue(payload.get("fileIndex")),
+                    name,
+                    contentType != null ? contentType : "application/octet-stream",
+                    content));
+            return null;
+        }
+
+        Map<Integer, List<Entry>> groupedByWidget() {
+            Map<Integer, List<Entry>> grouped = new LinkedHashMap<>();
+            for (Entry entry : entries) {
+                grouped.computeIfAbsent(entry.widgetIndex(), key -> new ArrayList<>()).add(entry);
+            }
+            grouped.values().forEach(list -> list.sort(Comparator.comparingInt(Entry::fileIndex)));
+            return grouped;
+        }
+    }
+
+    private record ExportRun(
+            List<ExportedFile> files,
+            List<ExportFailure> failures,
+            ExportMetricsSnapshot metrics) {
+
+        ExportRun withMetrics(ExportMetricsSnapshot snapshot) {
+            return new ExportRun(files, failures, snapshot);
+        }
     }
 
     private static String normalizeFormat(String format) {
@@ -350,6 +355,25 @@ public class BrowserExportService {
         }
         String trimmed = text.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static String textValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value);
+        return text.isBlank() || "null".equalsIgnoreCase(text) ? null : text;
+    }
+
+    private static double numberValue(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        try {
+            return value == null ? 0d : Double.parseDouble(String.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return 0d;
+        }
     }
 
     private static String rootCauseMessage(Throwable throwable) {
@@ -403,19 +427,29 @@ public class BrowserExportService {
         public final WidgetSelection widget;
         public final List<ExportedFile> files;
         public final String error;
+        /** Measurements of this request; null unless {@code app.export.metrics.enabled} is set. */
+        public final ExportMetricsSnapshot metrics;
 
-        private WidgetExportResult(WidgetSelection widget, List<ExportedFile> files, String error) {
+        private WidgetExportResult(
+                WidgetSelection widget, List<ExportedFile> files, String error, ExportMetricsSnapshot metrics) {
             this.widget = widget;
             this.files = files;
             this.error = error;
+            this.metrics = metrics;
+        }
+
+        public static WidgetExportResult success(
+                WidgetSelection widget, List<ExportedFile> files, ExportMetricsSnapshot metrics) {
+            return new WidgetExportResult(widget, files, null, metrics);
+        }
+
+        public static WidgetExportResult failed(
+                WidgetSelection widget, String error, ExportMetricsSnapshot metrics) {
+            return new WidgetExportResult(widget, List.of(), error, metrics);
         }
 
         public static WidgetExportResult success(WidgetSelection widget, List<ExportedFile> files) {
-            return new WidgetExportResult(widget, files, null);
-        }
-
-        public static WidgetExportResult failed(WidgetSelection widget, String error) {
-            return new WidgetExportResult(widget, List.of(), error);
+            return new WidgetExportResult(widget, files, null, null);
         }
 
         public boolean hasError() {
@@ -429,67 +463,21 @@ public class BrowserExportService {
         public final List<ExportedFile> files;
         public final List<ExportFailure> failures;
 
-        public PipelineExportResult(String pipelineId, String format, List<ExportedFile> files, List<ExportFailure> failures) {
+        /** Measurements of this request; null unless {@code app.export.metrics.enabled} is set. */
+        public final ExportMetricsSnapshot metrics;
+
+        public PipelineExportResult(
+                String pipelineId, String format, List<ExportedFile> files,
+                List<ExportFailure> failures, ExportMetricsSnapshot metrics) {
             this.pipelineId = pipelineId;
             this.format = format;
             this.files = files;
             this.failures = failures;
-        }
-    }
-
-    private static final class ExportCapture {
-        final List<ExportedFile> files;
-        final String error;
-
-        private ExportCapture(List<ExportedFile> files, String error) {
-            this.files = files;
-            this.error = error;
+            this.metrics = metrics;
         }
 
-        static ExportCapture fromEvaluated(Object evaluated) {
-            if (!(evaluated instanceof Map<?, ?> map)) {
-                return new ExportCapture(List.of(), "Unexpected export response shape.");
-            }
-
-            Object okValue = map.get("ok");
-            boolean ok = Boolean.TRUE.equals(okValue) || "true".equals(String.valueOf(okValue));
-            String error = textValue(map.get("error"));
-            if (!ok) {
-                return new ExportCapture(List.of(), error != null ? error : "Export failed.");
-            }
-
-            List<ExportedFile> files = new ArrayList<>();
-            Object filesValue = map.get("files");
-            if (filesValue instanceof List<?> list) {
-                for (Object item : list) {
-                    if (!(item instanceof Map<?, ?> fileMap)) {
-                        continue;
-                    }
-                    String name = textValue(fileMap.get("name"));
-                    String contentType = textValue(fileMap.get("contentType"));
-                    String base64 = textValue(fileMap.get("base64"));
-                    if (name == null || base64 == null) {
-                        continue;
-                    }
-                    byte[] content = Base64.getDecoder().decode(base64);
-                    files.add(new ExportedFile(name, contentType != null ? contentType : "application/octet-stream", content));
-                }
-            }
-            return new ExportCapture(files, null);
-        }
-
-        private static String textValue(Object value) {
-            if (value == null) {
-                return null;
-            }
-            String text = String.valueOf(value);
-            return text == null || text.isBlank() || "null".equalsIgnoreCase(text) ? null : text;
+        public PipelineExportResult(String pipelineId, String format, List<ExportedFile> files, List<ExportFailure> failures) {
+            this(pipelineId, format, files, failures, null);
         }
     }
 }
-
-
-
-
-
-

@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Controller
 public class AppController {
-	private final ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper;
 	private final PipelineService service;
 	private final List<String> lockedPipelines = List.of("0c1953d4-843b-4de4-a44e-1c607ed5a584");
 
@@ -31,8 +31,9 @@ public class AppController {
 	@Value("${app.llm.api-token}")
 	private String llmToken;
 
-	public AppController(PipelineService service) {
+	public AppController(PipelineService service, ObjectMapper mapper) {
 		this.service = service;
+		this.mapper = mapper;
 	}
 
 	public String getPipelines() throws Exception {
@@ -66,12 +67,22 @@ public class AppController {
 		return "/pages/index/index";
 	}
 
+	/**
+	 * @param export when true the page is being rendered for a headless batch export. The sidebar's
+	 *               pipeline switcher is never read in that case, so the summary query behind it is
+	 *               skipped; the rest of the sidebar still renders because the corpus filter needs
+	 *               its DOM, and the corpus filter feeds the {@code meta.corpus} block of every
+	 *               exported artefact.
+	 */
 	@GetMapping("/view/{id}")
-	public String view(@PathVariable("id") String id, Model model) throws Exception {
-		model.addAttribute("pipelines", getPipelines());
+	public String view(
+			@PathVariable("id") String id,
+			@RequestParam(value = "export", defaultValue = "false") boolean export,
+			Model model) throws Exception {
+		model.addAttribute("pipelines", export ? "[]" : getPipelines());
 		model.addAttribute("lockedPipelines", lockedPipelines);
 		model.addAttribute("config", getConfigById(id));
-		model.addAttribute("chatbot", !llmUrl.isEmpty() && !llmToken.isEmpty());
+		model.addAttribute("chatbot", !export && !llmUrl.isEmpty() && !llmToken.isEmpty());
 
 		return "/pages/view/view";
 	}

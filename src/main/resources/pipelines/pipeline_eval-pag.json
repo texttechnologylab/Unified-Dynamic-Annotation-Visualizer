@@ -1,0 +1,282 @@
+{
+  "id": "e00000aa-0000-4000-8000-0000000000aa",
+  "name": "pipeline_eval-pag",
+  "sources": [
+    {
+      "uri": "points.json",
+      "settings": {},
+      "id": "Source-eval-points"
+    },
+    {
+      "uri": "eval-src-pages08.json",
+      "settings": {},
+      "id": "Source-eval-p08"
+    }
+  ],
+  "generators": [
+    {
+      "name": "Points",
+      "type": "MapCoordinates",
+      "source": "Source-eval-points",
+      "settings": {
+        "keys": {
+          "coordinates": [
+            "x",
+            "y"
+          ],
+          "test": "x"
+        },
+        "fixedKeys": {
+          "fillColor": "#000000",
+          "strokeColor": "#000000",
+          "outsideColor": "#ffffff",
+          "scale": 1
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-points"
+    },
+    {
+      "name": "Group of 8",
+      "type": "MapCoordinates",
+      "source": "Source-eval-p08",
+      "generatorGroup": true,
+      "settings": {
+        "keysMap": {
+          "1_0": {
+            "X": "coordinates@0",
+            "Y": "coordinates@1",
+            "Z_abs": "scale",
+            "colors_S": [
+              "fillColor@Red",
+              "fillColor@Green",
+              "fillColor@Blue",
+              "fillColor@Alpha"
+            ],
+            "colors_SE": [
+              "strokeColor@Red",
+              "strokeColor@Green",
+              "strokeColor@Blue",
+              "strokeColor@Alpha"
+            ]
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-p08-@ID@"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 0",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 1,
+      "id": "ScrollTable-eval000"
+    },
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 1",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 1,
+      "id": "ScrollTable-eval001"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 2",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 1,
+      "id": "MedialAxis-eval002"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 3",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 1,
+      "id": "LineChart-eval003"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 4",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 6,
+      "id": "VoronoiDiagram-eval004"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 5",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 6,
+      "id": "MedialAxis-eval005"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 6",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 6,
+      "id": "LineChart-eval006"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 7",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 6,
+      "id": "VoronoiDiagram-eval007"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 8",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 11,
+      "id": "MedialAxis-eval008"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 9",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 11,
+      "id": "LineChart-eval009"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 10",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 11,
+      "id": "VoronoiDiagram-eval010"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 11",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 11,
+      "id": "MedialAxis-eval011"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 12",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 16,
+      "id": "LineChart-eval012"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 13",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 16,
+      "id": "VoronoiDiagram-eval013"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 14",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 16,
+      "id": "MedialAxis-eval014"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 15",
+      "generator": {
+        "id": "MapCoordinates-eval-p08-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 16,
+      "id": "LineChart-eval015"
+    }
+  ]
+}

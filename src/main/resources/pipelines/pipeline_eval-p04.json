@@ -1,0 +1,295 @@
+{
+  "id": "e0000004-0000-4000-8000-000000000004",
+  "name": "pipeline_eval-p04",
+  "sources": [
+    {
+      "uri": "points.json",
+      "settings": {},
+      "id": "Source-eval-points"
+    },
+    {
+      "uri": "eval-src-pages04.json",
+      "settings": {},
+      "id": "Source-eval-p04"
+    },
+    {
+      "uri": "eval-annotations-text.json",
+      "settings": {},
+      "id": "Source-eval-annotations-text"
+    },
+    {
+      "uri": "eval-annotations-categories.json",
+      "settings": {},
+      "id": "Source-eval-annotations-categories"
+    }
+  ],
+  "generators": [
+    {
+      "name": "Points",
+      "type": "MapCoordinates",
+      "source": "Source-eval-points",
+      "settings": {
+        "keys": {
+          "coordinates": [
+            "x",
+            "y"
+          ],
+          "test": "x"
+        },
+        "fixedKeys": {
+          "fillColor": "#000000",
+          "strokeColor": "#000000",
+          "outsideColor": "#ffffff",
+          "scale": 1
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-points"
+    },
+    {
+      "name": "Group of 4",
+      "type": "MapCoordinates",
+      "source": "Source-eval-p04",
+      "generatorGroup": true,
+      "settings": {
+        "keysMap": {
+          "1_0": {
+            "X": "coordinates@0",
+            "Y": "coordinates@1",
+            "Z_abs": "scale",
+            "colors_S": [
+              "fillColor@Red",
+              "fillColor@Green",
+              "fillColor@Blue",
+              "fillColor@Alpha"
+            ],
+            "colors_SE": [
+              "strokeColor@Red",
+              "strokeColor@Green",
+              "strokeColor@Blue",
+              "strokeColor@Alpha"
+            ]
+          }
+        },
+        "fixedKeys": {
+          "outsideColor": "#ffffff"
+        }
+      },
+      "extends": [],
+      "id": "MapCoordinates-eval-p04-@ID@"
+    },
+    {
+      "name": "Annotation layers",
+      "type": "TextFormatting",
+      "source": "Source-eval-annotations-text",
+      "settings": {
+        "styles": {
+          "POS": "highlight",
+          "NamedEntity": "underline",
+          "Lemma": "bold"
+        },
+        "colors": {
+          "POS": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          },
+          "NamedEntity": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          },
+          "Lemma": {
+            "NOUN": "#4e79a7",
+            "VERB": "#f28e2b",
+            "ADJ": "#e15759",
+            "ADV": "#76b7b2",
+            "PRON": "#59a14f",
+            "DET": "#edc948",
+            "ADP": "#b07aa1",
+            "NUM": "#ff9da7",
+            "CONJ": "#9c755f",
+            "PART": "#bab0ac",
+            "PUNCT": "#86bcb6",
+            "X": "#d37295"
+          }
+        }
+      },
+      "extends": [],
+      "id": "TextFormatting-eval-annotations"
+    },
+    {
+      "name": "Category counts",
+      "type": "CategoryNumber",
+      "source": "Source-eval-annotations-categories",
+      "settings": {
+        "colors": {
+          "NOUN": "#4e79a7",
+          "VERB": "#f28e2b",
+          "ADJ": "#e15759",
+          "ADV": "#76b7b2",
+          "PRON": "#59a14f",
+          "DET": "#edc948",
+          "ADP": "#b07aa1",
+          "NUM": "#ff9da7",
+          "CONJ": "#9c755f",
+          "PART": "#bab0ac",
+          "PUNCT": "#86bcb6",
+          "X": "#d37295"
+        }
+      },
+      "extends": [],
+      "id": "CategoryNumber-eval-annotations"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 0",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 1,
+      "id": "ScrollTable-eval000"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 1",
+      "generator": {
+        "id": "MapCoordinates-eval-points"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 1,
+      "id": "VoronoiDiagram-eval001"
+    },
+    {
+      "type": "ScrollTable",
+      "title": "ScrollTable 2",
+      "generator": {
+        "id": "MapCoordinates-eval-p04-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 1,
+      "id": "ScrollTable-eval002"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 3",
+      "generator": {
+        "id": "MapCoordinates-eval-p04-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 18,
+      "y": 1,
+      "id": "MedialAxis-eval003"
+    },
+    {
+      "type": "LineChart",
+      "title": "LineChart 4",
+      "generator": {
+        "id": "MapCoordinates-eval-p04-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 6,
+      "id": "LineChart-eval004"
+    },
+    {
+      "type": "VoronoiDiagram",
+      "title": "VoronoiDiagram 5",
+      "generator": {
+        "id": "MapCoordinates-eval-p04-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 6,
+      "id": "VoronoiDiagram-eval005"
+    },
+    {
+      "type": "MedialAxis",
+      "title": "MedialAxis 6",
+      "generator": {
+        "id": "MapCoordinates-eval-p04-@ID@"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 6,
+      "id": "MedialAxis-eval006"
+    },
+    {
+      "type": "HighlightText",
+      "title": "HighlightText (annotations)",
+      "generator": {
+        "id": "TextFormatting-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 0,
+      "y": 11,
+      "id": "HighlightText-eval-annotations"
+    },
+    {
+      "type": "BarChart",
+      "title": "BarChart (annotations)",
+      "generator": {
+        "id": "CategoryNumber-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 6,
+      "y": 11,
+      "id": "BarChart-eval-annotations"
+    },
+    {
+      "type": "PieChart",
+      "title": "PieChart (annotations)",
+      "generator": {
+        "id": "CategoryNumber-eval-annotations"
+      },
+      "options": {},
+      "w": 6,
+      "h": 5,
+      "x": 12,
+      "y": 11,
+      "id": "PieChart-eval-annotations"
+    }
+  ]
+}

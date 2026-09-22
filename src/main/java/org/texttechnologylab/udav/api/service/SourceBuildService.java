@@ -36,6 +36,11 @@ public class SourceBuildService {
     public void startBuild(String schema, @Nullable String pipelineId) { //TODO: remove duplicate unnecessary call
         try {
             doBuild(schema, pipelineId);
+        } catch (IllegalArgumentException e) {
+            // The pipeline definition refers to something that is not there, typically annotation
+            // data that has not been imported yet. Expected on a fresh database; one line is enough.
+            logger.warn("Pipeline {} is stored but its data could not be built: {}", pipelineId, rootMessage(e));
+            throw new RuntimeException("Build failed for pipeline=" + pipelineId, e);
         } catch (Exception e) {
             logger.error("Build failed for pipeline={}: {}", pipelineId, e.getMessage(), e);
             throw new RuntimeException("Build failed for pipeline=" + pipelineId, e);
@@ -166,5 +171,14 @@ public class SourceBuildService {
         if (schemaName.equalsIgnoreCase(DBConstants.DB_SCHEMA_UIMA)) {
             throw new IllegalArgumentException("Refusing to use reserved UIMA schema as transient schema: " + schemaName);
         }
+    }
+
+    private static String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null && current.getCause() != current) {
+            current = current.getCause();
+        }
+        String message = current.getMessage();
+        return (message == null || message.isBlank()) ? current.getClass().getSimpleName() : message;
     }
 }

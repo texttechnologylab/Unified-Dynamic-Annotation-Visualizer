@@ -8,9 +8,10 @@ import org.texttechnologylab.udav.importer.config.DbProps;
 import org.texttechnologylab.udav.importer.config.JsonDataImporterProps;
 import org.texttechnologylab.udav.importer.config.PipelineImporterProps;
 import org.texttechnologylab.udav.sources.config.SourceBuilderProps;
+import org.texttechnologylab.udav.api.export.ExportProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({DbProps.class, DUUIImporterProps.class, SourceBuilderProps.class, JsonDataImporterProps.class, PipelineImporterProps.class})
+@EnableConfigurationProperties({DbProps.class, DUUIImporterProps.class, SourceBuilderProps.class, JsonDataImporterProps.class, PipelineImporterProps.class, ExportProperties.class})
 public class App {
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);

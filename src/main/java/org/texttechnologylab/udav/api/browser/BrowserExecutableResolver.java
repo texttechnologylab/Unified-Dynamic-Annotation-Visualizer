@@ -13,7 +13,9 @@ public class BrowserExecutableResolver {
     private static final List<String> CHROMIUM_COMMANDS = List.of(
             "chromium",
             "chromium-browser",
-            "chromium-freeworld"
+            "chromium-freeworld",
+            "google-chrome",
+            "google-chrome-stable"
     );
 
     private static final List<String> EDGE_COMMANDS = List.of(
@@ -44,6 +46,27 @@ public class BrowserExecutableResolver {
             Path.of("/opt/microsoft/msedge-dev/msedge")
     );
 
+    /** Application bundles on macOS and the default install locations on Windows. */
+    private static final List<Path> PLATFORM_PATHS = platformPaths();
+
+    private static List<Path> platformPaths() {
+        List<Path> paths = new ArrayList<>();
+        String os = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
+        if (os.contains("mac")) {
+            paths.add(Path.of("/Applications/Chromium.app/Contents/MacOS/Chromium"));
+            paths.add(Path.of("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"));
+            paths.add(Path.of("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"));
+        } else if (os.contains("win")) {
+            for (String root : new String[]{System.getenv("PROGRAMFILES"), System.getenv("PROGRAMFILES(X86)"), System.getenv("LOCALAPPDATA")}) {
+                if (root == null || root.isBlank()) continue;
+                paths.add(Path.of(root, "Chromium", "Application", "chrome.exe"));
+                paths.add(Path.of(root, "Google", "Chrome", "Application", "chrome.exe"));
+                paths.add(Path.of(root, "Microsoft", "Edge", "Application", "msedge.exe"));
+            }
+        }
+        return List.copyOf(paths);
+    }
+
     public Path resolve() {
         List<Path> candidates = resolveCandidates();
         if (!candidates.isEmpty()) {
@@ -55,15 +78,33 @@ public class BrowserExecutableResolver {
         );
     }
 
+    /**
+     * Resolved candidates are memoized: the set of installed browser binaries does not change
+     * while the JVM runs, and discovery forks one {@code which} per command name and stats every
+     * known path, which is too expensive to repeat on every export request.
+     */
+    private static volatile List<Path> memoizedCandidates;
+
+    /** Clears the memo. Intended for tests. */
+    static void invalidateMemo() {
+        memoizedCandidates = null;
+    }
+
     public List<Path> resolveCandidates() {
         String override = System.getenv("BROWSER_EXECUTABLE_PATH");
         if (override != null && !override.isBlank()) {
             return List.of(Path.of(override.trim()));
         }
 
+        List<Path> cached = memoizedCandidates;
+        if (cached != null) {
+            return cached;
+        }
+
         LinkedHashSet<Path> out = new LinkedHashSet<>();
         out.addAll(resolveCommandsAll(CHROMIUM_COMMANDS));
         out.addAll(resolvePathsAll(CHROMIUM_PATHS));
+        out.addAll(resolvePathsAll(PLATFORM_PATHS));
         out.addAll(resolveCommandsAll(EDGE_COMMANDS));
         out.addAll(resolvePathsAll(EDGE_PATHS));
 
@@ -74,7 +115,10 @@ public class BrowserExecutableResolver {
             boolean bSnap = b.toString().startsWith("/snap/");
             return Boolean.compare(aSnap, bSnap);
         });
-        return ordered;
+
+        List<Path> resolved = List.copyOf(ordered);
+        memoizedCandidates = resolved;
+        return resolved;
     }
 
     private List<Path> resolveCommandsAll(List<String> commands) {
@@ -101,6 +145,8 @@ public class BrowserExecutableResolver {
     private Path resolveCommand(String command) {
         Process process = null;
         try {
+            // "which" only exists on Unix-like systems; on Windows the ProcessBuilder throws and the
+            // platform paths above do the work.
             process = new ProcessBuilder("which", command)
                     .redirectErrorStream(true)
                     .start();
