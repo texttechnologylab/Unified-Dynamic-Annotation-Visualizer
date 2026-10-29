@@ -410,6 +410,7 @@ h2:hover .anchor, h3:hover .anchor, h4:hover .anchor { opacity: 1; }
 figure { margin: 0 0 1.5rem; }
 figure.shot img { border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); cursor: zoom-in; background: #fff; }
 figcaption { font-size: 0.86rem; color: var(--text-3); margin-top: 0.5rem; }
+figure.video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); background: #000; }
 figure.diagram { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 1rem; overflow-x: auto; }
 figure.diagram svg { width: 100%; height: auto; display: block; font-family: var(--font); }
 .diagram .box { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.2; }
