@@ -108,16 +108,12 @@ export default class VoronoiDiagram extends D3Visualization {
       : [];
     const dataPoints = [...boundaryPoints, ...data];
 
-    // Create the horizontal and vertical scales
-    const xScale = d3
-      .scaleLinear()
-      .range([0, this.width])
-      .domain(this.domain(dataPoints, (d) => d.x));
-
-    const yScale = d3
-      .scaleLinear()
-      .range([this.height, 0])
-      .domain(this.domain(dataPoints, (d) => d.y));
+    // Same scale on both axes, so the Voronoi cells are the data's own
+    const { xScale, yScale } = this.isotropicScales(
+      dataPoints,
+      (d) => d.x,
+      (d) => d.y,
+    );
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,

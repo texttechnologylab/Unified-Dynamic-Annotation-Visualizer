@@ -40,6 +40,7 @@ export default class WidgetInterface {
         chart: this.filter,
       });
       this.root.select(".dv-chart-area .dv-chart-message").remove();
+      this.root.select(".dv-chart-area svg").style("display", null);
       return result;
     } catch (error) {
       this.showMessage(error.message || "Data could not be loaded");
@@ -50,7 +51,8 @@ export default class WidgetInterface {
   // Replaces the chart with a message, e.g. when its data cannot be loaded
   showMessage(text) {
     const area = this.root.select(".dv-chart-area");
-    area.select("svg").selectAll("*").remove();
+    // the chart's svg keeps its size, so it is hidden rather than emptied
+    area.select("svg").style("display", "none");
     area.select(".dv-chart-message").remove();
     area
       .append("div")

@@ -242,18 +242,22 @@ export default class BoundaryApproximation extends D3Visualization {
   render(data) {
     this.clear();
 
-    const dataPoints = this.interpolateEdges(data);
+    if (!data.length) {
+      this.showMessage("No edges in this dataset");
+      this.data = data;
+      return;
+    }
 
-    // Create the horizontal and vertical scales
-    const xScale = d3
-      .scaleLinear()
-      .range([0, this.width])
-      .domain(this.domain(dataPoints, (d) => d.x));
-
-    const yScale = d3
-      .scaleLinear()
-      .range([this.height, 0])
-      .domain(this.domain(dataPoints, (d) => d.y));
+    // Same scale on both axes, so the distances and radii below are measured in one unit. The
+    // resampled points lie on the edges, so the endpoints already give the extent.
+    const { xScale, yScale } = this.isotropicScales(
+      data.flat(),
+      (d) => d.x,
+      (d) => d.y,
+    );
+    // the spacing is set in pixels like the other parameters
+    const pixelsPerUnit = xScale(1) - xScale(0) || 1;
+    const dataPoints = this.interpolateEdges(data, this.spacing / pixelsPerUnit);
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,
@@ -352,7 +356,8 @@ export default class BoundaryApproximation extends D3Visualization {
     this.data = data;
   }
 
-  interpolateEdges(edges) {
+  // spacing in data units
+  interpolateEdges(edges, spacing) {
     const points = [];
 
     if (this.interpolate) {
@@ -362,7 +367,7 @@ export default class BoundaryApproximation extends D3Visualization {
         const length = Math.sqrt(dx * dx + dy * dy);
 
         // Number of segments based on spacing
-        const steps = Math.max(1, Math.floor(length / this.spacing));
+        const steps = Math.max(1, Math.floor(length / spacing));
 
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;

@@ -94,16 +94,12 @@ export default class MedialAxis extends D3Visualization {
   render(data) {
     this.clear();
 
-    // Create the horizontal and vertical scales
-    const xScale = d3
-      .scaleLinear()
-      .range([0, this.width])
-      .domain(this.domain(data, (d) => d.x));
-
-    const yScale = d3
-      .scaleLinear()
-      .range([this.height, 0])
-      .domain(this.domain(data, (d) => d.y));
+    // Same scale on both axes, so circumcentres and medial edges are the data's own
+    const { xScale, yScale } = this.isotropicScales(
+      data,
+      (d) => d.x,
+      (d) => d.y,
+    );
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,

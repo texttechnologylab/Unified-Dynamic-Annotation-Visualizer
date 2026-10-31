@@ -42,7 +42,9 @@ export default class D3Visualization extends WidgetInterface {
 
   clear() {
     this.svg.selectAll("*").remove();
+    this.root.select(".dv-chart-area .dv-chart-message").remove();
     this.svg
+      .style("display", null)
       .attr("width", this.width + this.margin.left + this.margin.right)
       .attr("height", this.height + this.margin.top + this.margin.bottom);
     this.plotArea = this.svg
@@ -114,6 +116,35 @@ export default class D3Visualization extends WidgetInterface {
     const range = max - min;
 
     return [min - range * padding, max + range * padding];
+  }
+
+  // One scale factor for both axes, so the drawing is a similarity image of the data: a
+  // triangulation, Voronoi cells, distances and circles computed in screen space are those of
+  // the data, not of a stretched picture. The data is centred; the axis whose extent does not
+  // fill the plot gets a wider domain instead of a shorter range, so both axes still span the
+  // whole plot area.
+  isotropicScales(data, x, y) {
+    let [x0, x1] = this.domain(data, x);
+    let [y0, y1] = this.domain(data, y);
+    // no data or a single point: a unit square keeps the axes drawable
+    if (!(x1 > x0)) [x0, x1] = [(x0 || 0) - 0.5, (x0 || 0) + 0.5];
+    if (!(y1 > y0)) [y0, y1] = [(y0 || 0) - 0.5, (y0 || 0) + 0.5];
+    const k = Math.min(this.width / (x1 - x0), this.height / (y1 - y0));
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + y1) / 2;
+    const halfWidth = this.width / (2 * k);
+    const halfHeight = this.height / (2 * k);
+
+    return {
+      xScale: d3
+        .scaleLinear()
+        .domain([cx - halfWidth, cx + halfWidth])
+        .range([0, this.width]),
+      yScale: d3
+        .scaleLinear()
+        .domain([cy - halfHeight, cy + halfHeight])
+        .range([this.height, 0]),
+    };
   }
 
   createAxis(scale, axisGenerator, transform) {
