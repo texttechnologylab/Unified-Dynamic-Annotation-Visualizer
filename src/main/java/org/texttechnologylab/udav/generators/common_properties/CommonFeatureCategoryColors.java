@@ -74,8 +74,9 @@ public class CommonFeatureCategoryColors extends CommonProperties {
             if (colorIterator.hasNext()) {
                 color = colorIterator.next();
             } else {
-                // Random colors if we run out of predefined colors
-                color = new Color((int) (Math.random() * 0x1000000));
+                // Out of predefined colors: derive one from the category name so it is the same in every run
+                float hue = Math.floorMod(category.hashCode(), 360) / 360f;
+                color = Color.getHSBColor(hue, 0.65f, 0.85f);
             }
             categoryColorMap.put(category, color);
         }

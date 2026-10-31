@@ -75,7 +75,7 @@ public class MapCoordinates extends Generator {
                 Color strokeColor = mapRGBAorStringToColor(map.get("strokeColor"), Color.RED);
 
                 // OutsideColor
-                Color outsideColor = Color.WHITE; // TODO: Custom color
+                Color outsideColor = mapRGBAorStringToColor(map.get("outsideColor"), Color.WHITE);
 
                 entries.add(new Entry(sourceJson.getSingleFileName(), label,
                         coordinatesNumbers, scale, fillColor, strokeColor, outsideColor));

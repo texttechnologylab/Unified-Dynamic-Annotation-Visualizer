@@ -101,9 +101,12 @@ public class ConvertionController {
 
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             for (MultipartFile file : files) {
-                String filename = file.getOriginalFilename() != null
-                        ? file.getOriginalFilename()
-                        : "file_" + System.currentTimeMillis();
+                // Keep only the last path segment, so no entry can point outside the extraction folder
+                String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
+                String filename = original.replaceAll(".*[/\\\\]", "");
+                if (filename.isBlank() || filename.equals(".") || filename.equals("..")) {
+                    filename = "file_" + System.currentTimeMillis();
+                }
 
                 ZipEntry zipEntry = new ZipEntry(filename);
                 zipOutputStream.putNextEntry(zipEntry);

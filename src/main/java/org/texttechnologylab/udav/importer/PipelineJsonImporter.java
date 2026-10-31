@@ -110,26 +110,10 @@ public class PipelineJsonImporter implements ApplicationRunner {
             String pipelineIdOriginal = parsed.pipelineId();
             String pipelineName = parsed.pipelineName();
 
-            if (pipelineNameExists(dsl, T, F_NAME, pipelineName)) {
-                LOGGER.warn("Pipeline with name {} already exists.", pipelineName);
-                return;
-            }
-
             boolean idExists = pipelineIdExists(dsl, T, F_ID, pipelineIdOriginal);
 
-            if (!idExists) {
-                dsl.insertInto(T)
-                        .columns(F_NAME, F_JSON, F_ID)
-                        .values(pipelineName, canonicalJson, pipelineIdOriginal)
-                        .execute();
-
-                LOGGER.info("Pipeline with name {} and id {} has been inserted.", pipelineName, pipelineIdOriginal);
-
-                buildAfterImport(pipelineIdOriginal);
-                return;
-            }
-
-            if (replaceIfDifferent) {
+            // replace-if-different updates the stored pipeline with the same id, so it is checked before the name
+            if (idExists && replaceIfDifferent) {
                 String existingCanonical = dsl.select(F_JSON).from(T).where(F_ID.eq(pipelineIdOriginal)).fetchOne(F_JSON);
 
                 String existingCanon = (existingCanonical == null) ? null : canonicalize(existingCanonical);
@@ -150,6 +134,23 @@ public class PipelineJsonImporter implements ApplicationRunner {
                         updated == 1 ? "updated" : "not updated", pipelineName);
 
                 // build sources for this pipeline in this schema
+                buildAfterImport(pipelineIdOriginal);
+                return;
+            }
+
+            if (pipelineNameExists(dsl, T, F_NAME, pipelineName)) {
+                LOGGER.warn("Pipeline with name {} already exists.", pipelineName);
+                return;
+            }
+
+            if (!idExists) {
+                dsl.insertInto(T)
+                        .columns(F_NAME, F_JSON, F_ID)
+                        .values(pipelineName, canonicalJson, pipelineIdOriginal)
+                        .execute();
+
+                LOGGER.info("Pipeline with name {} and id {} has been inserted.", pipelineName, pipelineIdOriginal);
+
                 buildAfterImport(pipelineIdOriginal);
                 return;
             }

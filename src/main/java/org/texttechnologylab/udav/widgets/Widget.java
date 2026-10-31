@@ -30,6 +30,24 @@ public abstract class Widget implements ChartHandler {
     // Overwrite if diagram should have a custom csv definition
     public String toCsv(JsonNode jsonNode) { return null; }
 
+    // Escapes LaTeX special characters in one pass, so the braces of \textbackslash{} are not escaped again
+    protected static String escapeLatex(String text) {
+        if (text == null) return "";
+        StringBuilder sb = new StringBuilder(text.length());
+        for (char c : text.toCharArray()) {
+            switch (c) {
+                case '\\' -> sb.append("\\textbackslash{}");
+                case '&', '%', '$', '#', '_', '{', '}' -> sb.append('\\').append(c);
+                case '~' -> sb.append("\\textasciitilde{}");
+                case '^' -> sb.append("\\textasciicircum{}");
+                case '<' -> sb.append("\\textless{}");
+                case '>' -> sb.append("\\textgreater{}");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     public static Widget constructWidget(String className, GeneratorDataRepository repo, ObjectMapper mapper) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (className.contains(".")) {
             throw new IllegalArgumentException("Class name can't contain \".\".");

@@ -77,7 +77,8 @@ export default class ExportHandler {
     // Prepare metadata node
     for (const [key, value] of Object.entries(meta)) {
       const node = document.createElementNS(namespace, key);
-      node.textContent = value;
+      node.textContent =
+        typeof value === "string" ? value : JSON.stringify(value);
       metadata.appendChild(node);
     }
 

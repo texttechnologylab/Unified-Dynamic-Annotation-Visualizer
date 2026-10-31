@@ -133,6 +133,8 @@ export default class VoronoiDiagram extends D3Visualization {
 
     function renderPolygon(index, scale) {
       const cellPolygon = voronoi.cellPolygon(index);
+      // No cell for coincident points, no factor for boundary points
+      if (!cellPolygon || !Number.isFinite(scale)) return null;
       const [cx, cy] = points[index];
 
       const scaledPolygon = cellPolygon.map(([x, y]) => [
@@ -150,7 +152,7 @@ export default class VoronoiDiagram extends D3Visualization {
         .data(dataPoints)
         .join("path")
         .attr("class", "polygon")
-        .attr("d", (d, i) => renderPolygon(i, d.abs))
+        .attr("d", (d, i) => renderPolygon(i, d.abs ?? d.scale))
         .attr("fill", (_, i) => dataPoints[i].fill)
         .attr("opacity", 0.7)
         .attr("stroke", (_, i) => dataPoints[i].stroke)

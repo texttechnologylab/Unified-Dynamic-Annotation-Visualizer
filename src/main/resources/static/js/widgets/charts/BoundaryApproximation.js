@@ -266,6 +266,7 @@ export default class BoundaryApproximation extends D3Visualization {
     if (this.clustering === "density") {
       const densityEstimator = d3
         .contourDensity()
+        .size([this.width, this.height])
         .bandwidth(this.bandwidth)
         .thresholds(this.thresholds);
 
