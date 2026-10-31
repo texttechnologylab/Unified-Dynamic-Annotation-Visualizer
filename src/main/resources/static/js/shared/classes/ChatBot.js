@@ -94,11 +94,16 @@ export default class ChatBot {
     this.textarea.value = "";
 
     // Get answer
-    const completion = await getCompletion(
-      this.modelSelect.value,
-      this.messages,
-    );
-    const answer = completion?.choices[0]?.message;
+    let answer;
+    try {
+      const completion = await getCompletion(
+        this.modelSelect.value,
+        this.messages,
+      );
+      answer = completion?.choices?.[0]?.message;
+    } catch (error) {
+      console.error(error);
+    }
 
     this.addMessage(
       answer || { role: "assistant", content: "Error: no completion message" },
