@@ -46,6 +46,11 @@ for i in $(seq 1 60); do
 done
 if echo "${body:-}" | grep -q '"x"'; then ok; else fail "no data after 3 minutes: ${body:0:120}"; fi
 
+step "a corpus filter that matches nothing is handled"
+code=$(curl -sS -m 20 -o "$TMP/filtered.json" -w '%{http_code}' -X POST "$URL/api/data?pipelineId=$PIPELINE&generatorId=CategoryNumber-eval-annotations&chartType=BarChart&page=1&size=1" \
+         -H 'Content-Type: application/json' -d '{"corpus":{"files":[],"tags":[],"dateFrom":"2030-01-01","dateTo":""},"chart":{}}')
+if [[ "$code" == "200" ]] && grep -q '"data"' "$TMP/filtered.json"; then ok; else fail "HTTP $code"; fi
+
 step "batch API exports the whole pipeline as SVG"
 code=$(curl -sS -m 120 -o "$TMP/export.zip" -w '%{http_code}' "$URL/api/batch/export/pipeline/$PIPELINE/svg")
 if [[ "$code" == "200" ]] && [[ "$(head -c 2 "$TMP/export.zip")" == "PK" ]]; then

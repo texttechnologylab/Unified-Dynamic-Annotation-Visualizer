@@ -36,8 +36,9 @@ public class DataService {
     private final FileService fileService;
 
     // Widgets read an empty file set as "no restriction", so a corpus filter that matches no
-    // document has to pass a file name that no generator data carries
-    private static final String NO_DOCUMENT = "\u0000";
+    // document has to pass a file name that no generator data carries. The value reaches the
+    // database as a query parameter, so it must be valid text (PostgreSQL rejects NUL bytes).
+    private static final String NO_DOCUMENT = "<no document matches the corpus filter>";
 
     public DataService(ObjectMapper mapper,
                        DummyDataProvider provider,
