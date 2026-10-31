@@ -1,6 +1,7 @@
 package org.texttechnologylab.udav.widgets.svgtolatex;
 
 import org.w3c.dom.*;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.nio.file.Path;
@@ -77,10 +78,7 @@ public class VecTikZConverter {
         ctx.baseDir = baseDir;
 
         // Parse the SVG XML
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(false);
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        DocumentBuilder builder = factory.newDocumentBuilder();
+        DocumentBuilder builder = newDocumentBuilderFactory().newDocumentBuilder();
         Document doc = builder.parse(new ByteArrayInputStream(svgString.getBytes("UTF-8")));
 
         Element root = doc.getDocumentElement();
@@ -126,6 +124,32 @@ public class VecTikZConverter {
      */
     public Map<String, byte[]> getAssets() {
         return Collections.unmodifiableMap(ctx.assets);
+    }
+
+    // -----------------------------------------------------------------------
+    // XML parsing
+    // -----------------------------------------------------------------------
+
+    /**
+     * Parser settings for every SVG the converter reads. The SVG comes from the client,
+     * so nothing outside the document is loaded: no external DTD and no external
+     * entities. Internal entities still work.
+     */
+    static DocumentBuilderFactory newDocumentBuilderFactory() throws ParserConfigurationException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(false);
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setXIncludeAware(false);
+        try {
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException unsupported) {
+            // xercesImpl (pulled in by DUUI) has no JAXP 1.5 properties, the features above cover it
+        }
+        return factory;
     }
 
     // -----------------------------------------------------------------------

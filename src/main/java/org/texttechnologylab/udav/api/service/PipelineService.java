@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
+import org.texttechnologylab.udav.database.DBConstants;
 import org.texttechnologylab.udav.db.SchemaObjectNames;
 import org.texttechnologylab.udav.api.service.utils.GeneratorConverter;
 
@@ -185,6 +186,7 @@ public class PipelineService {
         String id = json.get("id").asText();
         String name = json.get("name").asText();
         String jsonStr = toString(json);
+        requireUnreservedId(id);
 
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
@@ -243,6 +245,7 @@ public class PipelineService {
 
     @Transactional
     public void delete(String id) {
+        requireUnreservedId(id);
         invalidate(id);
         try (Connection c = dataSource.getConnection()) {
             DSLContext dsl = DSL.using(c);
@@ -266,6 +269,13 @@ public class PipelineService {
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Failed to drop schema: " + id, e);
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    // The id is also the schema name that delete drops
+    private void requireUnreservedId(String id) {
+        if (DBConstants.isReservedSchema(id, schema)) {
+            throw new ResponseStatusException(BAD_REQUEST, "Reserved pipeline id: " + id);
         }
     }
 

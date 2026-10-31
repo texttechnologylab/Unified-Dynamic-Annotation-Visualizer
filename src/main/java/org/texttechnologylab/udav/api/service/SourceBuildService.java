@@ -162,6 +162,9 @@ public class SourceBuildService {
         if (schemaName.equalsIgnoreCase(DBConstants.DB_SCHEMA_UIMA)) {
             throw new IllegalArgumentException("Refusing to rebuild reserved UIMA schema: " + schemaName);
         }
+        if (DBConstants.isReservedSchema(schemaName, appDbSchema)) {
+            throw new IllegalArgumentException("Refusing to rebuild reserved schema: " + schemaName);
+        }
     }
 
     private void assertSafeAuxSchema(String schemaName) {
