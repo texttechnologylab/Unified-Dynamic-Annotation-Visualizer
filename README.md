@@ -165,7 +165,10 @@ The report of the campaign the paper is based on is `evaluation/evaluation-repor
 The script writes `evaluation-report.txt`, whose first section states whether the numbers are usable;
 section 5 holds the LaTeX rows of the paper's tables and section 7 the raw per-run data. Harness
 knobs (`-Dudav.eval.analysisRuns=15`, `-Dudav.eval.pipelines=P1,P5`, ...) are passed through.
-`tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources.
+`tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources, and
+`tools/cost_model.py evaluation/evaluation-report-2026-08-26.txt` recomputes the cost model, its
+bootstrap intervals and the marginal resource slopes of the paper's cost-model table from section 7
+of a report.
 
 `mvn test` runs the unit tests. The tests tagged `browser` launch Playwright's own Chromium (downloaded
 on the first run, about 1 GB together with Firefox and WebKit) and are opt-in: `mvn test -Pbrowser-tests`.

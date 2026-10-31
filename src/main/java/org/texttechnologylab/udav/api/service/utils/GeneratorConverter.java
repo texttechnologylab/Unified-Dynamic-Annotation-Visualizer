@@ -195,39 +195,6 @@ public final class GeneratorConverter {
         }
     }
 
-    // demo
-    public static void main(String[] args) {
-        String newFormat = """
-                {
-                  "generators": [
-                    {
-                      "name": "New CategoryNumberMapping",
-                      "type": "CategoryNumberMapping",
-                      "source": "org.hucompute.textimager.uima.type.category.CategoryCoveredTagged",
-                      "settings": {},
-                      "id": "CategoryNumberMapping-p78dawc"
-                    },
-                    {
-                      "name": "New TextFormatting",
-                      "type": "TextFormatting",
-                      "source": "uima.tcas.Annotation",
-                      "settings": { "style": "highlight" },
-                      "id": "TextFormatting-ezj3cu7"
-                    },
-                    {
-                      "id": "Total_Formatting",
-                      "fromGenerators": [
-                        { "id": "POS_Formatting" },
-                        { "id": "NE_Formatting" }
-                      ]
-                    }
-                  ]
-                }
-                """;
-
-        System.out.println(toOldFormat(newFormat));
-        System.out.println(toNewFormat(toOldFormat(newFormat)));
-    }
 
     private static void addOrMergeGenerator(ObjectNode candidate,
                                             List<ObjectNode> ordered,

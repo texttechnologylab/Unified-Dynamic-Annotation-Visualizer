@@ -243,8 +243,8 @@ export default class MedialAxis extends D3Visualization {
     for (let edge = 0; edge < halfedges.length; edge++) {
       const opposite = halfedges[edge];
 
-      if (opposite < edge) continue; // avoid duplicates
       if (opposite === -1) continue; // skip edges on the convex hull
+      if (opposite < edge) continue; // avoid duplicates
 
       // Get indexes of both triangles
       const t1 = Math.floor(edge / 3);

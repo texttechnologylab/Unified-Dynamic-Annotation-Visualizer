@@ -58,29 +58,31 @@ export default class BoundaryApproximation extends D3Visualization {
       grid: true,
       circles: true,
     };
-    this.interpolate = config.options.interpolate || false;
-    this.spacing = 5;
+    // Pipeline options are the start values of the controls below
+    const options = config.options;
+    this.interpolate = options.interpolate || false;
+    this.spacing = options.spacing ?? 5;
 
-    this.clustering = config.options.clustering || "quadtree";
-    this.radiusMultiplier = 1.0;
+    this.clustering = options.clustering || "quadtree";
+    this.radiusMultiplier = options.radiusMultiplier ?? 1.0;
 
     // contour
-    this.gridRows = 8;
-    this.threshold = 0;
+    this.gridRows = options.gridRows ?? 8;
+    this.threshold = options.threshold ?? 0;
 
     // knn
-    this.knnK = 5;
+    this.knnK = options.knnK ?? 5;
 
     // Gaussian KDE
-    this.kdeBandwidth = 30;
+    this.kdeBandwidth = options.kdeBandwidth ?? 30;
 
     // dbscan
-    this.epsilon = 10;
-    this.minPts = 2;
+    this.epsilon = options.epsilon ?? 10;
+    this.minPts = options.minPts ?? 2;
 
     // densitiy estimation
-    this.bandwidth = 10;
-    this.thresholds = 5;
+    this.bandwidth = options.bandwidth ?? 10;
+    this.thresholds = options.thresholds ?? 5;
   }
 
   async init() {

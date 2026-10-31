@@ -37,10 +37,6 @@ export default class ScrollTable extends WidgetInterface {
     this.numbers = config.options.numbers ?? true;
   }
 
-  setTitle(title) {
-    this.root.select(".dv-toolbar-title").attr("title", title).text(title);
-  }
-
   clear() {
     this.div.selectAll("*").remove();
     this.div
