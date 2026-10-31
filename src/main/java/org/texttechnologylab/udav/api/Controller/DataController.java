@@ -98,11 +98,11 @@ public class DataController {
      * JSON-driven endpoint.
      * Expects a body of the shape:
      * {
-     * "corpus": { ... },   // reserved for future: files, tags, date (not yet implemented)
+     * "corpus": { ... },   // files, tags, date
      * "chart":  { ... }    // contains all existing chart filter key/values
      * }
      * <p>
-     * Only "chart" values are applied to the current data pipeline. "corpus" is accepted and ignored for now.
+     * The "chart" values and corpus.files are applied. Tags and date are accepted but not applied yet.
      */
     @PostMapping(value = "/data", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postData(

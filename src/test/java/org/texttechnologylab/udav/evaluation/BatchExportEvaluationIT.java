@@ -202,8 +202,10 @@ class BatchExportEvaluationIT {
     /**
      * Pipeline for the controlled U-only experiment.
      *
-     * Every one of its 16 widgets sits on a group generator of size 8, so bulk=false produces
-     * exactly 16 files and bulk=true produces 121. Widget set, composition and layout are
+     * 15 of its 16 widgets sit on a group generator of size 8 and one ScrollTable on a plain
+     * generator, so a json export gives 16 files with bulk=false and 121 with bulk=true. The
+     * experiment runs in svg, where the two ScrollTables export nothing: 14 and 112 files.
+     * Widget set, composition and layout are
      * byte-identical between the two runs, so the only thing that changes is how many files are
      * exported; the resulting slope is therefore attributable to U rather than to W or to
      * anything correlated with it.

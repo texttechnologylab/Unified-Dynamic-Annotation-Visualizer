@@ -237,7 +237,6 @@
                          opt-in via the browser-tests profile. -->
                     <excludedGroups>${surefire.excludedGroups}</excludedGroups>
                     <argLine>
-                        --illegal-access=permit
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
                     </argLine>
@@ -250,7 +249,6 @@
                 <version>3.2.5</version>
                 <configuration>
                     <argLine>
-                        --illegal-access=permit
                         --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.lang=ALL-UNNAMED
                     </argLine>
