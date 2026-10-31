@@ -1,0 +1,13 @@
+# The image is built from pom.xml and src/ only; keep everything else out of the build context
+.git
+.idea
+target
+docs
+vectikz
+evaluation
+tools
+data
+*.log
+*.md
+.env
+.env.*

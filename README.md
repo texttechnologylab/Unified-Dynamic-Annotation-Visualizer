@@ -210,26 +210,42 @@ startup, so the pipeline list is populated right away.
 
 ### Quick Start (Docker Compose)
 
-1. **Clone the repository:**
+Nothing to configure: `docker-compose.yml` carries defaults for everything.
+
+1. **Clone and start:**
 
    ```bash
    git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
    cd Unified-Dynamic-Annotation-Visualizer
-   ```
-
-2. **Create your `.env` file** by copying the provided example:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Start the application:**
-
-   ```bash
    docker compose up -d
    ```
 
-   This starts PostgreSQL and the UDAV application. The web UI is available at [http://localhost:8080](http://localhost:8080) once the container is healthy (usually within 30-60 seconds). The image ships the demo and evaluation pipelines with their JSON sources and imports them at startup; set `PIPELINE_IMPORTER=false` or point `PIPELINE_IMPORTER_FOLDER` / `JSON_IMPORTER_FOLDER` at mounted folders to import your own instead. The default memory settings suit a laptop; `.env.example` lists the values for large corpus imports.
+   The first start builds the image (a Maven build inside Docker, several minutes depending on the
+   connection); later starts take seconds. The web UI is available at
+   [http://localhost:8080](http://localhost:8080) once the container is healthy. The bundled demo
+   and evaluation pipelines with their JSON sources are imported and built in the first minute
+   after that; pipelines whose sources are UIMA annotation types stay empty until a corpus is
+   imported (see below).
+
+2. **Check it:**
+
+   ```bash
+   tools/smoke-test.sh
+   ```
+
+   Needs only bash and curl: it waits for the application and its pipelines, reads widget data
+   through the data API, exports a whole pipeline through the batch API and converts an SVG to
+   TikZ. On Windows run it from Git Bash or WSL, or open the UI and use the export menu of a
+   widget instead.
+
+3. **Stop it** with `docker compose down`, or `docker compose down -v` to drop the database as well.
+
+The defaults cap the Java heap at 4 GB and give PostgreSQL 1 GB of shared buffers; with the bundled
+pipelines built, the two containers use about 1.5 GB of memory together, which suits a laptop. To change anything, create a `.env` next to `docker-compose.yml` with the variables to
+override; `.env.example` documents them with the values used for large corpus imports. Set
+`PIPELINE_IMPORTER=false`, or point `PIPELINE_IMPORTER_FOLDER` / `JSON_IMPORTER_FOLDER` at mounted
+folders, to import your own pipelines instead of the bundled ones. After a code change,
+`docker compose up -d --build` rebuilds the image.
 
 > [!NOTE]
 > If you're looking for a small demo without any setup, check our [open demo](https://demo.udav.texttechnologylab.org/).
