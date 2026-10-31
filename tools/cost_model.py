@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-# Recomputes the paper's cost model from the raw data of an evaluation report:
+# Recomputes the paper's evaluation numbers from the raw data of one or more reports:
 #
 #   tools/cost_model.py evaluation/evaluation-report-2026-08-26.txt
+#   tools/cost_model.py evaluation-report-run1.txt evaluation-report-run2.txt ...
 #
-# Reads the JSON of section 7 and prints, per format, the OLS fit t = a + b*W + c*U over the
-# per-pipeline medians with 95% bootstrap intervals for b and c (percentile method, resampling
-# pipelines with a fixed seed), the adjusted R^2 and the Theil-Sen slopes of server CPU,
-# allocation and archive size per artefact, as rows of the paper's cost-model table. Below that
-# the pooled view-init fit, the browser session setup percentiles, the IQR summary and the stage
-# gap the paper quotes. Standard library only.
+# Reads the JSON of section 7 of every report and pools the runs of each condition (several
+# reports are the JVM runs of run-evaluation.sh --jvm-runs). Prints the rows of the workload
+# table, then per format the OLS fit t = a + b*W + c*U over the per-pipeline medians with 95%
+# bootstrap intervals for b and c (percentile method, resampling pipelines with a fixed seed),
+# the adjusted R^2 and the Theil-Sen slopes of server CPU, allocation and archive size per
+# artefact, as rows of the cost-model table. Below that the pooled view-init fit, the browser
+# session setup percentiles, the IQR summary and the stage gap the paper quotes. Standard
+# library only.
 
 import json
 import math
@@ -25,6 +28,22 @@ def load_raw(path):
     text = open(path, encoding="utf-8").read()
     start = text.index("## 7. RAW DATA (JSON)")
     return json.loads(text[text.index("{", start):])
+
+
+def pool(raws):
+    # runs of the same condition are concatenated; descriptors come from the first report
+    merged = {"workload": raws[0]["workload"], "samples": {}, "baseline": {}, "pagination": []}
+    for raw in raws:
+        for key, runs in raw["samples"].items():
+            merged["samples"].setdefault(key, []).extend(runs)
+        for key, value in raw.get("baseline", {}).items():
+            merged["baseline"].setdefault(key, {"individualMs": [], "batchMs": []})
+            merged["baseline"][key]["individualMs"].append(value["individualMs"])
+            merged["baseline"][key]["batchMs"].append(value["batchMs"])
+        slope = raw.get("paginationSlopeMsPerFile")
+        if slope is not None and not math.isnan(slope):
+            merged["pagination"].append(slope)
+    return merged
 
 
 def percentile(sorted_values, p):
@@ -90,8 +109,17 @@ def pearson(xs, ys):
     return cov / math.sqrt(sum((x - mx) ** 2 for x in xs) * sum((y - my) ** 2 for y in ys))
 
 
-def main(path):
-    raw = load_raw(path)
+def size_class(w, u):
+    if w > 30 or u > 150:
+        return "large"
+    if w <= 10 and u <= 25:
+        return "small"
+    return "medium"
+
+
+def main(paths):
+    raws = [load_raw(p) for p in paths]
+    raw = pool(raws)
     samples = raw["samples"]
     workload = raw["workload"]
     pipelines = sorted(workload, key=lambda p: int(p[1:]))
@@ -103,7 +131,17 @@ def main(path):
     def median_of(pipeline, fmt, key):
         return statistics.median(r[key] for r in runs(pipeline, fmt))
 
-    print("cost model t = a + b*W + c*U, 95%% bootstrap intervals (%d resamples, seed %d)" % (RESAMPLES, SEED))
+    runs_per_condition = sorted({len(v) for v in samples.values()})
+    print("%d report(s), %s runs per condition" % (len(raws), "/".join(str(n) for n in runs_per_condition)))
+
+    print("\nworkload table: pipeline, class, W, U (svg/png), median export time in s per format")
+    for p in pipelines:
+        w, u = workload[p]["W"], workload[p]["U"]
+        u_svg = int(median_of(p, "svg", "filesProduced"))
+        times = " & ".join("%.2f" % (median_of(p, fmt, "wallMs") / 1000) for fmt in FORMATS)
+        print("%-3s & %-6s & %2d & %3d (%d) & %s \\\\" % (p, size_class(w, u), w, u, u_svg, times))
+
+    print("\ncost model t = a + b*W + c*U, 95%% bootstrap intervals (%d resamples, seed %d)" % (RESAMPLES, SEED))
     print("Format & a & b (ms/widget) & c (ms/artefact) & adj. R^2 & CPU (ms) & Alloc. (MiB) & ZIP (KiB)")
     for fmt in FORMATS:
         rows = []
@@ -138,6 +176,12 @@ def main(path):
     print("browser session setup: median %.0f ms, p10 %.0f, p90 %.0f" % (
         statistics.median(browser), percentile(browser, 0.10), percentile(browser, 0.90)))
 
+    browser_cpu = [run["browserCpuMs"] for key in samples for run in samples[key]]
+    if all(v < 0 for v in browser_cpu):
+        print("browser CPU: not measured (every run reports -1)")
+    else:
+        print("browser CPU per request: median %.0f ms" % statistics.median(v for v in browser_cpu if v >= 0))
+
     ratios = []
     for key, rs in samples.items():
         wall = sorted(run["wallMs"] for run in rs)
@@ -152,10 +196,17 @@ def main(path):
     print("wall time minus the three stages: median %.0f ms, min %d, max %d" % (
         statistics.median(gaps), min(gaps), max(gaps)))
 
-    print("pagination experiment: %.2f ms per artefact" % raw.get("paginationSlopeMsPerFile", float("nan")))
+    if raw["baseline"]:
+        print("\nbatch versus W single-widget requests, medians over reports (s):")
+        for key, value in raw["baseline"].items():
+            individual = statistics.median(value["individualMs"]) / 1000
+            batch = statistics.median(value["batchMs"]) / 1000
+            print("  %-12s batch %.2f, individual %.2f, factor %.1f" % (key, batch, individual, individual / batch))
+    if raw["pagination"]:
+        print("pagination experiment: %.2f ms per artefact" % statistics.median(raw["pagination"]))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("usage: tools/cost_model.py <evaluation-report.txt>")
-    main(sys.argv[1])
+    if len(sys.argv) < 2:
+        sys.exit("usage: tools/cost_model.py <evaluation-report.txt> [more reports...]")
+    main(sys.argv[1:])

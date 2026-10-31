@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ConvertionControllerZipTest {
+class ConversionControllerZipTest {
 
     @Test
     void entryNamesHaveNoDirectories() throws Exception {
@@ -21,7 +21,7 @@ class ConvertionControllerZipTest {
                 new MockMultipartFile("files", "../../evil.svg", "image/svg+xml", new byte[]{2}),
                 new MockMultipartFile("files", "..\\win.svg", "image/svg+xml", new byte[]{3}));
 
-        byte[] zip = new ConvertionController(new ObjectMapper()).createZip(files).getBody();
+        byte[] zip = new ConversionController(new ObjectMapper()).createZip(files).getBody();
 
         List<String> names = new ArrayList<>();
         try (ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(zip))) {

@@ -30,7 +30,7 @@ RUN addgroup -g 1000 appuser && \
 
 # Copy JAR from builder stage. --chown here instead of a later "chown -R /app": a chown after
 # COPY rewrites the whole 1.2 GB jar into a second image layer.
-COPY --from=builder --chown=appuser:appuser /build/target/UDAV-1.0.jar app.jar
+COPY --from=builder --chown=appuser:appuser /build/target/UDAV-2.0.0.jar app.jar
 
 # Bundled pipelines and JSON sources (the demos and the evaluation workload). The importers read
 # them from disk, not from the classpath, so the container needs its own copy. Point
@@ -73,7 +73,7 @@ ENV DUUI_IMPORTER_CAS_POOL_SIZE="8"
 
 # Application Configuration
 ENV APP_INPUT_DIR="/app/data/input"
-ENV SROUCE_BUILDER="false"
+ENV SOURCE_BUILDER="false"
 ENV PIPELINE_IMPORTER="true"
 ENV PIPELINE_IMPORTER_FOLDER="/app/pipelines"
 ENV JSON_IMPORTER_FOLDER="/app/sourcefilesJSON"

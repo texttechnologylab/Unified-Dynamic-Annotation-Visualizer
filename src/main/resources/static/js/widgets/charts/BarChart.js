@@ -1,5 +1,6 @@
 import D3Visualization from "../D3Visualization.js";
 import { getGeneratorOptions } from "../../pages/editor/utils/editorActions.js";
+import { initPageRange, rerenderWithPageRange } from "../pageRange.js";
 
 export default class BarChart extends D3Visualization {
   static defaultConfig = {
@@ -42,7 +43,7 @@ export default class BarChart extends D3Visualization {
     this.exports.init(meta.total > 1);
     this.pagination.init(meta.ids);
 
-    const max = d3.max(data[0].map((d) => d.value));
+    const max = initPageRange(this, data[0]);
 
     this.filter = {
       sort: "value",
@@ -74,7 +75,7 @@ export default class BarChart extends D3Visualization {
       {
         type: "rangedouble",
         label: "Range",
-        value: [this.filter.min, this.filter.max],
+        value: this.range,
         options: { min: 0, max: max },
         onchange: (min, max) => {
           this.filter.min = min;
@@ -93,6 +94,14 @@ export default class BarChart extends D3Visualization {
         },
       },
     ]);
+  }
+
+  rerender(fetch = false) {
+    if (fetch) {
+      rerenderWithPageRange(this);
+    } else {
+      this.render(this.data);
+    }
   }
 
   render(data) {

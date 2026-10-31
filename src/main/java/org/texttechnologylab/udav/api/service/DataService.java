@@ -17,6 +17,8 @@ import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -31,16 +33,24 @@ public class DataService {
     private final PipelineService pipelineService;
     private final DataSource dataSource;
 
+    private final FileService fileService;
+
+    // Widgets read an empty file set as "no restriction", so a corpus filter that matches no
+    // document has to pass a file name that no generator data carries
+    private static final String NO_DOCUMENT = "\u0000";
+
     public DataService(ObjectMapper mapper,
                        DummyDataProvider provider,
                        ChartRegistry charts,
                        PipelineService pipelineService,
-                       DataSource dataSource) {
+                       DataSource dataSource,
+                       FileService fileService) {
         this.mapper = mapper;
         this.provider = provider;
         this.charts = charts;
         this.pipelineService = pipelineService;
         this.dataSource = dataSource;
+        this.fileService = fileService;
     }
 
     public String buildArrayJson(String id, String type,
@@ -156,10 +166,7 @@ public class DataService {
                                 Map<String, String> corpus,
                                 String schema) {
 
-        Set<String> files = Optional.ofNullable(corpus)
-                .map(m -> m.get("files"))
-                .map(Parsing::parseCsvSet)
-                .orElseGet(Collections::emptySet);
+        Set<String> files = corpusFiles(corpus);
 
         Map<String, String> mutableFilters = new LinkedHashMap<>(Optional.ofNullable(filters).orElseGet(Collections::emptyMap));
         ValueMode vm = ValueMode.from(mutableFilters.get("valueMode"));
@@ -175,6 +182,29 @@ public class DataService {
             return mapper.readTree(provider.getJsonFor(id, type));
         } catch (Exception ignored) {
             return mapper.createArrayNode();
+        }
+    }
+
+    // The corpus filter: the selected files, narrowed by tags (collection ids) and import dates
+    private Set<String> corpusFiles(Map<String, String> corpus) {
+        if (corpus == null) return Collections.emptySet();
+        Set<String> files = Parsing.parseCsvSet(corpus.get("files"));
+        Set<String> tags = Parsing.parseCsvSet(corpus.get("tags"));
+        LocalDate from = parseDate(corpus.get("dateFrom"));
+        LocalDate to = parseDate(corpus.get("dateTo"));
+        if (tags.isEmpty() && from == null && to == null) return files;
+
+        Set<String> matching = fileService.documentIdsMatching(tags, from, to);
+        if (!files.isEmpty()) matching.retainAll(files);
+        return matching.isEmpty() ? Set.of(NO_DOCUMENT) : matching;
+    }
+
+    private static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalDate.parse(value.trim());
+        } catch (DateTimeParseException ignored) {
+            return null;
         }
     }
 

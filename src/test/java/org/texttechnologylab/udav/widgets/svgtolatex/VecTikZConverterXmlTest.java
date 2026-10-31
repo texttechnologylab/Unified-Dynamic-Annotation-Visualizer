@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * The SVG posted to /api/convertions/tikz comes from the client, so entities must not pull local
+ * The SVG posted to /api/conversions/tikz comes from the client, so entities must not pull local
  * files into the generated document.
  */
 class VecTikZConverterXmlTest {

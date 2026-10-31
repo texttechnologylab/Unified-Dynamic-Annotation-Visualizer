@@ -6,6 +6,10 @@
 #   tools/run-evaluation.sh --smoke          one run per condition, correctness only (minutes)
 #   tools/run-evaluation.sh --docker         start UDAV + Postgres with the evaluation fixtures
 #                                            first (docker compose, on port 18080), then run against it
+#   tools/run-evaluation.sh --docker --jvm-runs 3
+#                                            the full campaign three times, restarting UDAV in
+#                                            between (several JVM invocations, Georges et al.);
+#                                            one report per run, pooled by tools/cost_model.py
 #   tools/run-evaluation.sh --url http://host:8080 --report my-report.txt
 #
 # Anything else on the command line is handed to Maven, e.g. the harness knobs
@@ -24,16 +28,18 @@ URL=""
 REPORT="evaluation-report.txt"
 SMOKE=0
 DOCKER=0
+JVM_RUNS=1
 EXTRA=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --smoke)   SMOKE=1; shift ;;
-    --docker)  DOCKER=1; shift ;;
-    --url)     URL="$2"; shift 2 ;;
-    --report)  REPORT="$2"; shift 2 ;;
-    -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
-    *)         EXTRA+=("$1"); shift ;;
+    --smoke)    SMOKE=1; shift ;;
+    --docker)   DOCKER=1; shift ;;
+    --jvm-runs) JVM_RUNS="$2"; shift 2 ;;
+    --url)      URL="$2"; shift 2 ;;
+    --report)   REPORT="$2"; shift 2 ;;
+    -h|--help)  sed -n '2,23p' "$0"; exit 0 ;;
+    *)          EXTRA+=("$1"); shift ;;
   esac
 done
 
@@ -44,17 +50,28 @@ if [[ -z "$URL" ]]; then
   if [[ $DOCKER -eq 1 ]]; then URL="http://localhost:18080"; else URL="http://localhost:8080"; fi
 fi
 
-if [[ $DOCKER -eq 1 ]]; then
-  echo "[evaluation] starting the Docker stack (port 18080, measurements on)"
-  docker compose -f docker-compose.yml -f tools/docker-compose.evaluation.yml up -d --build
+if [[ $JVM_RUNS -gt 1 && $DOCKER -eq 0 ]]; then
+  echo "[evaluation] --jvm-runs needs --docker: the script restarts the stack between runs" >&2
+  exit 1
 fi
 
-echo "[evaluation] waiting for $URL"
-for i in $(seq 1 90); do
-  if curl -fsS -m 5 "$URL/actuator/health" 2>/dev/null | grep -q '"UP"'; then break; fi
-  if [[ $i -eq 90 ]]; then echo "[evaluation] UDAV at $URL did not become healthy" >&2; exit 1; fi
-  sleep 2
-done
+COMPOSE=(docker compose -f docker-compose.yml -f tools/docker-compose.evaluation.yml)
+
+if [[ $DOCKER -eq 1 ]]; then
+  echo "[evaluation] starting the Docker stack (port 18080, measurements on)"
+  "${COMPOSE[@]}" up -d --build
+fi
+
+wait_healthy() {
+  echo "[evaluation] waiting for $URL"
+  for i in $(seq 1 90); do
+    if curl -fsS -m 5 "$URL/actuator/health" 2>/dev/null | grep -q '"UP"'; then return 0; fi
+    if [[ $i -eq 90 ]]; then echo "[evaluation] UDAV at $URL did not become healthy" >&2; exit 1; fi
+    sleep 2
+  done
+}
+
+wait_healthy
 
 FIRST_PIPELINE="e0000001-0000-4000-8000-000000000001"
 if ! curl -fsS -m 30 -o /dev/null "$URL/api/pipelines/$FIRST_PIPELINE"; then
@@ -64,21 +81,41 @@ if ! curl -fsS -m 30 -o /dev/null "$URL/api/pipelines/$FIRST_PIPELINE"; then
   exit 1
 fi
 
-MVN=(mvn -B test
-     -Dtest=BatchExportEvaluationIT
-     -Dsurefire.failIfNoSpecifiedTests=false
-     "-DUDAV_BASE_URL=$URL"
-     "-DUDAV_EVAL_REPORT=$REPORT")
-if [[ $SMOKE -eq 1 ]]; then
-  MVN+=(-Dudav.eval.bugHunt=true)
-  echo "[evaluation] smoke mode: one run per condition, no timing"
-else
-  echo "[evaluation] full campaign: this takes hours; the report is only valid on a quiet machine"
-fi
+run_harness() {
+  local report="$1"
+  local mvn=(mvn -B test
+             -Dtest=BatchExportEvaluationIT
+             -Dsurefire.failIfNoSpecifiedTests=false
+             "-DUDAV_BASE_URL=$URL"
+             "-DUDAV_EVAL_REPORT=$report")
+  if [[ $SMOKE -eq 1 ]]; then
+    mvn+=(-Dudav.eval.bugHunt=true)
+    echo "[evaluation] smoke mode: one run per condition, no timing"
+  else
+    echo "[evaluation] full campaign: this takes hours; the report is only valid on a quiet machine"
+  fi
 
-echo "[evaluation] ${MVN[*]} ${EXTRA[*]:-}"
-# ${EXTRA[@]+...}: an empty array trips "set -u" on bash 3.2, which macOS still ships
-"${MVN[@]}" ${EXTRA[@]+"${EXTRA[@]}"}
-echo
-echo "[evaluation] report: $ROOT/$REPORT"
-sed -n '/## 1. VERDICT/,/## 2/p' "$REPORT" | head -8
+  echo "[evaluation] ${mvn[*]} ${EXTRA[*]:-}"
+  # ${EXTRA[@]+...}: an empty array trips "set -u" on bash 3.2, which macOS still ships
+  "${mvn[@]}" ${EXTRA[@]+"${EXTRA[@]}"}
+  echo
+  echo "[evaluation] report: $ROOT/$report"
+  sed -n '/## 1. VERDICT/,/## 2/p' "$report" | head -8
+}
+
+REPORTS=()
+for ((run = 1; run <= JVM_RUNS; run++)); do
+  if [[ $run -gt 1 ]]; then
+    echo "[evaluation] restarting UDAV for JVM run $run of $JVM_RUNS"
+    "${COMPOSE[@]}" restart udav
+    wait_healthy
+  fi
+  if [[ $JVM_RUNS -gt 1 ]]; then report="${REPORT%.txt}-run$run.txt"; else report="$REPORT"; fi
+  run_harness "$report"
+  REPORTS+=("$report")
+done
+
+if [[ $JVM_RUNS -gt 1 ]]; then
+  echo
+  echo "[evaluation] pool the runs with: tools/cost_model.py ${REPORTS[*]}"
+fi

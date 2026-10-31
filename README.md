@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="/LICENSE"> <img src="https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
+  <a href="/LICENSE.txt"> <img src="https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer/releases"> <img src="https://img.shields.io/github/v/release/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://lrec2026.info/"> <img src="https://img.shields.io/badge/conference-LREC--2026-4b44ce.svg"></a>
   <a href="https://aclanthology.org/2026.lrec-1.533.pdf"> <img src="https://img.shields.io/badge/paper-LREC--2026-fb44ce.svg"></a>
@@ -79,7 +79,7 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 | `TOMCAT_MAX_THREADS` | `200` | Servlet worker pool that the budget in the note below is expressed against. |
 
 > [!NOTE]
-> The headless page calls back into this same application for `/api/data` and `/api/convertions/*`.
+> The headless page calls back into this same application for `/api/data` and `/api/conversions/*`.
 > Batch-attributable worker usage is bounded by roughly
 > `(max-sessions + max-waiters) + 6 * max-sessions` (Chromium caps connections per origin at ~6),
 > so keep that under `server.tomcat.threads.max` (pinned to `200` by default).
@@ -104,7 +104,7 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 
 #### TeX export: VecTikZ
 
-The `tex` format of the toolbar and of the batch API is produced by `POST /api/convertions/tikz`.
+The `tex` format of the toolbar and of the batch API is produced by `POST /api/conversions/tikz`.
 Widgets with a native LaTeX representation (Table, Highlight Text) generate it directly; every
 SVG-drawing widget is converted by **VecTikZ** (`org.texttechnologylab.udav.widgets.svgtolatex`),
 an SVG-to-TikZ converter that turns shapes, paths, text, gradients, patterns, markers, clip paths
@@ -128,6 +128,10 @@ it is replaced by the key. Widgets reference the template id and get one page pe
 the view shows a pager, the data API reports the group as `meta.total` / `meta.ids`, and the
 "Export all" toolbar entry and the batch API's `bulk=true` export every page. Only JSON/XML
 sources can be grouped.
+
+The corpus filter of a view selects documents by file, by tag and by import date: tags are the
+`collectionId` of the `DocumentMetaData` the DUUI importer stores with each document, the date is
+the import time of the document's sofa.
 
 `CategoryNumber` and `TextFormatting` evaluate the filter lists `filesWhitelist` / `filesBlacklist`
 and `categoriesWhitelist` / `categoriesBlacklist`, set on the generator or on its source.
@@ -166,9 +170,11 @@ The script writes `evaluation-report.txt`, whose first section states whether th
 section 5 holds the LaTeX rows of the paper's tables and section 7 the raw per-run data. Harness
 knobs (`-Dudav.eval.analysisRuns=15`, `-Dudav.eval.pipelines=P1,P5`, ...) are passed through.
 `tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources, and
-`tools/cost_model.py evaluation/evaluation-report-2026-08-26.txt` recomputes the cost model, its
-bootstrap intervals and the marginal resource slopes of the paper's cost-model table from section 7
-of a report.
+`tools/cost_model.py evaluation/evaluation-report-2026-08-26.txt` recomputes the workload and
+cost-model tables of the paper, the bootstrap intervals and the marginal resource slopes from
+section 7 of a report. `tools/run-evaluation.sh --docker --jvm-runs 3` runs the campaign three
+times with a restart of UDAV in between and writes one report per run; `tools/cost_model.py` pools
+any number of reports.
 
 `mvn test` runs the unit tests. The tests tagged `browser` launch Playwright's own Chromium (downloaded
 on the first run, about 1 GB together with Firefox and WebKit) and are opt-in: `mvn test -Pbrowser-tests`.
@@ -346,7 +352,7 @@ JAVA_OPTS=-Xmx10G -Xms1024m
 
 ## License
 
-This project is published under the AGPL-3.0 [license](/LICENSE).
+This project is published under the AGPL-3.0 [license](/LICENSE.txt).
 
 # Cite
 If you want to use the project please quote this as follows:

@@ -353,7 +353,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                 deleteExistingRowsForDocument(tx, docId);
             }
             upsertSofas(tx, docId, sofas);
-            upsertDocument(tx, docId, uri, lang, cache.tsHash, contentHash, pipelineHash);
+            upsertDocument(tx, docId, uri, lang, cache.tsHash, contentHash, pipelineHash, md.getCollectionId());
             org.apache.uima.cas.CAS base = jCas.getCas();
             List<org.apache.uima.cas.CAS> views = new ArrayList<>();
             for (Iterator<org.apache.uima.cas.CAS> vit = base.getViewIterator(); vit.hasNext(); ) {
@@ -531,7 +531,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
                     DSLContext ddl = DSL.using(conn, dsl.dialect(), dsl.settings());
                     ddl.createSchemaIfNotExists(DSL.name(schema)).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "uima_type_registry")).column("id", SQLDataType.BIGINT.identity(true)).column("uima_type_uri", SQLDataType.CLOB.nullable(false)).column("supertype_uri", SQLDataType.CLOB.nullable(true)).column("table_name", SQLDataType.VARCHAR(maxIdentifierLength).nullable(false)).column("row_count", SQLDataType.BIGINT.defaultValue(0L)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_uima_type_registry"))).primaryKey("id"), constraint(DSL.name(cutWithHash("uq_type_uri"))).unique("uima_type_uri"), constraint(DSL.name(cutWithHash("uq_table_name"))).unique("table_name")).execute();
-                    ddl.createTableIfNotExists(DSL.name(schema, "documents")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("uri", SQLDataType.CLOB.nullable(true)).column("language", SQLDataType.VARCHAR(32).nullable(true)).column("content_hash", SQLDataType.VARCHAR(64).nullable(true)).column("ts_hash", SQLDataType.VARCHAR(64).nullable(true)).column("pipeline_hash", SQLDataType.VARCHAR(64).nullable(true)).constraints(constraint(DSL.name(cutWithHash("pk_documents"))).primaryKey("doc_id")).execute();
+                    ddl.createTableIfNotExists(DSL.name(schema, "documents")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("uri", SQLDataType.CLOB.nullable(true)).column("language", SQLDataType.VARCHAR(32).nullable(true)).column("collection_id", SQLDataType.VARCHAR(512).nullable(true)).column("content_hash", SQLDataType.VARCHAR(64).nullable(true)).column("ts_hash", SQLDataType.VARCHAR(64).nullable(true)).column("pipeline_hash", SQLDataType.VARCHAR(64).nullable(true)).constraints(constraint(DSL.name(cutWithHash("pk_documents"))).primaryKey("doc_id")).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "type_system_fingerprints")).column("ts_hash", SQLDataType.VARCHAR(64).nullable(false)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_ts_fingerprint"))).primaryKey("ts_hash")).execute();
                     ddl.createTableIfNotExists(DSL.name(schema, "sofas")).column("doc_id", SQLDataType.VARCHAR(512).nullable(false)).column("sofa_id", SQLDataType.VARCHAR(128).nullable(false)).column("sofa_num", SQLDataType.INTEGER.nullable(true)).column("mime_type", SQLDataType.CLOB.nullable(true)).column("sofa_uri", SQLDataType.CLOB.nullable(true)).column("sofa_string", SQLDataType.CLOB.nullable(true)).column("sofa_hash", SQLDataType.VARCHAR(64).nullable(true)).column("created_at", SQLDataType.TIMESTAMPWITHTIMEZONE.defaultValue(currentOffsetDateTime())).constraints(constraint(DSL.name(cutWithHash("pk_sofas"))).primaryKey("doc_id", "sofa_id")).execute();
                     ddl.createIndexIfNotExists(DSL.name(cutWithHash("idx_sofas_doc_id"))).on(DSL.table(DSL.name(schema, "sofas")), DSL.field(DSL.name("doc_id"))).execute();
@@ -548,6 +548,7 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         ctx.execute("ALTER TABLE " + q(schema) + "." + q("uima_type_registry") + " ADD COLUMN IF NOT EXISTS " + q("row_count") + " BIGINT DEFAULT 0");
         ctx.execute("ALTER TABLE " + q(schema) + "." + q("uima_type_registry") + " ADD COLUMN IF NOT EXISTS " + q("supertype_uri") + " TEXT");
         ctx.execute("ALTER TABLE " + q(schema) + "." + q("documents") + " ADD COLUMN IF NOT EXISTS " + q("pipeline_hash") + " VARCHAR(64)");
+        ctx.execute("ALTER TABLE " + q(schema) + "." + q("documents") + " ADD COLUMN IF NOT EXISTS " + q("collection_id") + " VARCHAR(512)");
     }
 
     private void ensureTablesForTypeSystem(TsCache cache) {
@@ -764,9 +765,9 @@ public class JooqDatabaseWriter extends JCasAnnotator_ImplBase {
         return new DocumentState(true, upToDate);
     }
 
-    private void upsertDocument(DSLContext ctx, String docId, String uri, String lang, String tsHash, String contentHash, String pipelineHash) {
+    private void upsertDocument(DSLContext ctx, String docId, String uri, String lang, String tsHash, String contentHash, String pipelineHash, String collectionId) {
         Table<?> tbl = table(name(schema, "documents"));
-        ctx.insertInto(tbl).columns(field(name("doc_id")), field(name("uri")), field(name("language")), field(name("ts_hash")), field(name("content_hash")), field(name("pipeline_hash"))).values(docId, uri, lang, tsHash, contentHash, pipelineHash).onConflict(field(name("doc_id"))).doUpdate().set(field(name("uri")), uri).set(field(name("language")), lang).set(field(name("ts_hash")), tsHash).set(field(name("content_hash")), contentHash).set(field(name("pipeline_hash")), pipelineHash).execute();
+        ctx.insertInto(tbl).columns(field(name("doc_id")), field(name("uri")), field(name("language")), field(name("ts_hash")), field(name("content_hash")), field(name("pipeline_hash")), field(name("collection_id"))).values(docId, uri, lang, tsHash, contentHash, pipelineHash, collectionId).onConflict(field(name("doc_id"))).doUpdate().set(field(name("uri")), uri).set(field(name("language")), lang).set(field(name("ts_hash")), tsHash).set(field(name("content_hash")), contentHash).set(field(name("pipeline_hash")), pipelineHash).set(field(name("collection_id")), collectionId).execute();
     }
 
     private Map<String, SofaData> collectSofas(JCas jCas) {

@@ -51,6 +51,10 @@ export default class D3Visualization extends WidgetInterface {
   }
 
   async export(all = false) {
+    if (this.data == null) {
+      throw new Error("Nothing to export, the widget has no data");
+    }
+
     let items = [{ json: this.data, svg: this.svg.node() }];
 
     if (all && this.pagination.elements.length > 1) {

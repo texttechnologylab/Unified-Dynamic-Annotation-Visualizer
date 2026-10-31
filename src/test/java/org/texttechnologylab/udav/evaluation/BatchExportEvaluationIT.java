@@ -424,8 +424,9 @@ class BatchExportEvaluationIT {
      * Detection runs and analysis runs are therefore disjoint, as the paper states. A condition
      * that never settles is recorded in NON_STEADY and reported separately rather than pooled.
      *
-     * Format order is shuffled with a fixed seed so ordering effects do not align with format,
-     * while the campaign stays reproducible.
+     * Pipeline order and the format order of each pipeline are shuffled with a fixed seed so
+     * ordering effects align with neither format nor pipeline size, while the campaign stays
+     * reproducible.
      *
      * Each request yields, from the X-UDAV-Export-Metrics header: total wall time, the
      * browser-start / view-init / export-phase split (RQ2's fixed-versus-per-widget question),
@@ -446,10 +447,15 @@ class BatchExportEvaluationIT {
     }
 
     private void measurePrimaryCampaignImpl() throws Exception {
-        List<String> order = new ArrayList<>(FORMATS);
-        Collections.shuffle(order, new Random(SHUFFLE_SEED));
+        // Pipelines run in shuffled order and each draws its own format order, so neither drift
+        // over the campaign nor the format sequence lines up with pipeline size.
+        Random random = new Random(SHUFFLE_SEED);
+        List<Pipeline> pipelineOrder = new ArrayList<>(pipelines());
+        Collections.shuffle(pipelineOrder, random);
 
-        for (Pipeline pipeline : pipelines()) {
+        for (Pipeline pipeline : pipelineOrder) {
+            List<String> order = new ArrayList<>(FORMATS);
+            Collections.shuffle(order, random);
             for (String format : order) {
                 String condition = pipeline.label() + "|" + format;
 

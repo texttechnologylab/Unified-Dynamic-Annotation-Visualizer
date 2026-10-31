@@ -24,12 +24,12 @@ import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 import org.texttechnologylab.udav.widgets.svgtolatex.VecTikZConverter;
 
 @RestController
-@RequestMapping("/api/convertions")
-public class ConvertionController {
+@RequestMapping("/api/conversions")
+public class ConversionController {
 
     private final ObjectMapper mapper;
 
-    public ConvertionController(ObjectMapper mapper) {
+    public ConversionController(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 

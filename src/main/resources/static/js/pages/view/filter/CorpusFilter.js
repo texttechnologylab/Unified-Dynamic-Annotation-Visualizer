@@ -1,4 +1,4 @@
-import { getFiles } from "../../../api/files.api.js";
+import { getFiles, getTags } from "../../../api/files.api.js";
 import CheckboxSearch from "./CheckboxSearch.js";
 import DateRange from "./DateRange.js";
 
@@ -12,7 +12,7 @@ export default class CorpusFilter {
 
   init() {
     this.components.files = new CheckboxSearch("file-filter", getFiles);
-    this.components.tags = new CheckboxSearch("tag-filter", async () => []);
+    this.components.tags = new CheckboxSearch("tag-filter", getTags);
     this.components.date = new DateRange("date-filter");
 
     this.apply();

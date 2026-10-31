@@ -15,6 +15,9 @@ import {
 import widgets from "../../widgets/widgets.js";
 import Source from "./configs/Source.js";
 
+// The editor previews widgets before their generators are built, so it may show sample data
+globalThis.__UDAV_SAMPLE_DATA__ = true;
+
 export default class Editor {
   constructor() {
     this.showWarning = true;

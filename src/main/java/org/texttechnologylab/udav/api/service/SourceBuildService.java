@@ -17,6 +17,9 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +32,16 @@ public class SourceBuildService {
     @Value("${app.db.schema:public}")
     private String appDbSchema;
 
+    // One lock per pipeline schema: two builds of the same pipeline would swap schemas under each other
+    private final Map<String, ReentrantLock> buildLocks = new ConcurrentHashMap<>();
+
     /**
      * Build all sources for a given schema + pipeline.
-     * This version runs synchronously and is not concurrency-guarded.
+     * Runs synchronously; builds of the same pipeline are serialized, different pipelines run in parallel.
      */
     public void startBuild(String schema, @Nullable String pipelineId) { //TODO: remove duplicate unnecessary call
+        ReentrantLock lock = buildLocks.computeIfAbsent(schema == null ? "" : schema.trim(), key -> new ReentrantLock());
+        lock.lock();
         try {
             doBuild(schema, pipelineId);
         } catch (IllegalArgumentException e) {
@@ -44,6 +52,8 @@ public class SourceBuildService {
         } catch (Exception e) {
             logger.error("Build failed for pipeline={}: {}", pipelineId, e.getMessage(), e);
             throw new RuntimeException("Build failed for pipeline=" + pipelineId, e);
+        } finally {
+            lock.unlock();
         }
     }
 
