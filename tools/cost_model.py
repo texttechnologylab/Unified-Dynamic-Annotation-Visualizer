@@ -93,6 +93,9 @@ def bootstrap(rows, rng):
         bs.append(fit[1])
         cs.append(fit[2])
     bs.sort(); cs.sort()
+    if not bs:
+        nan = float("nan")
+        return (nan, nan), (nan, nan)
     return (percentile(bs, 0.025), percentile(bs, 0.975)), (percentile(cs, 0.025), percentile(cs, 0.975))
 
 
@@ -141,9 +144,14 @@ def main(paths):
         times = " & ".join("%.2f" % (median_of(p, fmt, "wallMs") / 1000) for fmt in FORMATS)
         print("%-3s & %-6s & %2d & %3d (%d) & %s \\\\" % (p, size_class(w, u), w, u, u_svg, times))
 
-    print("\ncost model t = a + b*W + c*U, 95%% bootstrap intervals (%d resamples, seed %d)" % (RESAMPLES, SEED))
-    print("Format & a & b (ms/widget) & c (ms/artefact) & adj. R^2 & CPU (ms) & Alloc. (MiB) & ZIP (KiB)")
-    for fmt in FORMATS:
+    if len(pipelines) < 4:
+        print("\n%d pipelines: the cost model needs at least four, so it is skipped (a reduced test run?)" % len(pipelines))
+        pipelines_for_model = []
+    else:
+        pipelines_for_model = pipelines
+        print("\ncost model t = a + b*W + c*U, 95%% bootstrap intervals (%d resamples, seed %d)" % (RESAMPLES, SEED))
+        print("Format & a & b (ms/widget) & c (ms/artefact) & adj. R^2 & CPU (ms) & Alloc. (MiB) & ZIP (KiB)")
+    for fmt in FORMATS if pipelines_for_model else []:
         rows = []
         cpu, alloc, zipped = [], [], []
         for p in pipelines:
@@ -159,18 +167,19 @@ def main(paths):
             fmt.upper(), fit[0], fit[1], b_lo, b_hi, fit[2], c_lo, c_hi, adjusted_r2(rows, fit),
             theil_sen(cpu), theil_sen(alloc), theil_sen(zipped)))
 
-    ws = [workload[p]["W"] for p in pipelines]
-    us = [workload[p]["U"] for p in pipelines]
-    r = pearson(ws, us)
-    print("\nr(W, U) = %.2f, VIF = %.1f" % (r, 1 / (1 - r * r)))
+    if pipelines_for_model:
+        ws = [workload[p]["W"] for p in pipelines]
+        us = [workload[p]["U"] for p in pipelines]
+        r = pearson(ws, us)
+        print("\nr(W, U) = %.2f, VIF = %.1f" % (r, 1 / (1 - r * r)))
 
-    view = []
-    for p in pipelines:
-        pooled = [run["pageReadyMs"] for fmt in FORMATS for run in runs(p, fmt)]
-        view.append((workload[p]["W"], workload[p]["U"], statistics.median(pooled)))
-    a, b, c = ols2(view)
-    print("view init, runs pooled across formats: a = %.0f ms, b = %.2f ms/widget, c = %.2f ms/artefact; %s = %.0f ms, %s = %.0f ms"
-          % (a, b, c, pipelines[0], view[0][2], pipelines[-1], view[-1][2]))
+        view = []
+        for p in pipelines:
+            pooled = [run["pageReadyMs"] for fmt in FORMATS for run in runs(p, fmt)]
+            view.append((workload[p]["W"], workload[p]["U"], statistics.median(pooled)))
+        a, b, c = ols2(view)
+        print("view init, runs pooled across formats: a = %.0f ms, b = %.2f ms/widget, c = %.2f ms/artefact; %s = %.0f ms, %s = %.0f ms"
+              % (a, b, c, pipelines[0], view[0][2], pipelines[-1], view[-1][2]))
 
     browser = sorted(run["browserInitMs"] for key in samples for run in samples[key])
     print("browser session setup: median %.0f ms, p10 %.0f, p90 %.0f" % (

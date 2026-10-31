@@ -83,11 +83,15 @@ fi
 
 run_harness() {
   local report="$1"
+  local run="$2"
+  # the run numbers let the harness print the progress over all JVM runs
   local mvn=(mvn -B test
              -Dtest=BatchExportEvaluationIT
              -Dsurefire.failIfNoSpecifiedTests=false
              "-DUDAV_BASE_URL=$URL"
-             "-DUDAV_EVAL_REPORT=$report")
+             "-DUDAV_EVAL_REPORT=$report"
+             "-Dudav.eval.jvmRun=$run"
+             "-Dudav.eval.jvmRuns=$JVM_RUNS")
   if [[ $SMOKE -eq 1 ]]; then
     mvn+=(-Dudav.eval.bugHunt=true)
     echo "[evaluation] smoke mode: one run per condition, no timing"
@@ -99,7 +103,7 @@ run_harness() {
   # ${EXTRA[@]+...}: an empty array trips "set -u" on bash 3.2, which macOS still ships
   "${mvn[@]}" ${EXTRA[@]+"${EXTRA[@]}"}
   echo
-  echo "[evaluation] report: $ROOT/$report"
+  if [[ "$report" = /* ]]; then echo "[evaluation] report: $report"; else echo "[evaluation] report: $ROOT/$report"; fi
   sed -n '/## 1. VERDICT/,/## 2/p' "$report" | head -8
 }
 
@@ -111,7 +115,7 @@ for ((run = 1; run <= JVM_RUNS; run++)); do
     wait_healthy
   fi
   if [[ $JVM_RUNS -gt 1 ]]; then report="${REPORT%.txt}-run$run.txt"; else report="$REPORT"; fi
-  run_harness "$report"
+  run_harness "$report" "$run"
   REPORTS+=("$report")
 done
 
