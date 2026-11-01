@@ -165,14 +165,15 @@ publishes the app on port 18080 with measurements switched on) and run
 `mvn test -Dtest=BatchExportEvaluationIT -DUDAV_BASE_URL=http://localhost:18080`, adding
 `-Dudav.eval.bugHunt=true` for the smoke variant.
 
-The report of the campaign the paper is based on is `evaluation/evaluation-report-2026-08-26.txt`.
+The paper is based on the three JVM runs of 2026-10-31, `evaluation/evaluation-report-2026-10-31-run1.txt`
+to `-run3.txt`; `evaluation/evaluation-report-2026-08-26.txt` is the earlier single-run campaign.
 The script writes `evaluation-report.txt`, whose first section states whether the numbers are usable;
 section 5 holds the LaTeX rows of the paper's tables and section 7 the raw per-run data. Harness
 knobs (`-Dudav.eval.analysisRuns=15`, `-Dudav.eval.pipelines=P1,P5`, ...) are passed through.
 `tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources, and
-`tools/cost_model.py evaluation/evaluation-report-2026-08-26.txt` recomputes the workload and
-cost-model tables of the paper, the bootstrap intervals and the marginal resource slopes from
-section 7 of a report. `tools/run-evaluation.sh --docker --jvm-runs 3` runs the campaign three
+`tools/cost_model.py evaluation/evaluation-report-2026-10-31-run*.txt` recomputes the workload and
+cost-model tables of the paper, the bootstrap intervals, the marginal resource costs and the other
+numbers of the evaluation section from section 7 of the reports. `tools/run-evaluation.sh --docker --jvm-runs 3` runs the campaign three
 times with a restart of UDAV in between and writes one report per run; `tools/cost_model.py` pools
 any number of reports.
 
