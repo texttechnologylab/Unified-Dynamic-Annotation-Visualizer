@@ -26,6 +26,12 @@ public class FileController {
         return ResponseEntity.ok(service.listDocumentIds(page, size, q));
     }
 
+    // Tags of the corpus filter: the collection ids of the imported documents
+    @GetMapping("/tags")
+    public ResponseEntity<List<String>> tags(@RequestParam(required = false) String q) {
+        return ResponseEntity.ok(service.listTags(q));
+    }
+
     // Get full JSON by name
     @GetMapping("/documents/{id}")
     public ResponseEntity<String> get(@PathVariable String id) throws Exception {

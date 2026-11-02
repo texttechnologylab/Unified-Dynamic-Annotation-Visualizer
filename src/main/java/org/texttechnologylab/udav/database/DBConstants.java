@@ -1,9 +1,24 @@
 package org.texttechnologylab.udav.database;
 
+import java.util.Locale;
+
 public final class DBConstants {
     private DBConstants() {}
 
     public static final String DB_SCHEMA_UIMA = "public";
+
+    /**
+     * Schemas a pipeline id must never name: the app and UIMA schemas and PostgreSQL's own.
+     * The id is also the pipeline's schema, which a build replaces and a delete drops.
+     */
+    public static boolean isReservedSchema(String name, String appSchema) {
+        if (name == null) return false;
+        String n = name.trim();
+        return n.equalsIgnoreCase(DB_SCHEMA_UIMA)
+                || (appSchema != null && n.equalsIgnoreCase(appSchema.trim()))
+                || n.equalsIgnoreCase("information_schema")
+                || n.toLowerCase(Locale.ROOT).startsWith("pg_");
+    }
 
     public static final String TABLENAME_VISUALIZATIONJSONS = "VISUALIZATIONJSONS";
     public static final String TABLENAME_GENERATORTYPE = "GENERATORTYPE";

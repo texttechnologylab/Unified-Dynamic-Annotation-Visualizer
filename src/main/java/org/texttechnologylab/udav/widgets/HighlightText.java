@@ -200,26 +200,6 @@ public class HighlightText extends Widget {
         return filteredLatex;
     }
 
-    /**
-     * Escapes LaTeX special characters in the input string.
-     */
-    private String escapeLatex(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\textbackslash{}")
-                .replace("$", "\\$")
-                .replace("&", "\\&")
-                .replace("%", "\\%")
-                .replace("#", "\\#")
-                .replace("_", "\\_")
-                .replace("{", "\\{")
-                .replace("}", "\\}")
-                .replace("~", "\\textasciitilde{}")
-                .replace("^", "\\textasciicircum{}")
-                .replace("<", "\\textless{}")
-                .replace(">", "\\textgreater{}")
-                ;
-    }
-
     private static String styletoCss(String styleName, String color) {
         String s = styleName == null ? "" : styleName.toLowerCase(Locale.ROOT);
         return switch (s) {

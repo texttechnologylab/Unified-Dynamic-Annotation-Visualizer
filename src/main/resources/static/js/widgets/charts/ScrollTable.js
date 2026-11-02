@@ -34,11 +34,7 @@ export default class ScrollTable extends WidgetInterface {
 
     this.div = this.root.select(".dv-chart-area").append("div");
 
-    this.numbers = config.options.numbers || true;
-  }
-
-  setTitle(title) {
-    this.root.select(".dv-toolbar-title").attr("title", title).text(title);
+    this.numbers = config.options.numbers ?? true;
   }
 
   clear() {
@@ -90,7 +86,7 @@ export default class ScrollTable extends WidgetInterface {
 
     const keys = Object.keys(data[0]);
 
-    let rows = data.map((row) => keys.map((k) => row[k] || ""));
+    let rows = data.map((row) => keys.map((k) => row[k] ?? ""));
     if (this.numbers) {
       rows = rows.map((row, i) => [i, ...row]);
       rows[0][0] = "#";

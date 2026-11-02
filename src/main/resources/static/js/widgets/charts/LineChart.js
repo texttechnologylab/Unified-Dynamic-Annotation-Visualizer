@@ -44,7 +44,7 @@ export default class LineChart extends D3Visualization {
   constructor(root, config) {
     super(root, config, { top: 20, right: 30, bottom: 30, left: 40 });
 
-    this.points = config.options.points || true;
+    this.points = config.options.points ?? true;
     this.curve = config.options.curve || "curveCatmullRom";
   }
 

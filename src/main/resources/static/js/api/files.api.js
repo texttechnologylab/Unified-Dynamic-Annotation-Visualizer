@@ -5,3 +5,9 @@ export async function getFiles(query) {
 
   return await api.get(path);
 }
+
+export async function getTags(query) {
+  const path = query ? `/files/tags?q=${query}` : "/files/tags";
+
+  return await api.get(path);
+}

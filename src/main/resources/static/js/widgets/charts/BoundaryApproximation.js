@@ -58,29 +58,31 @@ export default class BoundaryApproximation extends D3Visualization {
       grid: true,
       circles: true,
     };
-    this.interpolate = config.options.interpolate || false;
-    this.spacing = 5;
+    // Pipeline options are the start values of the controls below
+    const options = config.options;
+    this.interpolate = options.interpolate || false;
+    this.spacing = options.spacing ?? 5;
 
-    this.clustering = config.options.clustering || "quadtree";
-    this.radiusMultiplier = 1.0;
+    this.clustering = options.clustering || "quadtree";
+    this.radiusMultiplier = options.radiusMultiplier ?? 1.0;
 
     // contour
-    this.gridRows = 8;
-    this.threshold = 0;
+    this.gridRows = options.gridRows ?? 8;
+    this.threshold = options.threshold ?? 0;
 
     // knn
-    this.knnK = 5;
+    this.knnK = options.knnK ?? 5;
 
     // Gaussian KDE
-    this.kdeBandwidth = 30;
+    this.kdeBandwidth = options.kdeBandwidth ?? 30;
 
     // dbscan
-    this.epsilon = 10;
-    this.minPts = 2;
+    this.epsilon = options.epsilon ?? 10;
+    this.minPts = options.minPts ?? 2;
 
     // densitiy estimation
-    this.bandwidth = 10;
-    this.thresholds = 5;
+    this.bandwidth = options.bandwidth ?? 10;
+    this.thresholds = options.thresholds ?? 5;
   }
 
   async init() {
@@ -240,18 +242,22 @@ export default class BoundaryApproximation extends D3Visualization {
   render(data) {
     this.clear();
 
-    const dataPoints = this.interpolateEdges(data);
+    if (!data.length) {
+      this.showMessage("No edges in this dataset");
+      this.data = data;
+      return;
+    }
 
-    // Create the horizontal and vertical scales
-    const xScale = d3
-      .scaleLinear()
-      .range([0, this.width])
-      .domain(this.domain(dataPoints, (d) => d.x));
-
-    const yScale = d3
-      .scaleLinear()
-      .range([this.height, 0])
-      .domain(this.domain(dataPoints, (d) => d.y));
+    // Same scale on both axes, so the distances and radii below are measured in one unit. The
+    // resampled points lie on the edges, so the endpoints already give the extent.
+    const { xScale, yScale } = this.isotropicScales(
+      data.flat(),
+      (d) => d.x,
+      (d) => d.y,
+    );
+    // the spacing is set in pixels like the other parameters
+    const pixelsPerUnit = xScale(1) - xScale(0) || 1;
+    const dataPoints = this.interpolateEdges(data, this.spacing / pixelsPerUnit);
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,
@@ -266,6 +272,7 @@ export default class BoundaryApproximation extends D3Visualization {
     if (this.clustering === "density") {
       const densityEstimator = d3
         .contourDensity()
+        .size([this.width, this.height])
         .bandwidth(this.bandwidth)
         .thresholds(this.thresholds);
 
@@ -349,7 +356,8 @@ export default class BoundaryApproximation extends D3Visualization {
     this.data = data;
   }
 
-  interpolateEdges(edges) {
+  // spacing in data units
+  interpolateEdges(edges, spacing) {
     const points = [];
 
     if (this.interpolate) {
@@ -359,7 +367,7 @@ export default class BoundaryApproximation extends D3Visualization {
         const length = Math.sqrt(dx * dx + dy * dy);
 
         // Number of segments based on spacing
-        const steps = Math.max(1, Math.floor(length / this.spacing));
+        const steps = Math.max(1, Math.floor(length / spacing));
 
         for (let i = 0; i <= steps; i++) {
           const t = i / steps;

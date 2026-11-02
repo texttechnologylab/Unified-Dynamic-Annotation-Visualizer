@@ -34,10 +34,30 @@ export default class WidgetInterface {
     const page = all ? 1 : this.pagination.currentPage;
     const size = all ? this.pagination.elements.length : 1;
 
-    return await getData(pipeline, generator.id, type, page, size, {
-      corpus: state.corpusFilter.filter,
-      chart: this.filter,
-    });
+    try {
+      const result = await getData(pipeline, generator.id, type, page, size, {
+        corpus: state.corpusFilter.filter,
+        chart: this.filter,
+      });
+      this.root.select(".dv-chart-area .dv-chart-message").remove();
+      this.root.select(".dv-chart-area svg").style("display", null);
+      return result;
+    } catch (error) {
+      this.showMessage(error.message || "Data could not be loaded");
+      throw error;
+    }
+  }
+
+  // Replaces the chart with a message, e.g. when its data cannot be loaded
+  showMessage(text) {
+    const area = this.root.select(".dv-chart-area");
+    // the chart's svg keeps its size, so it is hidden rather than emptied
+    area.select("svg").style("display", "none");
+    area.select(".dv-chart-message").remove();
+    area
+      .append("div")
+      .attr("class", "dv-chart-message p-3 text-muted")
+      .text(text);
   }
 
   clear() {
@@ -54,13 +74,20 @@ export default class WidgetInterface {
 
   rerender(fetch = false) {
     if (fetch) {
-      this.fetch().then(({ data }) => this.render(data[0]));
+      // fetch() has already shown the message when it fails
+      this.fetch()
+        .then(({ data }) => this.render(data[0]))
+        .catch(() => {});
     } else {
       this.render(this.data);
     }
   }
 
   async export(all = false) {
+    if (this.data == null) {
+      throw new Error("Nothing to export, the widget has no data");
+    }
+
     let items = [{ json: this.data }];
 
     if (all && this.pagination.elements.length > 1) {

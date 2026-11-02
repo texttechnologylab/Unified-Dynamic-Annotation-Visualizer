@@ -26,8 +26,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -61,7 +59,7 @@ services:
       PIPELINE_IMPORTER_FOLDER: ${PIPELINE_IMPORTER_FOLDER:-/app/pipelines}
       JSON_IMPORTER_FOLDER: ${JSON_IMPORTER_FOLDER:-/app/sourcefilesJSON}
       PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT: ${PIPELINE_IMPORTER_REPLACE_IF_DIFFERENT:-false}
-      SROUCE_BUILDER: ${SROUCE_BUILDER:-false}
+      SOURCE_BUILDER: ${SOURCE_BUILDER:-false}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_TOKEN: ${LLM_API_TOKEN:-}
       # Batch export API (headless Chromium is shipped in the image; see README)

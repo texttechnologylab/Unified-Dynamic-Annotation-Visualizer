@@ -99,28 +99,6 @@ public class ScrollTable extends Widget {
         return sb.toString();
     }
 
-    /**
-     * Escapes all LaTeX special characters in a plain-text string so it can be safely
-     * embedded in a LaTeX document without causing syntax errors.
-     * Order matters: backslash must be replaced first.
-     */
-    private String escapeLatex(String text) {
-        if (text == null) return "";
-        return text
-                .replace("\\", "\\textbackslash{}")
-                .replace("&",  "\\&")
-                .replace("%",  "\\%")
-                .replace("$",  "\\$")
-                .replace("#",  "\\#")
-                .replace("_",  "\\_")
-                .replace("{",  "\\{")
-                .replace("}",  "\\}")
-                .replace("~",  "\\textasciitilde{}")
-                .replace("^",  "\\textasciicircum{}")
-                .replace("<",  "\\textless{}")
-                .replace(">",  "\\textgreater{}");
-    }
-
     @Override
     public JsonNode render(String generatorId,
                            Map<String, String> filters,

@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="/LICENSE"> <img src="https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
+  <a href="/LICENSE.txt"> <img src="https://img.shields.io/github/license/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer/releases"> <img src="https://img.shields.io/github/v/release/Texttechnologylab/Unified-Dynamic-Annotation-Visualizer"></a>
   <a href="https://lrec2026.info/"> <img src="https://img.shields.io/badge/conference-LREC--2026-4b44ce.svg"></a>
   <a href="https://aclanthology.org/2026.lrec-1.533.pdf"> <img src="https://img.shields.io/badge/paper-LREC--2026-fb44ce.svg"></a>
@@ -79,7 +79,7 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 | `TOMCAT_MAX_THREADS` | `200` | Servlet worker pool that the budget in the note below is expressed against. |
 
 > [!NOTE]
-> The headless page calls back into this same application for `/api/data` and `/api/convertions/*`.
+> The headless page calls back into this same application for `/api/data` and `/api/conversions/*`.
 > Batch-attributable worker usage is bounded by roughly
 > `(max-sessions + max-waiters) + 6 * max-sessions` (Chromium caps connections per origin at ~6),
 > so keep that under `server.tomcat.threads.max` (pinned to `200` by default).
@@ -104,7 +104,7 @@ pipeline are exported concurrently inside a single page. Both are tunable:
 
 #### TeX export: VecTikZ
 
-The `tex` format of the toolbar and of the batch API is produced by `POST /api/convertions/tikz`.
+The `tex` format of the toolbar and of the batch API is produced by `POST /api/conversions/tikz`.
 Widgets with a native LaTeX representation (Table, Highlight Text) generate it directly; every
 SVG-drawing widget is converted by **VecTikZ** (`org.texttechnologylab.udav.widgets.svgtolatex`),
 an SVG-to-TikZ converter that turns shapes, paths, text, gradients, patterns, markers, clip paths
@@ -128,6 +128,10 @@ it is replaced by the key. Widgets reference the template id and get one page pe
 the view shows a pager, the data API reports the group as `meta.total` / `meta.ids`, and the
 "Export all" toolbar entry and the batch API's `bulk=true` export every page. Only JSON/XML
 sources can be grouped.
+
+The corpus filter of a view selects documents by file, by tag and by import date: tags are the
+`collectionId` of the `DocumentMetaData` the DUUI importer stores with each document, the date is
+the import time of the document's sofa.
 
 `CategoryNumber` and `TextFormatting` evaluate the filter lists `filesWhitelist` / `filesBlacklist`
 and `categoriesWhitelist` / `categoriesBlacklist`, set on the generator or on its source.
@@ -161,11 +165,17 @@ publishes the app on port 18080 with measurements switched on) and run
 `mvn test -Dtest=BatchExportEvaluationIT -DUDAV_BASE_URL=http://localhost:18080`, adding
 `-Dudav.eval.bugHunt=true` for the smoke variant.
 
-The report of the campaign the paper is based on is `evaluation/evaluation-report-2026-08-26.txt`.
+The paper is based on the three JVM runs of 2026-10-31, `evaluation/evaluation-report-2026-10-31-run1.txt`
+to `-run3.txt`; `evaluation/evaluation-report-2026-08-26.txt` is the earlier single-run campaign.
 The script writes `evaluation-report.txt`, whose first section states whether the numbers are usable;
 section 5 holds the LaTeX rows of the paper's tables and section 7 the raw per-run data. Harness
 knobs (`-Dudav.eval.analysisRuns=15`, `-Dudav.eval.pipelines=P1,P5`, ...) are passed through.
-`tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources.
+`tools/make_eval_pipelines.py` regenerates the pipelines and their JSON sources, and
+`tools/cost_model.py evaluation/evaluation-report-2026-10-31-run*.txt` recomputes the workload and
+cost-model tables of the paper, the bootstrap intervals, the marginal resource costs and the other
+numbers of the evaluation section from section 7 of the reports. `tools/run-evaluation.sh --docker --jvm-runs 3` runs the campaign three
+times with a restart of UDAV in between and writes one report per run; `tools/cost_model.py` pools
+any number of reports.
 
 `mvn test` runs the unit tests. The tests tagged `browser` launch Playwright's own Chromium (downloaded
 on the first run, about 1 GB together with Firefox and WebKit) and are opt-in: `mvn test -Pbrowser-tests`.
@@ -201,26 +211,42 @@ startup, so the pipeline list is populated right away.
 
 ### Quick Start (Docker Compose)
 
-1. **Clone the repository:**
+Nothing to configure: `docker-compose.yml` carries defaults for everything.
+
+1. **Clone and start:**
 
    ```bash
    git clone https://github.com/texttechnologylab/Unified-Dynamic-Annotation-Visualizer.git
    cd Unified-Dynamic-Annotation-Visualizer
-   ```
-
-2. **Create your `.env` file** by copying the provided example:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Start the application:**
-
-   ```bash
    docker compose up -d
    ```
 
-   This starts PostgreSQL and the UDAV application. The web UI is available at [http://localhost:8080](http://localhost:8080) once the container is healthy (usually within 30-60 seconds). The image ships the demo and evaluation pipelines with their JSON sources and imports them at startup; set `PIPELINE_IMPORTER=false` or point `PIPELINE_IMPORTER_FOLDER` / `JSON_IMPORTER_FOLDER` at mounted folders to import your own instead. The default memory settings suit a laptop; `.env.example` lists the values for large corpus imports.
+   The first start builds the image (a Maven build inside Docker, several minutes depending on the
+   connection); later starts take seconds. The web UI is available at
+   [http://localhost:8080](http://localhost:8080) once the container is healthy. The bundled demo
+   and evaluation pipelines with their JSON sources are imported and built in the first minute
+   after that; pipelines whose sources are UIMA annotation types stay empty until a corpus is
+   imported (see below).
+
+2. **Check it:**
+
+   ```bash
+   tools/smoke-test.sh
+   ```
+
+   Needs only bash and curl: it waits for the application and its pipelines, reads widget data
+   through the data API, exports a whole pipeline through the batch API and converts an SVG to
+   TikZ. On Windows run it from Git Bash or WSL, or open the UI and use the export menu of a
+   widget instead.
+
+3. **Stop it** with `docker compose down`, or `docker compose down -v` to drop the database as well.
+
+The defaults cap the Java heap at 4 GB and give PostgreSQL 1 GB of shared buffers; with the bundled
+pipelines built, the two containers use about 1.5 GB of memory together, which suits a laptop. To change anything, create a `.env` next to `docker-compose.yml` with the variables to
+override; `.env.example` documents them with the values used for large corpus imports. Set
+`PIPELINE_IMPORTER=false`, or point `PIPELINE_IMPORTER_FOLDER` / `JSON_IMPORTER_FOLDER` at mounted
+folders, to import your own pipelines instead of the bundled ones. After a code change,
+`docker compose up -d --build` rebuilds the image.
 
 > [!NOTE]
 > If you're looking for a small demo without any setup, check our [open demo](https://demo.udav.texttechnologylab.org/).
@@ -343,7 +369,7 @@ JAVA_OPTS=-Xmx10G -Xms1024m
 
 ## License
 
-This project is published under the AGPL-3.0 [license](/LICENSE).
+This project is published under the AGPL-3.0 [license](/LICENSE.txt).
 
 # Cite
 If you want to use the project please quote this as follows:

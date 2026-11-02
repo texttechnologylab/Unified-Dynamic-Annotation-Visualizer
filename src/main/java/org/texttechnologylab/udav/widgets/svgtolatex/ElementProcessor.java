@@ -586,11 +586,7 @@ public class ElementProcessor {
         try {
             java.nio.file.Path file = ctx.baseDir.resolve(path).normalize();
             if (!java.nio.file.Files.isRegularFile(file)) return null;
-            javax.xml.parsers.DocumentBuilderFactory factory =
-                    javax.xml.parsers.DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            return factory.newDocumentBuilder().parse(file.toFile());
+            return VecTikZConverter.newDocumentBuilderFactory().newDocumentBuilder().parse(file.toFile());
         } catch (Exception unavailable) {
             return null;
         }

@@ -314,7 +314,7 @@ public class GeneratorSettings {
         priorityWhitelistKeys.addAll(settingsGenerator.priorityWhitelists.keySet());
         for (String key : priorityWhitelistKeys) {
             Set<Object> listBundle = settingsBundle.priorityWhitelists.get(key);
-            Set<Object> listGenerator = settingsBundle.priorityWhitelists.get(key);
+            Set<Object> listGenerator = settingsGenerator.priorityWhitelists.get(key);
             if (listBundle == null && listGenerator == null) {
                 settings.priorityWhitelists.put(key, null);
             } else if (listBundle == null) {

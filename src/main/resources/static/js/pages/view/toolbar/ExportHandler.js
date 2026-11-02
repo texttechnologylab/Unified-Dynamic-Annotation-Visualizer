@@ -1,4 +1,4 @@
-import { createZip, getCsv, getTikz } from "../../../api/convertions.api.js";
+import { createZip, getCsv, getTikz } from "../../../api/conversions.api.js";
 import {
   createButton,
   createElement,
@@ -30,7 +30,7 @@ export default class ExportHandler {
 
     Object.entries(formats).forEach(([format, icon]) => {
       const button = createButton(icon, "Export as " + format, () => {
-        this.startExport(format, false);
+        this.startExport(format, false).catch((error) => alert(error.message));
       });
 
       dropdown.append(button);
@@ -41,7 +41,7 @@ export default class ExportHandler {
 
       Object.entries(formats).forEach(([format, icon]) => {
         const button = createButton(icon, "Export all as " + format, () => {
-          this.startExport(format, true);
+          this.startExport(format, true).catch((error) => alert(error.message));
         });
 
         dropdown.append(button);
@@ -77,7 +77,8 @@ export default class ExportHandler {
     // Prepare metadata node
     for (const [key, value] of Object.entries(meta)) {
       const node = document.createElementNS(namespace, key);
-      node.textContent = value;
+      node.textContent =
+        typeof value === "string" ? value : JSON.stringify(value);
       metadata.appendChild(node);
     }
 

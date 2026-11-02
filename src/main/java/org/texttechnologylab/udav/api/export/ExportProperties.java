@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <p>Defaults are chosen for a single-node deployment sharing a JVM with the pages it renders.
  * {@link Pool#maxSessions} and {@link #concurrency} both feed back into this same
  * application: an export holds one Tomcat worker while its headless page issues {@code /api/data}
- * and {@code /api/convertions/*} requests back to it. Chromium caps concurrent connections per
+ * and {@code /api/conversions/*} requests back to it. Chromium caps concurrent connections per
  * origin at roughly six, so batch-attributable worker usage is bounded by about
  * {@code (maxSessions + maxWaiters) + 6 * maxSessions}. Keep that comfortably under
  * {@code server.tomcat.threads.max}.

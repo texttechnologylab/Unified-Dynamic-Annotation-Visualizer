@@ -79,6 +79,14 @@ class JsonBackedGeneratorsTest {
     }
 
     @Test
+    void priorityWhitelistOfTheGeneratorBeatsItsBlacklist() throws Exception {
+        CategoryNumber g = categoryNumber(
+                Map.of("categoriesBlacklist", List.of("noun", "verb"), "categoriesWhitelistPriority", List.of("noun")),
+                Map.of("doc-1", Map.of("NOUN", 3, "VERB", 1, "ADJ", 2)));
+        assertEquals(Map.of("doc-1", Map.of("NOUN", 3.0, "ADJ", 2.0)), g.categoryNumbersPerFile());
+    }
+
+    @Test
     void textFormattingBuildsOneLayerPerTypeWithStylesAndColours() throws Exception {
         TextFormatting g = textFormatting(
                 Map.of("styles", Map.of("POS", "underline", "NamedEntity", "highlight"),

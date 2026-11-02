@@ -24,12 +24,12 @@ import org.texttechnologylab.udav.widgets.jsontocsv.JsonToCsvConverter;
 import org.texttechnologylab.udav.widgets.svgtolatex.VecTikZConverter;
 
 @RestController
-@RequestMapping("/api/convertions")
-public class ConvertionController {
+@RequestMapping("/api/conversions")
+public class ConversionController {
 
     private final ObjectMapper mapper;
 
-    public ConvertionController(ObjectMapper mapper) {
+    public ConversionController(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
@@ -101,9 +101,12 @@ public class ConvertionController {
 
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             for (MultipartFile file : files) {
-                String filename = file.getOriginalFilename() != null
-                        ? file.getOriginalFilename()
-                        : "file_" + System.currentTimeMillis();
+                // Keep only the last path segment, so no entry can point outside the extraction folder
+                String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename();
+                String filename = original.replaceAll(".*[/\\\\]", "");
+                if (filename.isBlank() || filename.equals(".") || filename.equals("..")) {
+                    filename = "file_" + System.currentTimeMillis();
+                }
 
                 ZipEntry zipEntry = new ZipEntry(filename);
                 zipOutputStream.putNextEntry(zipEntry);

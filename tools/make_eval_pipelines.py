@@ -25,7 +25,7 @@ Equivalence with the campaign of 2026-08-26: the annotation data is generated wi
 java.util.Random and the seed, vocabulary, category list, palette and sizes of that campaign, so
 the synthetic document (20 000+ characters, 1500 spans over 3 layers) and the category counts
 (4 documents x 12 categories, Zipf-like) are identical to the data the paper's numbers were measured on
-(see evaluation/evaluation-report-2026-08-26.txt).
+(see the reports in evaluation/; the three runs of 2026-10-31 used the same pipelines).
 
 Run from the repository root:  python3 tools/make_eval_pipelines.py
 """

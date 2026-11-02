@@ -202,14 +202,115 @@ class BatchExportEvaluationIT {
     /**
      * Pipeline for the controlled U-only experiment.
      *
-     * Every one of its 16 widgets sits on a group generator of size 8, so bulk=false produces
-     * exactly 16 files and bulk=true produces 121. Widget set, composition and layout are
+     * 15 of its 16 widgets sit on a group generator of size 8 and one ScrollTable on a plain
+     * generator, so a json export gives 16 files with bulk=false and 121 with bulk=true. The
+     * experiment runs in svg, where the two ScrollTables export nothing: 14 and 112 files.
+     * Widget set, composition and layout are
      * byte-identical between the two runs, so the only thing that changes is how many files are
      * exported; the resulting slope is therefore attributable to U rather than to W or to
      * anything correlated with it.
      */
     private static final Pipeline PAGINATION_PIPELINE =
             new Pipeline("PAG", "e00000aa-0000-4000-8000-0000000000aa", "medium", 16, 121);
+
+    // -----------------------------------------------------------------------------------------
+    // Progress
+    // -----------------------------------------------------------------------------------------
+
+    /** The JVM run this campaign is part of: -Dudav.eval.jvmRun=k -Dudav.eval.jvmRuns=n */
+    private static final int JVM_RUN = intProperty("udav.eval.jvmRun", 1);
+    private static final int JVM_RUNS = intProperty("udav.eval.jvmRuns", 1);
+
+    /**
+     * Progress as planned seconds done, printed after every unit of work. The plan costs each
+     * request with a rough model from the August 2026 campaign: a batch request takes about
+     * 0.3 s plus 10 ms per artefact of the pipeline, a single-widget request about 0.25 s plus
+     * 15 ms per widget of the view. The steady-state search is planned at its maximum, so a
+     * condition that settles early jumps ahead and the remaining time is an upper estimate.
+     */
+    private static final class Progress {
+        private final double planned;
+        private double done;
+        private final long startNs = System.nanoTime();
+
+        Progress(double planned) {
+            this.planned = planned;
+        }
+
+        void done(double seconds, String what) {
+            done = Math.min(planned, done + seconds);
+            double fraction = planned > 0 ? done / planned : 1;
+            long elapsed = (System.nanoTime() - startNs) / 1_000_000_000L;
+            long remaining = fraction > 0 ? Math.round(elapsed * (1 - fraction) / fraction) : -1;
+            long perRun = fraction > 0 ? Math.round(elapsed / fraction) : -1;
+
+            StringBuilder line = new StringBuilder("[progress] ");
+            if (JVM_RUNS > 1) {
+                double overall = (JVM_RUN - 1 + fraction) / JVM_RUNS;
+                line.append(String.format("run %d/%d %.1f%% | overall %.1f%%",
+                        JVM_RUN, JVM_RUNS, 100 * fraction, 100 * overall));
+            } else {
+                line.append(String.format("%.1f%%", 100 * fraction));
+            }
+            line.append(" | elapsed ").append(hms(elapsed));
+            if (remaining >= 0) {
+                line.append(" | remaining ~").append(hms(remaining));
+                if (JVM_RUNS > 1) {
+                    line.append(" this run, ~").append(hms(remaining + (JVM_RUNS - JVM_RUN) * perRun)).append(" all runs");
+                }
+            }
+            line.append(" | ").append(what);
+            System.out.println(line);
+        }
+
+        private static String hms(long seconds) {
+            return String.format("%d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+        }
+    }
+
+    private static Progress progress;
+
+    private static Progress progress() {
+        if (progress == null) progress = new Progress(plannedSeconds());
+        return progress;
+    }
+
+    private static double batchSeconds(Pipeline pipeline) {
+        return 0.3 + 0.01 * pipeline.expectedU();
+    }
+
+    private static double singleWidgetSeconds(Pipeline pipeline) {
+        return 0.25 + 0.015 * pipeline.expectedW();
+    }
+
+    private static int primaryRunsPerCondition() {
+        return WARMUP_RUNS + (BUG_HUNT ? 0 : STEADY_MAX_SEARCH) + ANALYSIS_RUNS;
+    }
+
+    private static double baselineSeconds(Pipeline pipeline) {
+        return batchSeconds(pipeline) + pipeline.expectedW() * singleWidgetSeconds(pipeline);
+    }
+
+    /** The first pipeline of a size class in this run, which the baseline experiment uses. */
+    private static Pipeline baselinePipeline(String sizeClass) {
+        return pipelines().stream().filter(p -> p.sizeClass().equals(sizeClass)).findFirst().orElse(null);
+    }
+
+    private static double plannedSeconds() {
+        double total = 0;
+        for (Pipeline pipeline : pipelines()) {
+            total += batchSeconds(pipeline);
+            total += FORMATS.size() * primaryRunsPerCondition() * batchSeconds(pipeline);
+        }
+        for (String sizeClass : List.of("small", "medium", "large")) {
+            Pipeline pipeline = baselinePipeline(sizeClass);
+            if (pipeline != null) {
+                total += BASELINE_FORMATS.size() * (batchSeconds(pipeline) + ANALYSIS_RUNS * baselineSeconds(pipeline));
+            }
+        }
+        total += (1 + 2 * ANALYSIS_RUNS) * batchSeconds(PAGINATION_PIPELINE);
+        return total;
+    }
 
     // --- Collected results ---
 
@@ -387,6 +488,7 @@ class BatchExportEvaluationIT {
             System.out.printf("[workload] %-4s %-6s W=%-3d U=%-4d non-SVG=%d  (expected W=%d U=%d)%n",
                     pipeline.label(), pipeline.sizeClass(), w, u, nonSvg,
                     pipeline.expectedW(), pipeline.expectedU());
+            progress().done(batchSeconds(pipeline), "workload " + pipeline.label());
 
             // A mismatch means the pipeline did not import, its sources did not build, or the
             // generator groups did not expand. Any of those makes the whole campaign meaningless,
@@ -422,8 +524,9 @@ class BatchExportEvaluationIT {
      * Detection runs and analysis runs are therefore disjoint, as the paper states. A condition
      * that never settles is recorded in NON_STEADY and reported separately rather than pooled.
      *
-     * Format order is shuffled with a fixed seed so ordering effects do not align with format,
-     * while the campaign stays reproducible.
+     * Pipeline order and the format order of each pipeline are shuffled with a fixed seed so
+     * ordering effects align with neither format nor pipeline size, while the campaign stays
+     * reproducible.
      *
      * Each request yields, from the X-UDAV-Export-Metrics header: total wall time, the
      * browser-start / view-init / export-phase split (RQ2's fixed-versus-per-widget question),
@@ -444,10 +547,15 @@ class BatchExportEvaluationIT {
     }
 
     private void measurePrimaryCampaignImpl() throws Exception {
-        List<String> order = new ArrayList<>(FORMATS);
-        Collections.shuffle(order, new Random(SHUFFLE_SEED));
+        // Pipelines run in shuffled order and each draws its own format order, so neither drift
+        // over the campaign nor the format sequence lines up with pipeline size.
+        Random random = new Random(SHUFFLE_SEED);
+        List<Pipeline> pipelineOrder = new ArrayList<>(pipelines());
+        Collections.shuffle(pipelineOrder, random);
 
-        for (Pipeline pipeline : pipelines()) {
+        for (Pipeline pipeline : pipelineOrder) {
+            List<String> order = new ArrayList<>(FORMATS);
+            Collections.shuffle(order, random);
             for (String format : order) {
                 String condition = pipeline.label() + "|" + format;
 
@@ -474,6 +582,7 @@ class BatchExportEvaluationIT {
                         iqr(analysis.stream().map(Sample::wallMs).toList()),
                         analysis.getFirst().widgetsOk(),
                         analysis.getFirst().widgetsFailed());
+                progress().done(primaryRunsPerCondition() * batchSeconds(pipeline), "campaign " + condition);
             }
         }
     }
@@ -531,10 +640,7 @@ class BatchExportEvaluationIT {
 
     private void measureBatchVersusIndividualRequestsImpl() throws Exception {
         for (String sizeClass : List.of("small", "medium", "large")) {
-            Pipeline pipeline = pipelines().stream()
-                    .filter(p -> p.sizeClass().equals(sizeClass))
-                    .findFirst()
-                    .orElse(null);
+            Pipeline pipeline = baselinePipeline(sizeClass);
             if (pipeline == null) {
                 continue; // filtered out of this run
             }
@@ -543,6 +649,7 @@ class BatchExportEvaluationIT {
 
             for (String format : BASELINE_FORMATS) {
                 exportPipeline(pipeline.id(), format, true); // warm-up, untimed
+                progress().done(batchSeconds(pipeline), "baseline " + sizeClass + "|" + format + " warm-up");
 
                 List<Long> batch = new ArrayList<>();
                 List<Long> individual = new ArrayList<>();
@@ -557,6 +664,8 @@ class BatchExportEvaluationIT {
                         exportSingleWidget(pipeline.id(), widget, format, true);
                     }
                     individual.add((System.nanoTime() - individualStart) / 1_000_000);
+                    progress().done(baselineSeconds(pipeline),
+                            "baseline " + sizeClass + "|" + format + " run " + (run + 1) + "/" + ANALYSIS_RUNS);
                 }
 
                 BASELINE.put(sizeClass + "|" + format, new long[]{median(batch), median(individual)});
@@ -624,6 +733,7 @@ class BatchExportEvaluationIT {
         paginationSlopeMsPerFile = (double) (median(deepMs) - median(shallowMs)) / extraFiles;
         System.out.printf("[pagination] %d -> %d files, %dms -> %dms, slope=%.2f ms/file%n",
                 shallowFiles, deepFiles, median(shallowMs), median(deepMs), paginationSlopeMsPerFile);
+        progress().done((1 + 2 * ANALYSIS_RUNS) * batchSeconds(PAGINATION_PIPELINE), "pagination");
     }
 
     // -----------------------------------------------------------------------------------------

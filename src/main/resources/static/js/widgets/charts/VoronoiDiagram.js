@@ -108,16 +108,12 @@ export default class VoronoiDiagram extends D3Visualization {
       : [];
     const dataPoints = [...boundaryPoints, ...data];
 
-    // Create the horizontal and vertical scales
-    const xScale = d3
-      .scaleLinear()
-      .range([0, this.width])
-      .domain(this.domain(dataPoints, (d) => d.x));
-
-    const yScale = d3
-      .scaleLinear()
-      .range([this.height, 0])
-      .domain(this.domain(dataPoints, (d) => d.y));
+    // Same scale on both axes, so the Voronoi cells are the data's own
+    const { xScale, yScale } = this.isotropicScales(
+      dataPoints,
+      (d) => d.x,
+      (d) => d.y,
+    );
 
     const { area, zoom } = this.createAxisZoom([1, 40], {
       bottom: xScale,
@@ -133,6 +129,8 @@ export default class VoronoiDiagram extends D3Visualization {
 
     function renderPolygon(index, scale) {
       const cellPolygon = voronoi.cellPolygon(index);
+      // No cell for coincident points, no factor for boundary points
+      if (!cellPolygon || !Number.isFinite(scale)) return null;
       const [cx, cy] = points[index];
 
       const scaledPolygon = cellPolygon.map(([x, y]) => [
@@ -150,7 +148,7 @@ export default class VoronoiDiagram extends D3Visualization {
         .data(dataPoints)
         .join("path")
         .attr("class", "polygon")
-        .attr("d", (d, i) => renderPolygon(i, d.abs))
+        .attr("d", (d, i) => renderPolygon(i, d.abs ?? d.scale))
         .attr("fill", (_, i) => dataPoints[i].fill)
         .attr("opacity", 0.7)
         .attr("stroke", (_, i) => dataPoints[i].stroke)

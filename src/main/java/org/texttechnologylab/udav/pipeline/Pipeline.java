@@ -423,23 +423,6 @@ public class Pipeline {
         generator.setup_step1(); generator.setup_step2(); generator.setup_step3();
     }
 
-    private Map<String, Generator> findGeneratorsUsedByVisualizations() {
-        HashMap<String, Generator> visualizedGenerators = new HashMap<>();
-        JSONView widgetsView = rootJSONView.get("widgets");
-        for (JSONView widgetView : widgetsView) {
-            String widgetID = widgetView.get("id").toString();
-            if (widgetID == null) { widgetID = "undefined"; }
-            String generatorID = null;
-            try { generatorID = widgetView.get("generator").get("id").toString(); }
-            catch (Exception ignored) {}
-            if (generatorID == null) { continue; }
-            Generator generator = generators.get(generatorID);
-            if (generator == null) { throw new IllegalArgumentException("There is no generator with ID \"" + generatorID + "\" to create widget \"" + widgetID +"\"."); }
-            visualizedGenerators.put(generatorID, generator);
-        }
-        return visualizedGenerators;
-    }
-
     private static Source decideSourceFromJSONDefinition(String definition, DBAccess dbAccess) throws SQLException, IOException {
         String normalizedDefinition = stripNSuffix(definition);
         if (isDbJsonBackedSource(normalizedDefinition)) {
